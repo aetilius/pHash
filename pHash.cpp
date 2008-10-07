@@ -256,8 +256,11 @@ int ph_compare_images(const CImg<uint8_t> &imA,const CImg<uint8_t> &imB,double &
 
 int ph_compare_images(const char *file1, const char *file2,double &pcc, double sigma, double gamma, int N,double threshold){
 
-    CImg<uint8_t> imA(file1);
-    CImg<uint8_t> imB(file2);
+    CImg<uint8_t> *imA = new CImg<uint8_t>(file1);
+    CImg<uint8_t> *imB = new CImg<uint8_t>(file2);
     
-    return (ph_compare_images(imA,imB,pcc,sigma,gamma,N,threshold));
+    int res = ph_compare_images(*imA,*imB,pcc,sigma,gamma,N,threshold);
+    delete imA;
+    delete imB;
+    return res;
 }
