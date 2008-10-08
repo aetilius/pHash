@@ -1,7 +1,7 @@
 # pHash project makefile v0.0.1
 
 CC      = g++
-CCFLAGS = -Wall
+CCFLAGS = -Wall -ffast-math
 OUTFILE = pHash
 TESTFILE = test_main.cpp
 LIBS = -lm -lpthread -ljpeg -lpHash
@@ -12,7 +12,7 @@ test : pHash.so
 	$(CC) $(CCFLAGS) $(TESTFILE) $(CIMGDEFINES) -o$(OUTFILE) $(LIBDIRS) $(LIBS)
 
 pHash.so : pHash.o
-	$(CC) -shared $(CIMGDEFINES) pHash.o -Wl,-soname -Wl,libpHash.so.0.2 -olibpHash.so.0.2  
+	$(CC) -shared $(CCFLAGS) $(CIMGDEFINES) pHash.o -Wl,-soname -Wl,libpHash.so.0.2 -olibpHash.so.0.2  
 	ln -sf libpHash.so.0.2 libpHash.so
 
 pHash.o : pHash.cpp pHash.h
