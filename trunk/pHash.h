@@ -25,7 +25,6 @@
 #ifndef _PHASH_H
 #define _PHASH_H
 
-#include <stdint.h>
 #include <limits.h>
 #include <math.h>
 #include "CImg.h"

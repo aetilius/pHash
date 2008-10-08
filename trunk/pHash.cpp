@@ -35,8 +35,8 @@ int ph_radon_projections(const CImg<uint8_t> &img,int N,Projections &projs){
     int width = img.dimx();
     int height = img.dimy();
     int D = (width > height)?width:height;
-    float x_center = width/2;
-    float y_center = height/2;
+    float x_center = (float)width/2;
+    float y_center = (float)height/2;
     int x_off = (int)std::floor(x_center + ROUNDING_FACTOR(x_center));
     int y_off = (int)std::floor(y_center + ROUNDING_FACTOR(y_center));
 
@@ -100,6 +100,7 @@ int ph_feature_vector(const Projections &projs, Features &fv)
     int D = projection_map.dimy();
 
     fv.features = (double*)malloc(N*sizeof(double));
+    fv.size = N;
     if (!fv.features)
 	return EXIT_FAILURE;
 
@@ -130,7 +131,7 @@ int ph_feature_vector(const Projections &projs, Features &fv)
 int ph_dct(const Features &fv,Digest &digest)
 {
     int N = fv.size;
-    int nb_coeffs = 40;
+    const int nb_coeffs = 40;
 
     digest.coeffs = (uint8_t*)malloc(nb_coeffs*sizeof(uint8_t));
     if (!digest.coeffs)
@@ -178,7 +179,7 @@ int ph_crosscorr(const Digest &x,const Digest &y,double &pcc,double threshold){
     uint8_t *x_coeffs = x.coeffs;
     uint8_t *y_coeffs = y.coeffs;
 
-    double r[N];
+    double *r = new double[N];
     double sumx = 0.0;
     double sumy = 0.0;
     for (int i=0;i < N;i++){
@@ -201,37 +202,56 @@ int ph_crosscorr(const Digest &x,const Digest &y,double &pcc,double threshold){
         if (r[d] > max)
 	    max = r[d];
     }
+    delete[] r;
     pcc = max;
     if (max > threshold)
-	result = 1;
+	    result = 1;
+
     return result;
 }
+
+#ifdef max
+#undef max
+#endif
+
 int ph_image_digest(const CImg<uint8_t> &img,double sigma, double gamma,Digest &digest, int N){
     
+    int result = EXIT_FAILURE;
     CImg<uint8_t> graysc = img.get_RGBtoYCbCr().channel(0);
  
-    graysc.blur(sigma);
+    graysc.blur((float)sigma);
  
     (graysc/graysc.max()).pow(gamma);
      
     Projections projs;
     if (ph_radon_projections(graysc,N,projs) < 0)
-	return EXIT_FAILURE;
+	goto cleanup;
  
     Features features;
     if (ph_feature_vector(projs,features) < 0)
-	return EXIT_FAILURE;
+	goto cleanup;
     
     if (ph_dct(features,digest) < 0)
-        return EXIT_FAILURE;
+        goto cleanup;
  
-    return EXIT_SUCCESS;
+    result = EXIT_SUCCESS;
+
+cleanup:
+    free(projs.nb_pix_perline);
+    free(features.features);
+
+    delete projs.R;
+    return result;
 }
+
+#define max(a,b) (((a)>(b))?(a):(b))
 
 int ph_image_digest(const char *file, double sigma, double gamma, Digest &digest, int N){
     
-    CImg<uint8_t> src(file);
-    return ph_image_digest(src,sigma,gamma,digest,N);
+    CImg<uint8_t> *src = new CImg<uint8_t>(file);
+    int result = ph_image_digest(*src,sigma,gamma,digest,N);
+    delete src;
+    return result;
 
 }
 
@@ -240,17 +260,24 @@ int ph_compare_images(const CImg<uint8_t> &imA,const CImg<uint8_t> &imB,double &
     int result = 0;
     Digest digestA;
     if (ph_image_digest(imA,sigma,gamma,digestA,N) < 0)
-	return EXIT_FAILURE;
+	goto cleanup;
 
     Digest digestB;
     if (ph_image_digest(imB,sigma,gamma,digestB,N) < 0)
-	return EXIT_FAILURE;
+	goto cleanup;
 
     if (ph_crosscorr(digestA,digestB,pcc,threshold) < 0)
-	return EXIT_FAILURE;
+	goto cleanup;
 
     if  (pcc  > threshold)
         result = 1;
+
+cleanup:
+
+    delete &imA;
+    delete &imB;
+    free(digestA.coeffs);
+    free(digestB.coeffs);
     return result;
 }
 
@@ -260,7 +287,6 @@ int ph_compare_images(const char *file1, const char *file2,double &pcc, double s
     CImg<uint8_t> *imB = new CImg<uint8_t>(file2);
     
     int res = ph_compare_images(*imA,*imB,pcc,sigma,gamma,N,threshold);
-    delete imA;
-    delete imB;
+
     return res;
 }
