@@ -4,7 +4,7 @@
 
 using namespace cimg_library;
 int main(int argc, char **argv){
-    cimg_usage("phash program");
+    cimg_usage("pHash Radial Hash projection algorithm");
     const char *msg = ph_about();
     puts(msg);
 

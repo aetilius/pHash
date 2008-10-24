@@ -290,3 +290,59 @@ int ph_compare_images(const char *file1, const char *file2,double &pcc, double s
 
     return res;
 }
+
+CImg<float>* ph_dct_matrix(const int N){
+    CImg<float> *ptr_matrix = new CImg<float>(N,N,1,1,1/sqrt(N));
+    
+    for (int x=0;x<N;x++){
+	for (int y=1;y<N;y++){
+	    ptr_matrix->at(x,y) = (sqrt(2)/sqrt(N))*cos((cimg::valuePI/2/N)*y*(2*(x+1)));
+	}
+    }
+
+    return ptr_matrix;
+}
+
+int ph_dct_imagehash(const char* file,ulong64 &hash){
+
+    if (!file){
+	return -1;
+    }
+
+    CImg<uint8_t> src = CImg<uint8_t>(file);
+    CImg<float>  img = src.RGBtoYCbCr().channel(0).blur(0.50,0.50);
+    img.resize(32,32);
+
+    CImg<float> *C  = ph_dct_matrix(32);
+    CImg<float> Ctransp = C->get_transpose();
+
+    CImg<float> dctImage = (*C)*img*Ctransp;
+
+    CImg<float> subsec = dctImage.crop(1,1,7,7).unroll('x');;
+   
+    float median = subsec.median();
+    ulong64 one = 0x0000000000000001;
+    hash = 0x0000000000000000;
+    for (int i=0;i< 64;i++){
+	float current = subsec(i);
+        if (current > median)
+	    hash |= one;
+	one = one << 1;
+    }
+  
+    return 0;
+}
+
+int ph_hamming_distance(const ulong64 hash1,const ulong64 hash2){
+    int count = 0;
+    ulong64 mask = 0x8000000000000000;
+    ulong64 combined = hash1^hash2;
+
+    for (int i=0;i<64;i++){
+	if ((mask & combined) == mask)
+	    count++;
+        combined = (combined << 1);
+    }
+
+    return count;
+}

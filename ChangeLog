@@ -2,3 +2,8 @@
 ----
 Initial release with support for the robust video hash extraction 
 algorithm.
+10.24.2008 added ph_dct_imagehash() function
+	   added ph_dct_matrix() function
+	   added dct_image_main() test driver for above functions.
+	   added ph_hamming_distance() function
+	   added define statements for ulong64 type definition to make sure exactly 64 bits.
