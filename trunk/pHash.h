@@ -34,6 +34,15 @@ using namespace std;
 
 #define ROUNDING_FACTOR(x) (((x) >= 0) ? 0.5 : -0.5) 
 
+#if defined( _MSC_VER) || defined(_BORLANDC_)
+typedef unsigned _uint64 ulong64;
+typedef signed _int64 long64;
+
+#else
+typedef unsigned long long ulong64;
+typedef signed long long long64;
+#endif
+
 typedef unsigned char uint8_t;
 
 /*! /brief Radon Projection info
@@ -145,5 +154,27 @@ int ph_compare_images(const CImg<uint8_t> &imA,const CImg<uint8_t> &imB,double &
  *  /return int 0 (false) for different image, 1 (true) for same images, less than 0 for error
  */
 int ph_compare_images(const char *file1, const char *file2,double &pcc, double sigma = 3.5, double gamma=1.0, int N=180,double threshold=0.90);
+
+/*! /brief return dct matrix, C
+ *  Return DCT matrix of sqare size, N
+ *  /param N - int denoting the size of the square matrix to create.
+ *  /return CImg<double> size NxN containing the dct matrix
+ */
+CImg<float>* ph_dct_matrix(const int N);
+
+/*! /brief compute dct robust image hash
+ *  /param file string variable for name of file
+ *  /param hash of type ulong64 (must be 64-bit variable)
+ *  /return int value - -1 for failure, 1 for success
+ */
+int ph_dct_imagehash(const char* file,ulong64 &hash);
+
+/* ! /brief hamming distance
+ *   Compute the hamming distance between two 64-bit data types
+ *   /param hash1 of type ulong64 denoting an image hash
+ *   /param hash2 of type ulong64 denoting an image hash
+ *   /return int value for the hamming distance, -1 for error
+ */
+int ph_hamming_distance(const ulong64 hash1,const ulong64 hash2);
 
 #endif
