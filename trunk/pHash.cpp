@@ -310,15 +310,17 @@ int ph_dct_imagehash(const char* file,ulong64 &hash){
     }
 
     CImg<uint8_t> src = CImg<uint8_t>(file);
-    CImg<float>  img = src.RGBtoYCbCr().channel(0).blur(0.50,0.50);
-    img.resize(32,32);
+    CImg<float> meanfilter(7,7,1,1,1);
 
+    CImg<float>  img = src.RGBtoYCbCr().channel(0).get_convolve(meanfilter);
+
+    img.resize(32,32);
     CImg<float> *C  = ph_dct_matrix(32);
     CImg<float> Ctransp = C->get_transpose();
 
     CImg<float> dctImage = (*C)*img*Ctransp;
 
-    CImg<float> subsec = dctImage.crop(1,1,7,7).unroll('x');;
+    CImg<float> subsec = dctImage.crop(1,1,8,8).unroll('x');;
    
     float median = subsec.median();
     ulong64 one = 0x0000000000000001;

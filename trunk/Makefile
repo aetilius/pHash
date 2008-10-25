@@ -26,4 +26,4 @@ pHash.o : pHash.cpp pHash.h
 	$(CC) -fPIC -DPIC $(CIMGDEFINES) $(CCFLAGS) -c pHash.cpp
 
 clean :
-	rm pHash pHash.o
+	rm pHash2 pHash.so.* 
