@@ -1,6 +1,6 @@
 /*
 
-    pHash, the oipen source perceptual hash library
+    pHash, the open source perceptual hash library
     Copyright (C) 2008 Evan Klinger & David Starkweather.
     All rights reserved.
 
@@ -37,7 +37,6 @@ using namespace std;
 #if defined( _MSC_VER) || defined(_BORLANDC_)
 typedef unsigned _uint64 ulong64;
 typedef signed _int64 long64;
-
 #else
 typedef unsigned long long ulong64;
 typedef signed long long long64;

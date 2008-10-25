@@ -334,15 +334,13 @@ int ph_dct_imagehash(const char* file,ulong64 &hash){
 }
 
 int ph_hamming_distance(const ulong64 hash1,const ulong64 hash2){
-    int count = 0;
-    ulong64 mask = 0x8000000000000000;
-    ulong64 combined = hash1^hash2;
-
-    for (int i=0;i<64;i++){
-	if ((mask & combined) == mask)
-	    count++;
-        combined = (combined << 1);
-    }
-
-    return count;
+    ulong64 x = hash1^hash2;
+    const ulong64 m1  = 0x5555555555555555ULL;
+    const ulong64 m2  = 0x3333333333333333ULL;
+    const ulong64 h01 = 0x0101010101010101ULL;
+    const ulong64 m4  = 0x0f0f0f0f0f0f0f0fULL;
+    x -= (x >> 1) & m1;
+    x = (x & m2) + ((x >> 2) & m2);
+    x = (x + (x >> 4)) & m4;
+    return (x * h01)>>56;
 }
