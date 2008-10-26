@@ -1,7 +1,7 @@
 # pHash project makefile v0.0.1
 
 CC      = g++
-CCFLAGS = -Wall -ffast-math
+CCFLAGS = -Wall -ffast-math -O2
 OUTFILE = pHash
 TESTFILE = test_main.cpp
 TEST2FILE = dct_image_main.cpp 
@@ -9,7 +9,7 @@ LIBS = -lm -lpthread -ljpeg -lpHash
 X11LIBS = -lX11 -lXext -lXrandr 
 X11LIBDIRS = -L/usr/X11R6/lib64
 LIBDIRS = -L.
-CIMGDEFINES = -Dcimg_use_jpeg -Dcimg_display=0
+CIMGDEFINES = -Dcimg_use_jpeg -Dcimg_display=0 -Dcimg_debug=0
 X11DEFINES = -Dcimg_use_xshm -Dcimg_use_xrandr
 
 test : pHash.so
