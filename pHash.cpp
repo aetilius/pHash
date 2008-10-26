@@ -293,10 +293,10 @@ int ph_compare_images(const char *file1, const char *file2,double &pcc, double s
 
 CImg<float>* ph_dct_matrix(const int N){
     CImg<float> *ptr_matrix = new CImg<float>(N,N,1,1,1/sqrt(N));
-    
+    float sqrttwo = sqrt(2);
     for (int x=0;x<N;x++){
 	for (int y=1;y<N;y++){
-	    ptr_matrix->at(x,y) = (sqrt(2)/sqrt(N))*cos((cimg::valuePI/2/N)*y*(2*(x+1)));
+	    ptr_matrix->at(x,y) = sqrttwo*cos((cimg::valuePI/2/N)*y*(2*(x+1)));
 	}
     }
 
@@ -309,7 +309,7 @@ int ph_dct_imagehash(const char* file,ulong64 &hash){
 	return -1;
     }
 
-    CImg<uint8_t> src = CImg<uint8_t>(file);
+    CImg<uint8_t> src(file);
     CImg<float> meanfilter(7,7,1,1,1);
 
     CImg<float>  img = src.RGBtoYCbCr().channel(0).get_convolve(meanfilter);
@@ -332,6 +332,8 @@ int ph_dct_imagehash(const char* file,ulong64 &hash){
 	one = one << 1;
     }
   
+    delete C;
+
     return 0;
 }
 
