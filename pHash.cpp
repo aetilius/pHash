@@ -292,8 +292,8 @@ int ph_compare_images(const char *file1, const char *file2,double &pcc, double s
 }
 
 CImg<float>* ph_dct_matrix(const int N){
-    CImg<float> *ptr_matrix = new CImg<float>(N,N,1,1,1/sqrt(N));
-    float sqrttwo = sqrt(2);
+    CImg<float> *ptr_matrix = new CImg<float>(N,N,1,1,1/sqrt((float)N));
+    float sqrttwo = sqrt((float)2);
     for (int x=0;x<N;x++){
 	for (int y=1;y<N;y++){
 	    ptr_matrix->at(x,y) = sqrttwo*cos((cimg::valuePI/2/N)*y*(2*(x+1)));
