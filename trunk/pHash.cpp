@@ -155,7 +155,7 @@ int ph_dct(const Features &fv,Digest &digest)
         if (k == 0)
 	    D_temp[k] = sum/sqrt((double)N);
         else
-            D_temp[k] = sum*sqrt((double)2)/sqrt((double)N);
+            D_temp[k] = sum*SQRT_TWO/sqrt((double)N);
         if (D_temp[k] > max)
             max = D_temp[k];
         if (D_temp[k] < min)
@@ -293,10 +293,9 @@ int ph_compare_images(const char *file1, const char *file2,double &pcc, double s
 
 CImg<float>* ph_dct_matrix(const int N){
     CImg<float> *ptr_matrix = new CImg<float>(N,N,1,1,1/sqrt((float)N));
-    float sqrttwo = sqrt((float)2);
     for (int x=0;x<N;x++){
 	for (int y=1;y<N;y++){
-	    ptr_matrix->at(x,y) = sqrttwo*cos((cimg::valuePI/2/N)*y*(2*(x+1)));
+	    ptr_matrix->at(x,y) = SQRT_TWO*cos((cimg::valuePI/2/N)*y*(2*(x+1)));
 	}
     }
 

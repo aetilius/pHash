@@ -32,6 +32,8 @@
 using namespace cimg_library;
 using namespace std;
 
+#define SQRT_TWO 1.4142135623730950488016887242097
+
 #define ROUNDING_FACTOR(x) (((x) >= 0) ? 0.5 : -0.5) 
 
 #if defined( _MSC_VER) || defined(_BORLANDC_)
