@@ -176,6 +176,14 @@ int ph_dct_imagehash(const char* file,ulong64 &hash);
  *   /param hash2 of type ulong64 denoting an image hash
  *   /return int value for the hamming distance, -1 for error
  */
+/* ! /brief dct video robust hash
+ *   Compute video hash based on the dct of normalized video 32x32x64 cube
+ *   /param file name of file
+ *   /param hash ulong64 value for hash value
+ *   /return int value - less than 0 for error
+ */
+int ph_dct_videohash(const char* file,ulong64 & hash);
+
 int ph_hamming_distance(const ulong64 hash1,const ulong64 hash2);
 
 #endif
