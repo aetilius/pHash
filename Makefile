@@ -5,7 +5,7 @@ CCFLAGS = -Wall -ffast-math -O2
 OUTFILE = pHash
 TESTFILE = test_main.cpp
 TEST2FILE = dct_image_main.cpp 
-LIBS = -lm -lpthread -ljpeg -lpHash
+LIBS = -lm -lpthread -ljpeg -lpHash -lavcodec -lavformat -lswscale
 X11LIBS = -lX11 -lXext -lXrandr 
 FFMPEGLIBS = -lavformat -lavcodec -lavutil -lswscale
 X11LIBDIRS = -L/usr/X11R6/lib64
@@ -24,6 +24,9 @@ test_dct_image: pHash.so
 
 test_dct_video: pHash.so
 	$(CC) $(CCFLAGS) dct_video_main.cpp $(CIMGDEFINES) -opHash3 $(LIBDIRS) $(LIBS) $(FFMPEGLIBDIRS) $(FFMPEGLIBS)
+
+pHash.a : pHash.o
+	ar rcs libpHash.a pHash.o
 
 pHash.so : pHash.o
 	$(CC) -shared $(CCFLAGS) $(CIMGDEFINES) pHash.o -Wl,-soname -Wl,libpHash.so.0.2 -olibpHash.so.0.2  
