@@ -8,3 +8,7 @@ algorithm.
 	   added ph_hamming_distance() function
 	   added define statements for ulong64 type definition to make sure exactly 64 bits.
 10.25.2008 changed ph_dct_imagehash function to use mean 7x7 filter, instead of cimg blur function.
+10.28.2008 added ph_dct_video function to phash.cpp to calculate hashes for video files
+	   added cimgffmpeg.h with read functions to read video files
+	   added dct_video_main.cpp test driver
+	   

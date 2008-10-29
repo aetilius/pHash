@@ -23,6 +23,7 @@
 */
 
 #include "pHash.h"
+#include "cimgffmpeg.h"
 
 const char phash_project[] = "pHash v0.2. Copyright 2008 David Starkweather & Evan Klinger";
 
@@ -298,7 +299,6 @@ CImg<float>* ph_dct_matrix(const int N){
 	    ptr_matrix->at(x,y) = SQRT_TWO*cos((cimg::valuePI/2/N)*y*(2*(x+1)));
 	}
     }
-
     return ptr_matrix;
 }
 
@@ -333,6 +333,65 @@ int ph_dct_imagehash(const char* file,ulong64 &hash){
   
     delete C;
 
+    return 0;
+}
+
+int ph_dct_videohash(const char* file,ulong64 &hash){
+
+
+    long nb_frames = GetNumberVideoFrames(file);
+
+    if (nb_frames <= 0)
+	return -1;
+
+    CImg<float> videoframes(32,32,nb_frames,1,0);
+
+    if (ReadFrames(file,videoframes,0,nb_frames-1,1,nb_frames,1) < 0){
+	printf("error reading frames\n");
+	exit(1);
+    }
+    videoframes.blur(0,0,1.0).resize(32,32,64);
+
+    CImg<float> dct_video(32,32,64,1,0);
+
+    CImg<float> *C = ph_dct_matrix(32);
+    CImg<float>  Ctr = C->get_transpose();
+    CImg<float> *C64 = ph_dct_matrix(64);
+
+    for (int i=0;i<64;i++){
+	CImg<float> current = videoframes.get_slice(i);
+	CImg<float> dct_current = (*C)*current*Ctr;
+	cimg_forXY(dct_current,X,Y){
+	    dct_video(X,Y,i) = dct_current(X,Y);
+	}
+    }
+
+    CImg<float> dct_video2 = dct_video = dct_video.get_permute_axes("xzyv");
+
+    for (int i=0;i<32;i++){
+	CImg<float> current = dct_video2.get_slice(i);
+	CImg<float> dct_current = (*C64)*current;
+	cimg_forXY(dct_current,X,Y){
+	    dct_video2(X,Y,i) = dct_current(X,Y);
+	}
+    }
+
+    dct_video = dct_video2.get_permute_axes("xzyv");
+    dct_video.crop(1,1,1,4,4,4).unroll('x');
+
+    float median = dct_video.median();
+    ulong64 one = 0x0000000000000001ULL;
+    ulong64 video_hash = 0x0000000000000000ULL;
+    for (int i=0;i< 64;i++){
+	float current = dct_video(i);
+        if (current > median){
+	    video_hash |= one;
+	}
+	one = one << 1;
+    }
+
+    hash = video_hash;
+    
     return 0;
 }
 
