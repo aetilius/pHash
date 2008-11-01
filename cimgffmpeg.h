@@ -51,9 +51,9 @@
 #include <pthread.h>
 #include "CImg.h"
 extern "C" {
-	#include "libavformat/avformat.h"
-	#include "libavcodec/avcodec.h"
-	#include "libswscale/swscale.h"
+	#include "avformat.h"
+	#include "avcodec.h"
+	#include "swscale.h"
 }
 /*
    struct to hold video information to be passed to PlayVideo thread
