@@ -25,10 +25,27 @@
 #include "pHash.h"
 #include "cimgffmpeg.h"
 
-const char phash_project[] = "pHash v0.2. Copyright 2008 David Starkweather & Evan Klinger";
-
+const char phash_project[] = "pHash %d.%d.%d. Copyright 2008 David Starkweather & Evan Klinger";
+char phash_version[255] = {0};
 const char* ph_about(){
-    return phash_project;
+	int major, minor, point;
+	if(PHASH_VERSION < 100)
+		major = 0;
+	else
+		major = PHASH_VERSION/100;
+
+	if(PHASH_VERSION < 10)
+	{
+		minor = 0;
+		point = PHASH_VERSION;
+	}
+	else
+	{
+		minor = (PHASH_VERSION%100)/10;
+		point = PHASH_VERSION%10;
+	}
+	snprintf(phash_version, sizeof(phash_version), phash_project, major, minor, point);
+    return phash_version;
 }
 
 int ph_radon_projections(const CImg<uint8_t> &img,int N,Projections &projs){
