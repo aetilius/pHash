@@ -1,7 +1,5 @@
-0.1 - 08.12.2008
-----
-Initial release with support for the robust video hash extraction 
-algorithm.
+0.3 - 11.03.2008
+---
 10.24.2008 added ph_dct_imagehash() function
 	   added ph_dct_matrix() function
 	   added dct_image_main() test driver for above functions.
@@ -12,3 +10,8 @@ algorithm.
 	   added cimgffmpeg.h with read functions to read video files
 	   added dct_video_main.cpp test driver
 	   
+0.1 - 08.12.2008
+----
+Initial release with support for the robust video hash extraction 
+algorithm.
+
