@@ -9,6 +9,8 @@
 10.28.2008 added ph_dct_video function to phash.cpp to calculate hashes for video files
 	   added cimgffmpeg.h with read functions to read video files
 	   added dct_video_main.cpp test driver
+11.04.2008 fixed dct video hash function - runs faster now
+
 	   
 0.1 - 08.12.2008
 ----

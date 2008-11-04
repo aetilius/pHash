@@ -48,7 +48,6 @@
 
 #include <ctime>
 #include "string.h"
-#include <pthread.h>
 #include "CImg.h"
 extern "C" {
 	#include "avformat.h"
@@ -80,22 +79,14 @@ using namespace cimg_library;
  *  @param pixelformat int - pixel format ( =0 for GRAY8 (8bpp grayscale) and =1 for RGB24 (24 bpp RGB)  )
  *  @return int  -  the number of frames read; -1 for unable to read frames; 0 for no frames.
 */
-int ReadFrames(const char *filename, CImg<float> &videoframes, unsigned int low_index, unsigned int hi_index, int step = 1, long nb_retrieval=100, int pixelformat = 0)
+int ReadFrames(const char *filename, CImgList<unsigned char> *pFrameList, unsigned int low_index, unsigned int hi_index, int step = 1, long nb_retrieval=100)
 {
-
-	//determine destination pixel format from pixelformat input variable
-	//ffmpeg_pixfmt values are taken from enum PixelFormat in avutil.h
-	int ffmpeg_pixfmt;
-	if (pixelformat == 0)
-		ffmpeg_pixfmt = PIX_FMT_RGB24;
-	else //(pixelformat == 1)
-		ffmpeg_pixfmt = PIX_FMT_GRAY8;
+        //target pixel format
+	int ffmpeg_pixfmt = PIX_FMT_GRAY8;
 	
 	av_register_all();
 	AVFormatContext *pFormatCtx;
-
-        int index_vf = 0;	
-
+	
 	// Open video file
 	if(av_open_input_file(&pFormatCtx, filename, NULL, 0, NULL)!=0)
 	  return -1 ; // Couldn't open file
@@ -170,34 +161,20 @@ int ReadFrames(const char *filename, CImg<float> &videoframes, unsigned int low_
 		    
 		    if(frameFinished) {
 		    	 
-		    	if (current_index == next_index)
-		    	{
-		    		
-		    		next_index += step;
-    	    		SwsContext *c = sws_getContext(pCodecCtx->width, pCodecCtx->height, pCodecCtx->pix_fmt, pCodecCtx->width, pCodecCtx->height, ffmpeg_pixfmt , 1, NULL, NULL, NULL);
-				   	sws_scale(c, pFrame->data, pFrame->linesize, 0, pCodecCtx->height, pConvertedFrame->data, pConvertedFrame->linesize);
+		    	if (current_index == next_index){
+			    next_index += step;
+			    SwsContext *c = sws_getContext(pCodecCtx->width, pCodecCtx->height, pCodecCtx->pix_fmt, pCodecCtx->width, pCodecCtx->height, ffmpeg_pixfmt , 1, NULL, NULL, NULL);
+			    sws_scale(c, pFrame->data, pFrame->linesize, 0, pCodecCtx->height, pConvertedFrame->data, pConvertedFrame->linesize);
 				   	
-				   	if (ffmpeg_pixfmt == PIX_FMT_RGB24)
-				   	{
-				   		CImg<unsigned char> *pNextImage = new CImg<unsigned char>(*pConvertedFrame->data,3,pCodecCtx->width,pCodecCtx->height,1,true);
-				   		CImg<unsigned char> NextImage = pNextImage->get_permute_axes("yzvx");
-				   	}
-				   	else if (ffmpeg_pixfmt == PIX_FMT_GRAY8){
-				   		CImg<uint8_t> *pNextImage = new CImg<uint8_t>(*pConvertedFrame->data,1,pCodecCtx->width,pCodecCtx->height,1,true);
-				   		CImg<float> NextImage = pNextImage->get_permute_axes("yzvx");
-						NextImage.blur(1.0).resize(32,32);
-				   		
-						cimg_forXY(NextImage,X,Y){
-						    videoframes(X,Y,index_vf) = NextImage(X,Y);
-						}
-						index_vf++;
-						
-				   	}
-				   	size++;
+			    CImg<uint8_t> *pNextImage = new CImg<unsigned char>(*pConvertedFrame->data,1,pCodecCtx->width,pCodecCtx->height,1,true);
+			    CImg<uint8_t> NextImage = pNextImage->get_permute_axes("yzvx");
+			    CImg<float> meanfilter(7,7,1,1,(float)(1.0/7.0));
+			    NextImage.convolve(meanfilter).resize(32,32);
+			    pFrameList->push_back(NextImage);
+			    size++;
 		    	}    
-				current_index++;
+			    current_index++;
 		    }
-		    
 		  av_free_packet(&packet);
 		  if (next_index >= hi_index)
 			  break;
