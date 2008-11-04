@@ -10,6 +10,7 @@ FFMPEGLIBS = -lavformat -lavcodec -lavutil -lswscale
 X11LIBDIRS = -L/usr/X11R6/lib64
 FFMPEGLIBDIRS = -L/usr/local/lib
 LIBDIRS = -L.
+CIMGDEFINES = -Dcimg_use_jpeg -Dcimg_display=0 -Dcimg_debug=0
 FFMPEGINCLUDEDIRS = -I/usr/include/ffmpeg
 CIMGDEFINES = -Dcimg_use_jpeg -Dcimg_display=0 -Dcimg_debug=0 -DPHASH_VERSION=$(PHASH_VERSION)
 X11DEFINES = -Dcimg_use_xshm -Dcimg_use_xrandr
