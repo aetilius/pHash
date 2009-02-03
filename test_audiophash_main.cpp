@@ -1,6 +1,6 @@
-#include <cstdio.h>
+#include <cstdio>
 #include <getopt.h>
-#include <audiophash.h>
+#include "audiophash.h"
 
 int main(int argc, char** argv){
 

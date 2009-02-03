@@ -27,7 +27,11 @@ test_dct_video: pHash.so
 	$(CC) $(CCFLAGS) dct_video_main.cpp $(CIMGDEFINES) $(FFMPEGINCLUDEDIRS) -opHash3 $(LIBDIRS) $(LIBS) $(FFMPEGLIBDIRS) $(FFMPEGLIBS)
 
 test_rash_video: pHash.so
-	$(CC) $(CCFLAGS) rash_video_main.cpp $(CIMGDEFINES) $(X11DEFINES) $(FFMPEGINCLUDEDIRS) -opHash4 $(LIBDIRS) $(LIBS) $(FFMPLIBDIRS) $(FFMPEGLIBS) $(X11LIBDIRS) $(X11LIBS)
+	$(CC) $(CCFLAGS) rash_video_main.cpp $(CIMGDEFINES) $(X11DEFINES) $(FFMPEGINCLUDEDIRS) -opHash4 $(LIBDIRS) $(LIBS) $(FFMPEGLIBDIRS) $(FFMPEGLIBS) $(X11LIBDIRS) $(X11LIBS)
+
+
+test_audio_phash: pHash.so
+	$(CC) $(CCFLAGS) test_audiophash_main.cpp $(FFMPEGINCLUDEDIRS) $(X11DEFINES) -oaudiophash $(LIBDIRS) $(LIBS) $(FFMPEGLIBDIRS) $(FFMPEGLIBS) $(FFTW3LIBS) $(X11LIBDIRS) $(X11LIBS)
 
 pHash.a : pHash.o audiophash.o
 	ar rcs libpHash.a *.o
