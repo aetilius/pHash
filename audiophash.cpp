@@ -66,7 +66,6 @@ int ph_count_samples(const char *filename, int sr,int channels){
 
 	int src_sr = pCodecCtx->sample_rate;
         int src_channels = pCodecCtx->channels;
-	SampleFormat src_fmt = pCodecCtx->sample_fmt;
 
 	AVCodec *pCodec;
 
@@ -152,7 +151,6 @@ float* ph_readaudio(const char *filename, int sr, int channels, int &N)
 
 	int src_sr = pCodecCtx->sample_rate;
         int src_channels = pCodecCtx->channels;
-	SampleFormat src_fmt = pCodecCtx->sample_fmt;
 
 	AVCodec *pCodec;
 
@@ -202,12 +200,13 @@ float* ph_readaudio(const char *filename, int sr, int channels, int &N)
            index += cnt;
 	}
 
+	audio_resample_close(rs_ctx);
 	avcodec_close(pCodecCtx);
 	av_close_input_file(pFormatCtx);
         N = cap;
 	
 	return buf;
-}
+} 
 
 
 
@@ -247,7 +246,6 @@ uint32_t* ph_audiohash(float *buf, int N, int sr, int &nb_frames){
    int nb_barks = (int)(floor(nfft_half/2 + 1));
    double barkwidth = 1.06;    
 
-   double barkcoeffs[nfilts];
    double freqs[nb_barks];
    double binbarks[nb_barks];
    double curr_bark[nfilts];
@@ -384,9 +382,10 @@ double* ph_audio_distance_ber(uint32_t *hash_a , const int Na, uint32_t *hash_b,
     if (!pC)
 	return NULL;
     int k,M,nb_above, nb_below, hash1_index,hash2_index;
-    double sum_above, sum_below,above_factor, below_factor,ber;
+    double sum_above, sum_below,above_factor, below_factor;
 
     uint32_t *pha,*phb;
+    double *dist = NULL;
 
     for (int i=0; i < Nc;i++){
 
@@ -395,9 +394,11 @@ double* ph_audio_distance_ber(uint32_t *hash_a , const int Na, uint32_t *hash_b,
         pha = ptrA;
         phb = ptrB + i;
 
-	double *dist = new double[M];
-	
-
+	double *tmp_dist = (double*)realloc(dist, M*sizeof(double));
+        if (!tmp_dist){
+	    return NULL;
+        }
+        dist = tmp_dist;
 	dist[0] = ph_compare_blocks(pha,phb,block_size);
 
 	k = 1;
@@ -432,7 +433,8 @@ double* ph_audio_distance_ber(uint32_t *hash_a , const int Na, uint32_t *hash_b,
 	above_factor = sum_above/M;
 	below_factor = sum_below/M;
 	pC[i] = 0.5*(1 + below_factor - above_factor);
-	delete [] dist;
     }
+
+    free(dist);
     return pC;
 }
