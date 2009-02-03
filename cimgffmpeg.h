@@ -47,12 +47,14 @@
 #define CIMGFFMPEG_H_
 
 #include <ctime>
+#include <pthread.h>
 #include "string.h"
 #include "CImg.h"
+
 extern "C" {
-	#include "avformat.h"
-	#include "avcodec.h"
-	#include "swscale.h"
+	#include "libavformat/avformat.h"
+	#include "libavcodec/avcodec.h"
+	#include "libswscale/swscale.h"
 }
 /*
    struct to hold video information to be passed to PlayVideo thread
@@ -95,7 +97,7 @@ int ReadFrames(const char *filename, CImgList<unsigned char> *pFrameList, unsign
 	if(av_find_stream_info(pFormatCtx)<0)
 	  return -1; // Couldn't find stream information
 	
-	//dump_format(pFormatCtx,0,NULL,0);//debugging function to print infomation about format
+	dump_format(pFormatCtx,0,NULL,0);//debugging function to print infomation about format
 	
 	unsigned int i;
 	AVCodecContext *pCodecCtx;
@@ -151,25 +153,21 @@ int ReadFrames(const char *filename, CImgList<unsigned char> *pFrameList, unsign
 	unsigned int current_index = low_index;
 	unsigned int next_index = current_index;
 	AVPacket packet;
-	
 	while(av_read_frame(pFormatCtx, &packet)>=0) 
 	{
     	  if(packet.stream_index==videoStream) {
-			
 		    avcodec_decode_video(pCodecCtx, pFrame, &frameFinished,
 		                         packet.data, packet.size);
 		    
 		    if(frameFinished) {
-		    	 
 		    	if (current_index == next_index){
 			    next_index += step;
 			    SwsContext *c = sws_getContext(pCodecCtx->width, pCodecCtx->height, pCodecCtx->pix_fmt, pCodecCtx->width, pCodecCtx->height, ffmpeg_pixfmt , 1, NULL, NULL, NULL);
 			    sws_scale(c, pFrame->data, pFrame->linesize, 0, pCodecCtx->height, pConvertedFrame->data, pConvertedFrame->linesize);
 				   	
-			    CImg<uint8_t> *pNextImage = new CImg<unsigned char>(*pConvertedFrame->data,1,pCodecCtx->width,pCodecCtx->height,1,true);
+			    CImg<uint8_t> *pNextImage = new CImg<unsigned char>(*pConvertedFrame->data,1,pCodecCtx->width,pCodecCtx->height,1,false);
 			    CImg<uint8_t> NextImage = pNextImage->get_permute_axes("yzvx");
-			    CImg<float> meanfilter(7,7,1,1,(float)(1.0/7.0));
-			    NextImage.convolve(meanfilter).resize(32,32);
+			    NextImage.blur(1.0).resize(32,32);
 			    pFrameList->push_back(NextImage);
 			    size++;
 		    	}    

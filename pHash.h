@@ -182,8 +182,10 @@ int ph_dct_imagehash(const char* file,ulong64 &hash);
  *   /param hash ulong64 value for hash value
  *   /return int value - less than 0 for error
  */
-int ph_dct_videohash(const char* file,ulong64 & hash);
+int ph_dct_videohash(const char* file,ulong64 &hash);
 
 int ph_hamming_distance(const ulong64 hash1,const ulong64 hash2);
+
+int ph_rash_videodigest(const char* file,CImg<uint8_t> *p_videodigest);
 
 #endif

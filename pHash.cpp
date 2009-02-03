@@ -423,3 +423,68 @@ int ph_hamming_distance(const ulong64 hash1,const ulong64 hash2){
     x = (x + (x >> 4)) & m4;
     return (x * h01)>>56;
 }
+
+int ph_rash_videodigest(const char* file,CImg<uint8_t> *p_videodigest){
+
+    int S = 10;
+    int L = 50;
+    int alpha1 = 3;
+    int alpha2 = 2;
+    
+    CImgList<uint8_t> *pframes = new CImgList<uint8_t>();
+    
+    long N = GetNumberVideoFrames(file);
+    printf("number of video frames %li\n",N);
+
+    int frames_read = ReadFrames(file,pframes,0,N,1,N);
+    if (frames_read < 0){
+	printf("unable to read frames\n");
+	exit(1);
+    }
+    printf("frames read %d\n",frames_read);
+    printf("frame list is size = %d\n",pframes->size);
+
+#ifdef max
+#undef max
+
+    CImg<double> dist(N,1,1,1,0);
+    CImg<double> prev(64,1,1,1,0);
+    cimglist_for(*pframes,I){
+	CImg<int> hist = pframes->at(I).get_histogram(64);
+        CImg<double> hist_normd = hist/hist.max();
+	CImg<int> diff = hist_normd - prev;
+	dist(I) = abs(diff.norm(1));
+	prev = hist_normd;
+    }
+
+    uint8_t bnds[N];
+    bnds[0] = 1;
+    bnds[N-1] = 1;
+    int lstart,lend,gstart,gend;
+    for (int k=1;k<N-1;k++){
+        lstart = (k-S < 0)?0:k-S;
+	lend   = (k+S > N-1)?N-1:k+S;
+	gstart = (k-L < 0)?0:k-L;
+	gend   = (k+L > N-1)?N-1:k+L;
+	CImg<double> local_win = dist.get_crop(lstart,0,lend,0);
+	CImg<double> global_win = dist.get_crop(gstart,0,gend,0);
+	double Tg = global_win.mean() + alpha1*global_win.variance();
+        int local_win_size = local_win.dimx();
+	double Tl = alpha2*local_win.kth_smallest(local_win_size-1);
+	double localmax = local_win.max();
+        double thresh = (Tg >= Tl) ? Tg : Tl;
+	if  ((dist(k) >=  thresh) && (dist(k) >= localmax))
+	    bnds[k] = 1;
+	else
+	    bnds[k] = 0;
+    }
+#endif
+    printf("boundaries\n");
+    for (int i=0;i<N;i++){
+	printf("%d",bnds[i]);
+    }
+    printf("END\n");
+    delete pframes;
+
+    return 0;
+}
