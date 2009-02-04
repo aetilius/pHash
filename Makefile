@@ -1,6 +1,6 @@
 PHASH_VERSION = 003
 CC      = g++
-CCFLAGS = -Wall -ffast-math -O0
+CCFLAGS = -Wall -ffast-math -O2
 OUTFILE = pHash
 TESTFILE = test_main.cpp
 TEST2FILE = dct_image_main.cpp 
@@ -18,7 +18,7 @@ X11DEFINES = -Dcimg_use_xshm -Dcimg_use_xrandr
 
 
 test_rash_image : pHash.so
-	$(CC) $(CCFLAGS) $(TESTFILE) $(CIMGDEFINES) -o$(OUTFILE) $(LIBDIRS) $(LIBS) $(FFMPEGLIBS)
+	$(CC) $(CCFLAGS) $(TESTFILE) $(CIMGDEFINES) -o$(OUTFILE) $(LIBDIRS) $(LIBS) $(FFMPEGLIBS) $(FFTW3LIBS)
 
 test_dct_image: pHash.so
 	$(CC) $(CCFLAGS) $(TEST2FILE) $(CIMGDEFINES) -opHash2  $(LIBDIRS) $(LIBS) $(FFMPEGLIBS)
