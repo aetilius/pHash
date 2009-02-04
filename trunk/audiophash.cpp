@@ -79,8 +79,8 @@ int ph_count_samples(const char *filename, int sr,int channels){
 	if(avcodec_open(pCodecCtx, pCodec)<0)
 	  return -1; // Could not open codec
 
-	uint8_t in_buf[AVCODEC_MAX_AUDIO_FRAME_SIZE + FF_INPUT_BUFFER_PADDING_SIZE];
-        uint8_t out_buf[AVCODEC_MAX_AUDIO_FRAME_SIZE];
+	uint8_t *in_buf = (uint8_t *)malloc(AVCODEC_MAX_AUDIO_FRAME_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
+        uint8_t *out_buf = (uint8_t *)malloc(AVCODEC_MAX_AUDIO_FRAME_SIZE);
 
         int in_buf_used, numbytesread, buf_size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
 
@@ -99,6 +99,8 @@ int ph_count_samples(const char *filename, int sr,int channels){
 	    }
 	    count += (int)(audio_resample(rs_ctxt,(short*)out_buf ,(short*)in_buf,in_buf_used)/sizeof(int16_t));
 	}
+	free(in_buf);
+	free(out_buf);
 	audio_resample_close(rs_ctxt);
 	avcodec_close(pCodecCtx);
 	av_close_input_file(pFormatCtx);
