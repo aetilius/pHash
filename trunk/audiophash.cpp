@@ -1,7 +1,7 @@
 /*
 
     pHash, the open source perceptual hash library
-    Copyright (C) 2008 Evan Klinger & David Starkweather.
+    Copyright (C) 2008 Aetilius, Inc.
     All rights reserved.
  
     This program is free software: you can redistribute it and/or modify
