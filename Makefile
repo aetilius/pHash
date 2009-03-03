@@ -1,4 +1,4 @@
-PHASH_VERSION = 003
+PHASH_VERSION = 004
 CC      = g++
 CCFLAGS = -Wall -ffast-math -O2
 OUTFILE = pHash
@@ -37,8 +37,7 @@ pHash.a : pHash.o audiophash.o
 	ar rcs libpHash.a *.o
 
 pHash.so : pHash.o audiophash.o
-	$(CC) -shared $(CCFLAGS) $(CIMGDEFINES) *.o  -Wl,-soname -Wl,libpHash.so.0.2 -olibpHash.so.0.2 $(FFMPEGLIBDIRS)
-	ln -sf libpHash.so.0.2 libpHash.so
+	$(CC) -shared $(CCFLAGS) $(CIMGDEFINES) *.o  -Wl,-soname -Wl,libpHash.so.0.4 -olibpHash.so.0.4 $(FFMPEGLIBDIRS)	ln -sf libpHash.so.0.4 libpHash.so
 
 pHash.o : pHash.cpp pHash.h 
 	$(CC) -fPIC -DPIC $(CIMGDEFINES) $(CCFLAGS) $(FFMPEGINCLUDEDIRS) -c pHash.cpp
