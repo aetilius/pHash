@@ -235,7 +235,17 @@ int ph_crosscorr(const Digest &x,const Digest &y,double &pcc,double threshold){
 int ph_image_digest(const CImg<uint8_t> &img,double sigma, double gamma,Digest &digest, int N){
     
     int result = EXIT_FAILURE;
-    CImg<uint8_t> graysc = img.get_RGBtoYCbCr().channel(0);
+    CImg<uint8_t> graysc;
+    if (img.dimv() >= 3){
+	graysc = img.get_RGBtoYCbCr().channel(0);
+    }
+    else if (img.dimv() == 1){
+	graysc = img;
+    }
+    else {
+	return result;
+    }
+	
  
     graysc.blur((float)sigma);
  
@@ -327,8 +337,12 @@ int ph_dct_imagehash(const char* file,ulong64 &hash){
 
     CImg<uint8_t> src(file);
     CImg<float> meanfilter(7,7,1,1,1);
-
-    CImg<float>  img = src.RGBtoYCbCr().channel(0).get_convolve(meanfilter);
+    CImg<float> img;
+    if (src.dimv() >= 3){
+        img = src.RGBtoYCbCr().channel(0).get_convolve(meanfilter);
+    } else if (img.dimv() ==1){
+	img = src.get_convolve(meanfilter);
+    }
 
     img.resize(32,32);
     CImg<float> *C  = ph_dct_matrix(32);
