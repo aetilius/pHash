@@ -1,7 +1,12 @@
-Initial release with support for the robust video hash extraction 
-algorithm.
+0.4 - 03.09.2009
+---
+02.03.2009 added audiophash.cpp audiophash.h test_audiophash_main.cpp
+	   
+03.09.2009 fixed monochrome image support for hash functions (-i.e. if dimension, v of image is
+	   3 or greater, converts to grayscale. If v = 1,  uses that plane as a gray scale.);
+	   affected functions: ph_dct_imagehash() and ph_image_digest()
 
-0.1 - 08.12.2008
+---
 
 0.3 - 11.03.2008
 ---
@@ -17,12 +22,9 @@ algorithm.
 	   added dct_video_main.cpp test driver
 11.04.2008 fixed dct video hash function - runs faster now
 
-02.03.2009 added audiophash.cpp audiophash.h test_audiophash_main.cpp
-	   
-03.09.2009 fixed monochrome image support for hash functions (-i.e. if dimension, v of image is
-	   3 or greater, converts to grayscale. If v = 1,  uses that plane as a gray scale.);
-	   affected functions: ph_dct_imagehash() and ph_image_digest()
-
 ----
 
+0.1 - 08.12.2008
 
+Initial release with support for the robust video hash extraction 
+algorithm.

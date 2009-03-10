@@ -43,4 +43,4 @@ audiophash.o: audiophash.cpp audiophash.h
 	$(CC) -fPIC -DPIC $(CCFLAGS) $(FFMPEGINCLUDEDIRS)  -c audiophash.cpp
 
 clean :
-	rm -f pHash pHash3 pHash2 libpHash.* *.o  
+	rm -f pHash pHash3 pHash2 libpHash.* *.o test_rash_image audiophash
