@@ -84,7 +84,7 @@ using namespace cimg_library;
 int ReadFrames(const char *filename, CImgList<unsigned char> *pFrameList, unsigned int low_index, unsigned int hi_index, int step = 1, long nb_retrieval=100)
 {
         //target pixel format
-	int ffmpeg_pixfmt = PIX_FMT_GRAY8;
+	PixelFormat ffmpeg_pixfmt = PIX_FMT_GRAY8;
 	
 	av_register_all();
 	AVFormatContext *pFormatCtx;
@@ -97,7 +97,7 @@ int ReadFrames(const char *filename, CImgList<unsigned char> *pFrameList, unsign
 	if(av_find_stream_info(pFormatCtx)<0)
 	  return -1; // Couldn't find stream information
 	
-	dump_format(pFormatCtx,0,NULL,0);//debugging function to print infomation about format
+	//dump_format(pFormatCtx,0,NULL,0);//debugging function to print infomation about format
 	
 	unsigned int i;
 	AVCodecContext *pCodecCtx;
@@ -208,7 +208,7 @@ int NextFrames(const char *filename, CImgList<unsigned char> *pFrameList, int st
 	
 	//determine destination pixel format from pixelformat input variable
 	//ffmpeg_pixfmt values are taken from enum PixelFormat in avutil.h
-	int ffmpeg_pixfmt = PIX_FMT_RGB24;
+	PixelFormat ffmpeg_pixfmt = PIX_FMT_RGB24;
 	if (pixelformat == 1)
 		ffmpeg_pixfmt = PIX_FMT_GRAY8;
 	
