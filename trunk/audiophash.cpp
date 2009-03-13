@@ -120,12 +120,16 @@ float* ph_readaudio(const char *filename, int sr, int channels, int &N)
 	AVFormatContext *pFormatCtx;
 	
 	// Open file
-	if(av_open_input_file(&pFormatCtx, filename, NULL, 0, NULL)!=0)
+	if(av_open_input_file(&pFormatCtx, filename, NULL, 0, NULL)!=0){
+	    N=0;
 	  return NULL ; // Couldn't open file
+	}
 	 
 	// Retrieve stream information
-	if(av_find_stream_info(pFormatCtx)<0)
-	  return NULL; // Couldn't find stream information
+	if(av_find_stream_info(pFormatCtx)<0){
+	    N=0;
+	    return NULL; // Couldn't find stream information
+	}
 	
 	//dump_format(pFormatCtx,0,NULL,0);//debugging function to print infomation about format
 
@@ -144,7 +148,7 @@ float* ph_readaudio(const char *filename, int sr, int channels, int &N)
 	     }
 	}
 	if(audioStream==-1){
-	    printf("no audio stream\n");
+	     N = 0;
 	     return NULL; //no video stream
 	}
 	
@@ -160,11 +164,14 @@ float* ph_readaudio(const char *filename, int sr, int channels, int &N)
 	pCodec=avcodec_find_decoder(pCodecCtx->codec_id);
 	if(pCodec==NULL) 
 	{
+	        N=0;
 	  	return NULL ; // Codec not found
 	}
 	// Open codec
-	if(avcodec_open(pCodecCtx, pCodec)<0)
-	  return NULL; // Could not open codec
+	if(avcodec_open(pCodecCtx, pCodec)<0){
+	    N=0;
+	    return NULL; // Could not open codec
+	}
 
 	uint8_t *in_buf = (uint8_t*)malloc(AVCODEC_MAX_AUDIO_FRAME_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
         int in_buf_used, numbytesread, buf_size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
@@ -188,6 +195,7 @@ float* ph_readaudio(const char *filename, int sr, int channels, int &N)
 	    if (cap + cnt > N){
 		float *tmpbuf = (float*)realloc(buf,(N + 2*cnt)*sizeof(float));
 		if (!tmpbuf){
+		    N=0;
 		    return NULL;
 		}
 		buf = tmpbuf;
