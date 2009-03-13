@@ -18,6 +18,9 @@ test_audio: pHash.so
 test_image: pHash.so
 	$(CC) $(CCFLAGS) test_imagephash.cpp $(FFMPEGINCLUDEDIRS) -otest_imagephash $(LIBDIRS) $(LIBS) $(FFMPEGLIBDIRS) $(FFMPEGLIBS) $(FFTW3LIBS)
 
+test_video: pHash.so
+	$(CC) $(CCFLAGS) test_videophash.cpp $(FFMPEGINCLUDEDIRS) -otest_videophash $(LIBDIRS) $(LIBS) $(FFMPEGLIBDIRS) $(FFMPEGLIBS) $(FFTW3LIBS)
+
 pHash.a : pHash.o audiophash.o
 	ar rcs libpHash.a *.o
 

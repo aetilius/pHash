@@ -1,8 +1,10 @@
 0.4 - 03.09.2009
 ---
-03.13.2009 added test_imagephash.cpp as a test harnest for image phash functions.
+03.13.2009 added test_imagephash.cpp as a test harness for image phash functions.
 	   removed superfluous test targets from makefile
 	   added 2 targets to makefile (test_audio and test_image)
+	   added test_videophash.cpp as a test for video dct phash functions
+	   added "test_video" target to makefile
 	
 03.12.2009 added test_audiophash.cpp as a test harness for audio phash functions
 	   
