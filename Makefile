@@ -12,21 +12,11 @@ LIBDIRS = -L.
 FFMPEGINCLUDEDIRS = -I/usr/include/ffmpeg -I/usr/local/include/
 CIMGDEFINES = -Dcimg_use_jpeg -Dcimg_display=0 -Dcimg_debug=0 -DPHASH_VERSION=$(PHASH_VERSION)
 
-test_rash_image : pHash.so
-	$(CC) $(CCFLAGS) $(TESTFILE) $(CIMGDEFINES) -o$(OUTFILE) $(LIBDIRS) $(LIBS) $(FFMPEGLIBS) $(FFTW3LIBS)
+test_audio: pHash.so
+	$(CC) $(CCFLAGS) test_audiophash.cpp $(FFMPEGINCLUDEDIRS) -otest_audiophash $(LIBDIRS) $(LIBS) $(FFMPEGLIBDIRS) $(FFMPEGLIBS) $(FFTW3LIBS)
 
-test_dct_image: pHash.so
-	$(CC) $(CCFLAGS) $(TEST2FILE) $(CIMGDEFINES) -opHash2  $(LIBDIRS) $(LIBS) $(FFMPEGLIBS)
-
-test_dct_video: pHash.so
-	$(CC) $(CCFLAGS) dct_video_main.cpp $(CIMGDEFINES) $(FFMPEGINCLUDEDIRS) -opHash3 $(LIBDIRS) $(LIBS) $(FFMPEGLIBDIRS) $(FFMPEGLIBS)
-
-test_rash_video: pHash.so
-	$(CC) $(CCFLAGS) rash_video_main.cpp $(CIMGDEFINES) $(FFMPEGINCLUDEDIRS) -opHash4 $(LIBDIRS) $(LIBS) $(FFMPEGLIBDIRS) $(FFMPEGLIBS) 
-
-
-test_audio_phash: pHash.so
-	$(CC) $(CCFLAGS) test_audiophash_main.cpp $(FFMPEGINCLUDEDIRS) -oaudiophash $(LIBDIRS) $(LIBS) $(FFMPEGLIBDIRS) $(FFMPEGLIBS) $(FFTW3LIBS)
+test_image: pHash.so
+	$(CC) $(CCFLAGS) test_imagephash.cpp $(FFMPEGINCLUDEDIRS) -otest_imagephash $(LIBDIRS) $(LIBS) $(FFMPEGLIBDIRS) $(FFMPEGLIBS) $(FFTW3LIBS)
 
 pHash.a : pHash.o audiophash.o
 	ar rcs libpHash.a *.o

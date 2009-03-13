@@ -1,5 +1,9 @@
 0.4 - 03.09.2009
 ---
+03.13.2009 added test_imagephash.cpp as a test harnest for image phash functions.
+	   removed superfluous test targets from makefile
+	   added 2 targets to makefile (test_audio and test_image)
+	
 03.12.2009 added test_audiophash.cpp as a test harness for audio phash functions
 	   
 03.09.2009 fixed monochrome image support for hash functions (-i.e. if dimension, v of image is
