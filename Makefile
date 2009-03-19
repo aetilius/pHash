@@ -1,6 +1,6 @@
 PHASH_VERSION = 004
 CC      = g++
-CCFLAGS = -Wall -ffast-math -O2
+CCFLAGS = -Wall -ffast-math -O3
 OUTFILE = pHash
 TESTFILE = test_main.cpp
 TEST2FILE = dct_image_main.cpp 

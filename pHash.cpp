@@ -1,7 +1,7 @@
 /*
 
     pHash, the open source perceptual hash library
-    Copyright (C) 2008 Aetilius, Inc.
+    Copyright (C) 2009 Aetilius, Inc.
     All rights reserved.
  
     This program is free software: you can redistribute it and/or modify
@@ -25,7 +25,7 @@
 #include "pHash.h"
 #include "cimgffmpeg.h"
 
-const char phash_project[] = "pHash %d.%d.%d. Copyright 2008 David Starkweather & Evan Klinger";
+const char phash_project[] = "pHash %d.%d.%d. Copyright 2008-2009 David Starkweather & Evan Klinger";
 char phash_version[255] = {0};
 const char* ph_about(){
 	int major, minor, point;
