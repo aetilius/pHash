@@ -28,6 +28,7 @@
 #include <errno.h>
 #include <algorithm>
 #include <vector>
+#include <string.h>
 #include "audiophash.h"
 
 #define TRUE 1
