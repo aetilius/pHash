@@ -15,8 +15,11 @@ JNIEXPORT jlong JNICALL Java_pHash_videoHash
 JNIEXPORT jintArray JNICALL Java_pHash_audioHash
   (JNIEnv *, jclass, jstring);
 
-JNIEXPORT jint JNICALL Java_pHash_distance
+JNIEXPORT jint JNICALL Java_pHash_imageDistance
   (JNIEnv *, jclass, jlong, jlong);
+
+JNIEXPORT jdouble JNICALL Java_pHash_audioDistance
+  (JNIEnv *, jclass, jintArray, jintArray);
 
 #ifdef __cplusplus
 }
