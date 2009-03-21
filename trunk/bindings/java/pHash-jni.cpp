@@ -18,7 +18,8 @@ JNIEXPORT jdouble JNICALL Java_pHash_audioDistance
 	const float threshold = 0.30;
     	const int block_size = 256;
     	int Nc;
-	double maxC = 0.0, *pC; 
+	jdouble maxC = 0.0;
+	double *pC; 
 	jint hash1_len, hash2_len;
 	hash1_len = e->GetArrayLength(hash1);
 	hash2_len = e->GetArrayLength(hash2);

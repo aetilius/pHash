@@ -20,9 +20,13 @@ public class pHash
 	{
 		long hash = imageHash(args[0]);
 		long hash2 = imageHash(args[1]);
-		System.out.println(hash);
-		System.out.println(hash2);
 		System.out.println(imageDistance(hash,hash2));
+		int[] audioHash1 = audioHash(args[2]);
+		int[] audioHash2 = audioHash(args[3]);
+		System.out.println(audioDistance(audioHash1,audioHash2));
+		long vHash = videoHash(args[4]);
+		long vHash2 = videoHash(args[5]);
+		System.out.println(videoDistance(vHash,vHash2));
 
 	}
 
