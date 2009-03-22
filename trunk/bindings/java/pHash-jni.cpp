@@ -15,6 +15,10 @@ JNIEXPORT jdouble JNICALL Java_pHash_audioDistance
   (JNIEnv *e, jclass cl, jintArray hash1, jintArray hash2)
 {
 
+	if(hash1 == NULL || hash2 == NULL)
+	{
+		return (jdouble)-1.0;
+	}
 	const float threshold = 0.30;
     	const int block_size = 256;
     	int Nc;
@@ -24,16 +28,16 @@ JNIEXPORT jdouble JNICALL Java_pHash_audioDistance
 	hash1_len = e->GetArrayLength(hash1);
 	hash2_len = e->GetArrayLength(hash2);
 	if(hash1_len <= 0 || hash2_len <= 0)
-		return -1;
-	jint *hash1_n, *hash2_n;
-	hash1_n = (jint *)malloc(sizeof(jint)*hash1_len);
-	hash2_n = (jint *)malloc(sizeof(jint)*hash2_len);
+	{
+		return (jdouble)-1.0;
+	}
+	uint32_t *hash1_n, *hash2_n;
 	
-	e->GetIntArrayRegion(hash1, 0, hash1_len, hash1_n);
-	e->GetIntArrayRegion(hash2, 0, hash2_len, hash2_n);
-	pC = ph_audio_distance_ber((uint32_t*)hash1_n, hash1_len, (uint32_t*)hash2_n, hash2_len, threshold, block_size, Nc);
-	free(hash1_n);
-	free(hash2_n);
+	hash1_n = (uint32_t*)e->GetIntArrayElements(hash1, 0);
+	hash2_n = (uint32_t*)e->GetIntArrayElements(hash2, 0);
+	pC = ph_audio_distance_ber(hash1_n, hash1_len, hash2_n, hash2_len, threshold, block_size, Nc);
+	e->ReleaseIntArrayElements(hash1, (jint*)hash1_n, 0);
+	e->ReleaseIntArrayElements(hash2, (jint*)hash2_n, 0);
 	maxC = 0.0;
         for (int j=0;j<Nc;j++){
             if (pC[j] > maxC){
@@ -85,9 +89,19 @@ JNIEXPORT jintArray JNICALL Java_pHash_audioHash
     unsigned int *hash = NULL;
 	const char *file = e->GetStringUTFChars(f,0);
     buf = ph_readaudio(file,sr,channels,N); 
+	if(!buf) 
+	{
+    		e->ReleaseStringUTFChars(f,file);
+		return NULL;
+	}
     e->ReleaseStringUTFChars(f,file);
     hash = ph_audiohash(buf,N,sr,nbframes);
-    free(buf);
+	if(!hash) 
+	{
+    		free(buf);
+		return NULL;
+	}
+	free(buf);
     ret = e->NewIntArray(nbframes);
 
     e->SetIntArrayRegion(ret, 0, nbframes, (jint *)hash);
