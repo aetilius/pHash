@@ -1,5 +1,6 @@
 0.4 - 03.09.2009
 ---
+03.25.2009 added install target to makefile
 03.13.2009 added test_imagephash.cpp as a test harness for image phash functions.
 	   removed superfluous test targets from makefile
 	   added 2 targets to makefile (test_audio and test_image)
