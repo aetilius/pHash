@@ -1,16 +1,23 @@
 PHASH_VERSION = 004
+PREFIX = /usr/local
 CC      = g++
 CCFLAGS = -Wall -ffast-math -O3
 OUTFILE = pHash
 TESTFILE = test_main.cpp
 TEST2FILE = dct_image_main.cpp 
-LIBS = -lm -lpthread -ljpeg -lpHash
+LIBS = -lm -lpthread -ljpeg -lpng -lpHash
 FFTW3LIBS = -lfftw3
 FFMPEGLIBS = -lavformat -lavcodec -lavutil -lswscale
 FFMPEGLIBDIRS = -L/usr/local/lib
 LIBDIRS = -L.
 FFMPEGINCLUDEDIRS = -I/usr/include/ffmpeg -I/usr/local/include/
-CIMGDEFINES = -Dcimg_use_jpeg -Dcimg_display=0 -Dcimg_debug=0 -DPHASH_VERSION=$(PHASH_VERSION)
+CIMGDEFINES = -Dcimg_use_jpeg -Dcimg_use_png -Dcimg_display=0 -Dcimg_debug=0 -DPHASH_VERSION=$(PHASH_VERSION)
+
+
+install : pHash.so
+	cp libpHash.so.0.4 $(PREFIX)/lib
+	cp *.h $(PREFIX)/include
+	ln -sf $(PREFIX)/lib/libpHash.so.0.4 $(PREFIX)/lib/libpHash.so
 
 test_audio: pHash.so
 	$(CC) $(CCFLAGS) test_audiophash.cpp $(FFMPEGINCLUDEDIRS) -otest_audiophash $(LIBDIRS) $(LIBS) $(FFMPEGLIBDIRS) $(FFMPEGLIBS) $(FFTW3LIBS)
