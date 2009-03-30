@@ -40,6 +40,12 @@ AC_CHECK_LIB([swscale], [sws_getContext])
 
 # Checks for header files.
 AC_CHECK_HEADERS([limits.h stdlib.h string.h sys/time.h unistd.h])
+AC_CHECK_HEADER([CImg.h], [], AC_MSG_ERROR([
+
+*** Cannot find required CImg.h header
+Please grab it from http://cimg.sf.net
+
+]))
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
