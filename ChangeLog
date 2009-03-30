@@ -1,3 +1,10 @@
+0.5
+---
+03.30.2009 switch to gnu build system
+	   fixed array out of bounds bug in cross correlation function
+	   optimized cross correlation function a bit
+---
+
 0.4 - 03.09.2009
 ---
 03.25.2009 added install target to makefile
