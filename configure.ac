@@ -28,15 +28,39 @@ AC_PROG_LIBTOOL
 
 
 # Checks for libraries.
-AC_CHECK_LIB([avcodec], [avcodec_alloc_frame])
-AC_CHECK_LIB([avformat], [avformat_alloc_context])
-AC_CHECK_LIB([avutil], [avutil_version])
-AC_CHECK_LIB([fftw3], [fftw_plan_dft_r2c_1d])
-AC_CHECK_LIB([jpeg], [jpeg_read_header])
+AC_CHECK_LIB([avcodec], [avcodec_alloc_frame], [], AC_MSG_ERROR([
+
+*** libavcodec not found.
+
+]))
+
+AC_CHECK_LIB([avformat], [avformat_alloc_context], [], AC_MSG_ERROR([
+
+*** libavformat not found.
+
+]))
+
+AC_CHECK_LIB([avutil], [avutil_version], [], AC_MSG_ERROR([
+
+*** libavutil not found.
+
+]))
+
+AC_CHECK_LIB([fftw3], [fftw_plan_dft_r2c_1d], [], AC_MSG_ERROR([
+
+*** libfftw3 not found.
+
+]))
+
+AC_CHECK_LIB([jpeg], [jpeg_read_header], [AC_DEFINE(cimg_use_jpeg, 1)])
 AC_CHECK_LIB([m], [sqrt])
-AC_CHECK_LIB([png], [png_create_read_struct])
+AC_CHECK_LIB([png], [png_create_read_struct], [AC_DEFINE(cimg_use_png, 1)])
 AC_CHECK_LIB([pthread], [pthread_create])
-AC_CHECK_LIB([swscale], [sws_getContext])
+AC_CHECK_LIB([swscale], [sws_getContext], [], AC_MSG_ERROR([
+
+*** libswscale not found.
+
+]))
 
 # Checks for header files.
 AC_CHECK_HEADERS([limits.h stdlib.h string.h sys/time.h unistd.h])
