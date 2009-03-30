@@ -28,6 +28,7 @@
 #include <limits.h>
 #include <math.h>
 #include "CImg.h"
+#include "config.h"
 
 using namespace cimg_library;
 using namespace std;

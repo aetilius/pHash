@@ -25,27 +25,14 @@
 #include "pHash.h"
 #include "cimgffmpeg.h"
 
-const char phash_project[] = "pHash %d.%d.%d. Copyright 2008-2009 David Starkweather & Evan Klinger";
+const char phash_project[] = "pHash %s Copyright 2008-2009 David Starkweather & Evan Klinger";
 char phash_version[255] = {0};
 const char* ph_about(){
-	int major, minor, point;
-	if(PHASH_VERSION < 100)
-		major = 0;
-	else
-		major = PHASH_VERSION/100;
-
-	if(PHASH_VERSION < 10)
-	{
-		minor = 0;
-		point = PHASH_VERSION;
-	}
-	else
-	{
-		minor = (PHASH_VERSION%100)/10;
-		point = PHASH_VERSION%10;
-	}
-	snprintf(phash_version, sizeof(phash_version), phash_project, major, minor, point);
-    return phash_version;
+	if(phash_version[0] != 0)
+		return phash_version;
+	
+	snprintf(phash_version, sizeof(phash_version), phash_project, VERSION);
+	return phash_version;
 }
 
 int ph_radon_projections(const CImg<uint8_t> &img,int N,Projections &projs){
@@ -212,9 +199,9 @@ int ph_crosscorr(const Digest &x,const Digest &y,double &pcc,double threshold){
         double denx = 0.0;
         double deny = 0.0;
 	for (int i=0;i<N;i++){
-	    num  += (x_coeffs[i]-meanx)*(y_coeffs[(i-d)%N]-meany);
+	    num  += (x_coeffs[i]-meanx)*(y_coeffs[(N+i-d)%N]-meany);
             denx += pow((x_coeffs[i]-meanx),2);
-            deny += pow((y_coeffs[(i-d)%N]-meany),2);
+            deny += pow((y_coeffs[(N+i-d)%N]-meany),2);
 	}
         r[d] = num/sqrt(denx*deny);
         if (r[d] > max)
