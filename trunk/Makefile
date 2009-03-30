@@ -1,7 +1,7 @@
 PHASH_VERSION = 004
 PREFIX = /usr/local
 CC      = g++
-CCFLAGS = -Wall -ffast-math -O3
+CCFLAGS = -Wall -O2 -ffast-math
 OUTFILE = pHash
 TESTFILE = test_main.cpp
 TEST2FILE = dct_image_main.cpp 
@@ -18,6 +18,7 @@ install : pHash.so
 	cp libpHash.so.0.4 $(PREFIX)/lib
 	cp *.h $(PREFIX)/include
 	ln -sf $(PREFIX)/lib/libpHash.so.0.4 $(PREFIX)/lib/libpHash.so
+	ldconfig -n $(PREFIX)/lib
 
 test_audio: pHash.so
 	$(CC) $(CCFLAGS) test_audiophash.cpp $(FFMPEGINCLUDEDIRS) -otest_audiophash $(LIBDIRS) $(LIBS) $(FFMPEGLIBDIRS) $(FFMPEGLIBS) $(FFTW3LIBS)
@@ -32,7 +33,7 @@ pHash.a : pHash.o audiophash.o
 	ar rcs libpHash.a *.o
 
 pHash.so : pHash.o audiophash.o
-	$(CC) -shared $(CCFLAGS) $(CIMGDEFINES) *.o  -Wl,-soname -Wl,libpHash.so.0.4 -olibpHash.so.0.4 $(FFMPEGLIBDIRS)
+	$(CC) -shared $(CCFLAGS) $(CIMGDEFINES) *.o  -Wl,-soname -Wl,libpHash.so.0.4 -olibpHash.so.0.4 $(FFMPEGLIBDIRS) $(FFMPEGLIBS) $(FFTW3LIBS)
 	ln -sf libpHash.so.0.4 libpHash.so
 
 pHash.o : pHash.cpp pHash.h 
