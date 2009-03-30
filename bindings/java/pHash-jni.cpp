@@ -96,16 +96,16 @@ JNIEXPORT jintArray JNICALL Java_pHash_audioHash
 	}
     e->ReleaseStringUTFChars(f,file);
     hash = ph_audiohash(buf,N,sr,nbframes);
-	if(!hash) 
+	if(!hash || nbframes <= 0) 
 	{
     		free(buf);
 		return NULL;
 	}
 	free(buf);
+
     ret = e->NewIntArray(nbframes);
 
     e->SetIntArrayRegion(ret, 0, nbframes, (jint *)hash);
-
     free(hash);
 
 	return ret;
