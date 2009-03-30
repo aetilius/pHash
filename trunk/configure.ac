@@ -46,12 +46,12 @@ AC_TYPE_INT16_T
 AC_TYPE_SIZE_T
 AC_TYPE_UINT32_T
 AC_TYPE_UINT8_T
+AC_TYPE_UINT64_T
 
 # Checks for library functions.
 AC_FUNC_ERROR_AT_LINE
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([floor gettimeofday memmove memset pow sqrt strcasecmp strdup strncasecmp])
-AC_SUBST(CXXFLAGS)
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile pHash.pc])
 AC_OUTPUT
