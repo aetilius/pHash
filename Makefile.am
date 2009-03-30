@@ -1,7 +1,7 @@
 lib_LTLIBRARIES = libpHash.la
 libpHash_la_SOURCES = pHash.cpp audiophash.cpp cimgffmpeg.h
 
-include_HEADERS = pHash.h
+include_HEADERS = pHash.h audiophash.h
 
 bin_PROGRAMS = test_audio test_image test_video
 test_audio_SOURCES = test_audiophash.cpp
