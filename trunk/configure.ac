@@ -11,14 +11,16 @@ AC_CONFIG_HEADERS([config.h])
 AC_PROG_CXX
 AC_PROG_CC
 
+CXXFLAGS ="-O3 -ffast-math"
+
 AC_MSG_CHECKING(whether to enable debugging)
-AC_ARG_ENABLE(debug, [  --enable-debug[=no/yes] Turn on debugging [default=no]],
-[ if test "x$enableval" = "xyes"; then
+AC_ARG_ENABLE(debug, [AC_HELP_STRING([--enable-debug],[compile with debugging support])], ok=$enableval, ok=no)
+if test "$ok" = "yes"; then
 	CXXFLAGS="-g"
-  else
-	CXXFLAGS="-O2 -ffast-math"
-  fi
-])
+else
+	CXXFLAGS="-O3 -ffast-math"
+fi
+
 AC_PROG_INSTALL
 AC_PROG_LN_S
 m4_defun([_LT_AC_LANG_F77_CONFIG], [:])
