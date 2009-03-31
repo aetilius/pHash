@@ -11,14 +11,12 @@ AC_CONFIG_HEADERS([config.h])
 AC_PROG_CXX
 AC_PROG_CC
 
-CXXFLAGS ="-O3 -ffast-math"
+CXXFLAGS="-O3 -ffast-math"
 
 AC_MSG_CHECKING(whether to enable debugging)
 AC_ARG_ENABLE(debug, [AC_HELP_STRING([--enable-debug],[compile with debugging support])], ok=$enableval, ok=no)
 if test "$ok" = "yes"; then
 	CXXFLAGS="-g"
-else
-	CXXFLAGS="-O3 -ffast-math"
 fi
 
 AC_PROG_INSTALL
@@ -52,9 +50,9 @@ AC_CHECK_LIB([fftw3], [fftw_plan_dft_r2c_1d], [], AC_MSG_ERROR([
 
 ]))
 
-AC_CHECK_LIB([jpeg], [jpeg_read_header], [AC_DEFINE(cimg_use_jpeg, 1)])
+AC_CHECK_LIB([jpeg], [jpeg_read_header], [use_jpeg="y"])
 AC_CHECK_LIB([m], [sqrt])
-AC_CHECK_LIB([png], [png_create_read_struct], [AC_DEFINE(cimg_use_png, 1)])
+AC_CHECK_LIB([png], [png_create_read_struct], [use_png="y"])
 AC_CHECK_LIB([pthread], [pthread_create])
 AC_CHECK_LIB([swscale], [sws_getContext], [], AC_MSG_ERROR([
 
@@ -62,14 +60,22 @@ AC_CHECK_LIB([swscale], [sws_getContext], [], AC_MSG_ERROR([
 
 ]))
 
+if test "$use_jpeg" = "y"; then
+	CPPFLAGS="$CPPFLAGS -Dcimg_use_jpeg"
+	LDFLAGS="$LDFLAGS -ljpeg"
+fi
+if test "$use_png" = "y"; then
+	CPPFLAGS="$CPPFLAGS -Dcimg_use_png"
+	LDFLAGS="$LDFLAGS -lpng"
+fi
 # Checks for header files.
 AC_CHECK_HEADERS([limits.h stdlib.h string.h sys/time.h unistd.h])
-AC_CHECK_HEADER([CImg.h], [], AC_MSG_ERROR([
+#AC_CHECK_HEADER([CImg.h], [], AC_MSG_ERROR([
 
-*** Cannot find required CImg.h header
-Please grab it from http://cimg.sf.net
+#*** Cannot find required CImg.h header
+#Please grab it from http://cimg.sf.net
 
-]))
+#]))
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
