@@ -29,25 +29,25 @@ AC_PROG_LIBTOOL
 AC_CHECK_LIB([avcodec], [avcodec_alloc_frame], [], AC_MSG_ERROR([
 
 *** libavcodec not found.
-
+You need FFmpeg. Get it at <http://ffmpeg.org/>
 ]))
 
 AC_CHECK_LIB([avformat], [avformat_alloc_context], [], AC_MSG_ERROR([
 
 *** libavformat not found.
-
+You need FFmpeg. Get it at <http://ffmpeg.org/>
 ]))
 
 AC_CHECK_LIB([avutil], [avutil_version], [], AC_MSG_ERROR([
 
 *** libavutil not found.
-
+You need FFmpeg. Get it at <http://ffmpeg.org/>
 ]))
 
 AC_CHECK_LIB([fftw3], [fftw_plan_dft_r2c_1d], [], AC_MSG_ERROR([
 
 *** libfftw3 not found.
-
+You need FFTW3. Get it at <http://fftw.org/>
 ]))
 
 AC_CHECK_LIB([jpeg], [jpeg_read_header], [use_jpeg="y"])
@@ -57,7 +57,7 @@ AC_CHECK_LIB([pthread], [pthread_create])
 AC_CHECK_LIB([swscale], [sws_getContext], [], AC_MSG_ERROR([
 
 *** libswscale not found.
-
+You need FFmpeg. Get it at <http://ffmpeg.org/>
 ]))
 
 if test "$use_jpeg" = "y"; then
@@ -68,15 +68,21 @@ if test "$use_png" = "y"; then
 	CPPFLAGS="$CPPFLAGS -Dcimg_use_png"
 	LDFLAGS="$LDFLAGS -lpng"
 fi
+
+
 # Checks for header files.
 AC_CHECK_HEADERS([limits.h stdlib.h string.h sys/time.h unistd.h])
-#AC_CHECK_HEADER([CImg.h], [], AC_MSG_ERROR([
+AC_CHECK_HEADER([CImg.h], [], [found_cimg="n"])
+if test "$found_cimg" = "n"; then
+	if test `ls|grep CImg.h` = "CImg.h"; then
+		echo "Found CImg.h in current directory."
+	else
+		AC_MSG_ERROR([
 
-#*** Cannot find required CImg.h header
-#Please grab it from http://cimg.sf.net
-
-#]))
-
+*** You need CImg.h. Get it at <http://cimg.sf.net/>
+])
+	fi
+fi
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
 AC_C_INLINE
@@ -90,6 +96,7 @@ AC_TYPE_UINT64_T
 AC_FUNC_ERROR_AT_LINE
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
+AC_SUBST(PHASH_VERSION)
 AC_CHECK_FUNCS([floor gettimeofday memmove memset pow sqrt strcasecmp strdup strncasecmp])
 AC_CONFIG_FILES([Makefile pHash.pc])
 AC_OUTPUT
