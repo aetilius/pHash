@@ -25,14 +25,8 @@
 /* Define to 1 if you have the `fftw3' library (-lfftw3). */
 #define HAVE_LIBFFTW3 1
 
-/* Define to 1 if you have the `jpeg' library (-ljpeg). */
-#define HAVE_LIBJPEG 1
-
 /* Define to 1 if you have the `m' library (-lm). */
 #define HAVE_LIBM 1
-
-/* Define to 1 if you have the `png' library (-lpng). */
-#define HAVE_LIBPNG 1
 
 /* Define to 1 if you have the `pthread' library (-lpthread). */
 #define HAVE_LIBPTHREAD 1
@@ -134,6 +128,11 @@
    #define below would cause a syntax error. */
 /* #undef _UINT32_T */
 
+/* Define for Solaris 2.5.1 so the uint64_t typedef from <sys/synch.h>,
+   <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
+   #define below would cause a syntax error. */
+/* #undef _UINT64_T */
+
 /* Define for Solaris 2.5.1 so the uint8_t typedef from <sys/synch.h>,
    <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
    #define below would cause a syntax error. */
@@ -161,6 +160,10 @@
 /* Define to the type of an unsigned integer type of width exactly 32 bits if
    such a type exists and the standard includes do not define it. */
 /* #undef uint32_t */
+
+/* Define to the type of an unsigned integer type of width exactly 64 bits if
+   such a type exists and the standard includes do not define it. */
+/* #undef uint64_t */
 
 /* Define to the type of an unsigned integer type of width exactly 8 bits if
    such a type exists and the standard includes do not define it. */
