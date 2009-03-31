@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.63])
-AC_INIT([pHash], [0.0.5], [support@phash.org])
+AC_INIT([pHash], [0.5.0], [support@phash.org])
 AM_INIT_AUTOMAKE($PACKAGE_NAME,$PACKAGE_VERSION)
 AC_CONFIG_SRCDIR([test_audiophash_main.cpp])
 AC_CONFIG_HEADERS([config.h])
