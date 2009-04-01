@@ -28,16 +28,13 @@ AC_PROG_LIBTOOL
 
 AC_DEFUN([AC_CHECK_CIMG],
 [AC_CHECK_HEADER([CImg.h], [], [found_cimg="n"])
-if test "$found_cimg" = "n"; then
-	if test ls|grep 'CImg.h' >/dev/null 2>&1; then
-		echo "Found CImg.h in current directory."
-	else
-		AC_MSG_ERROR([
+AS_IF([test "$found_cimg" = "n"],
+	[AS_IF([test ls|grep 'CImg.h' >/dev/null 2>&1],
+		[echo "Found CImg.h in current directory."],
+		[AC_MSG_ERROR([
 
 *** You need CImg.h. Get it at <http://cimg.sf.net/>
-])
-	fi
-fi])
+])]])
 
 AC_DEFUN([AC_CHECK_FFTW3],
 [
@@ -77,23 +74,23 @@ You need FFmpeg. Get it at <http://ffmpeg.org/>
 
 ])
 
-AC_ARG_ENABLE([image-hash], [AC_HELP_STRING([--enable-image-hash], [include support 
-for perceptual image hashes @<:@default=yes@:>@])],
+AC_ARG_ENABLE([image-hash], [AC_HELP_STRING([--enable-image-hash], 
+[include support for perceptual image hashes @<:@default=yes@:>@])],
 [], [image_hash=yes])
-AC_IF([test "x$image_hash" != x"no"],
-	[AC_CHECK_CIMG()])
+AS_IF([test x"$image_hash" != x"no"],
+	[AC_CHECK_CIMG(); AC_DEFINE([HAVE_IMAGE_HASH],[1])])
 
-AC_ARG_ENABLE([video-hash], [AC_HELP_STRING([--enable-video-hash], [include support 
-for perceptual video hashes @<:@default=yes@:>@])],
+AC_ARG_ENABLE([video-hash], [AC_HELP_STRING([--enable-video-hash], 
+[include support for perceptual video hashes @<:@default=yes@:>@])],
 [], [video_hash=yes])
-AC_IF([test "x$video_hash" != x"no"],
-	[AC_CHECK_FFMPEG(); AC_CHECK_CIMG()])
+AS_IF([test x"$video_hash" != x"no"],
+	[AC_CHECK_FFMPEG(); AC_CHECK_CIMG(); AC_DEFINE([HAVE_VIDEO_HASH],[1])])
 
-AC_ARG_ENABLE([audio-hash], [AC_HELP_STRING([--enable-audio-hash], [include support 
-for perceptual audio hashes @<:@default=yes@:>@])],
+AC_ARG_ENABLE([audio-hash], [AC_HELP_STRING([--enable-audio-hash], 
+[include support for perceptual audio hashes @<:@default=yes@:>@])],
 [], [audio_hash=yes])
-AC_IF([test "x$audio_hash" != x"no"],
-	[AC_CHECK_FFMPEG(); AC_CHECK_FFTW3()])
+AS_IF([test x"$audio_hash" != x"no"],
+	[AC_CHECK_FFMPEG(); AC_CHECK_FFTW3(); AC_DEFINE([HAVE_AUDIO_HASH],[1])])
 
 
 # Checks for libraries.
@@ -104,12 +101,12 @@ AC_CHECK_LIB([m], [sqrt])
 AC_CHECK_LIB([png], [png_create_read_struct], [use_png="y"])
 AC_CHECK_LIB([pthread], [pthread_create])
 
-AC_IF([test "$use_jpeg" = "y"],
+AS_IF([test "$use_jpeg" = "y"],
 [
 	CPPFLAGS="$CPPFLAGS -Dcimg_use_jpeg"
 	LDFLAGS="$LDFLAGS -ljpeg"
 ])
-AC_IF([test "$use_png" = "y"],
+AS_IF([test "$use_png" = "y"],
 [
 	CPPFLAGS="$CPPFLAGS -Dcimg_use_png"
 	LDFLAGS="$LDFLAGS -lpng"
@@ -132,7 +129,6 @@ AC_TYPE_UINT64_T
 AC_FUNC_ERROR_AT_LINE
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
-AC_SUBST(PHASH_VERSION)
 AC_CHECK_FUNCS([floor gettimeofday memmove memset pow sqrt strcasecmp strdup strncasecmp])
-AC_CONFIG_FILES([Makefile pHash.pc])
+AC_CONFIG_FILES([Makefile pHash.pc bindings/java/Makefile])
 AC_OUTPUT
