@@ -40,6 +40,7 @@ AS_IF([test "$found_cimg" = "n"],
 *** CImg.h not found.
 You need CImg.h. Get it at <http://cimg.sf.net/>
 ])
+found_cimg="y"
 ]])
 
 AC_DEFUN([AC_CHECK_FFTW3],
@@ -50,6 +51,7 @@ AC_CHECK_LIB([fftw3], [fftw_plan_dft_r2c_1d], [], AC_MSG_ERROR([
 *** libfftw3 not found.
 You need FFTW3. Get it at <http://fftw.org/>
 ]))
+found_fftw="y"
 ])
 
 AC_DEFUN([AC_CHECK_FFMPEG],
@@ -79,24 +81,24 @@ AC_CHECK_LIB([swscale], [sws_getContext], [], AC_MSG_ERROR([
 *** libswscale not found.
 You need FFmpeg. Get it at <http://ffmpeg.org/>
 ]))
-
+found_ffmpeg="y"
 ])
 
 AC_ARG_ENABLE([image-hash], [AC_HELP_STRING([--enable-image-hash], 
 [include support for perceptual image hashes @<:@default=yes@:>@])],
-[], [image_hash=yes])
+[image_hash=$enableval], [image_hash=yes])
 AS_IF([test x"$image_hash" != x"no"],
 	[AC_CHECK_CIMG(); AC_DEFINE([HAVE_IMAGE_HASH],[1])])
 
 AC_ARG_ENABLE([video-hash], [AC_HELP_STRING([--enable-video-hash], 
 [include support for perceptual video hashes @<:@default=yes@:>@])],
-[], [video_hash=yes])
+[video_hash=$enableval], [video_hash=yes])
 AS_IF([test x"$video_hash" != x"no"],
 	[AC_CHECK_FFMPEG(); AC_CHECK_CIMG(); AC_DEFINE([HAVE_VIDEO_HASH],[1])])
 
 AC_ARG_ENABLE([audio-hash], [AC_HELP_STRING([--enable-audio-hash], 
 [include support for perceptual audio hashes @<:@default=yes@:>@])],
-[], [audio_hash=yes])
+[audio_hash=$enableval], [audio_hash=yes])
 AS_IF([test x"$audio_hash" != x"no"],
 	[AC_CHECK_FFMPEG(); AC_CHECK_FFTW3(); AC_DEFINE([HAVE_AUDIO_HASH],[1])])
 
