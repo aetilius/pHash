@@ -133,7 +133,11 @@ AC_TYPE_INT16_T
 AC_TYPE_SIZE_T
 AC_TYPE_UINT32_T
 AC_TYPE_UINT8_T
-AC_TYPE_UINT64_T
+AC_CHECK_TYPE([uint64_t],[],[AC_MSG_ERROR([
+
+*** Required type uint64_t not found. 
+pHash requires 64-bit integers for video and image hashes.
+]))
 
 # Checks for library functions.
 AC_FUNC_ERROR_AT_LINE
