@@ -14,10 +14,11 @@ AC_PROG_CC
 CXXFLAGS="-O3 -ffast-math"
 
 AC_MSG_CHECKING(whether to enable debugging)
-AC_ARG_ENABLE(debug, [AC_HELP_STRING([--enable-debug],[compile with debugging support])], ok=$enableval, ok=no)
+AC_ARG_ENABLE(debug, [AC_HELP_STRING([--enable-debug],[compile with debugging support @<:@default=no@:>@])], ok=$enableval, ok=no)
 if test "$ok" = "yes"; then
 	CXXFLAGS="-g"
 fi
+
 
 AC_PROG_INSTALL
 AC_PROG_LN_S
@@ -25,7 +26,31 @@ m4_defun([_LT_AC_LANG_F77_CONFIG], [:])
 AC_PROG_LIBTOOL
 
 
-# Checks for libraries.
+AC_DEFUN([AC_CHECK_CIMG],
+[AC_CHECK_HEADER([CImg.h], [], [found_cimg="n"])
+if test "$found_cimg" = "n"; then
+	if test ls|grep 'CImg.h' >/dev/null 2>&1; then
+		echo "Found CImg.h in current directory."
+	else
+		AC_MSG_ERROR([
+
+*** You need CImg.h. Get it at <http://cimg.sf.net/>
+])
+	fi
+fi])
+
+AC_DEFUN([AC_CHECK_FFTW3],
+[
+AC_CHECK_LIB([fftw3], [fftw_plan_dft_r2c_1d], [], AC_MSG_ERROR([
+
+*** libfftw3 not found.
+You need FFTW3. Get it at <http://fftw.org/>
+]))
+])
+
+AC_DEFUN([AC_CHECK_FFMPEG],
+[
+INCLUDES = "$INCLUDES -I libavformat -I libavcodec -I libswscale"
 AC_CHECK_LIB([avcodec], [avcodec_alloc_frame], [], AC_MSG_ERROR([
 
 *** libavcodec not found.
@@ -44,45 +69,56 @@ AC_CHECK_LIB([avutil], [avutil_version], [], AC_MSG_ERROR([
 You need FFmpeg. Get it at <http://ffmpeg.org/>
 ]))
 
-AC_CHECK_LIB([fftw3], [fftw_plan_dft_r2c_1d], [], AC_MSG_ERROR([
-
-*** libfftw3 not found.
-You need FFTW3. Get it at <http://fftw.org/>
-]))
-
-AC_CHECK_LIB([jpeg], [jpeg_read_header], [use_jpeg="y"])
-AC_CHECK_LIB([m], [sqrt])
-AC_CHECK_LIB([png], [png_create_read_struct], [use_png="y"])
-AC_CHECK_LIB([pthread], [pthread_create])
 AC_CHECK_LIB([swscale], [sws_getContext], [], AC_MSG_ERROR([
 
 *** libswscale not found.
 You need FFmpeg. Get it at <http://ffmpeg.org/>
 ]))
 
-if test "$use_jpeg" = "y"; then
+])
+
+AC_ARG_ENABLE([image-hash], [AC_HELP_STRING([--enable-image-hash], [include support 
+for perceptual image hashes @<:@default=yes@:>@])],
+[], [image_hash=yes])
+AC_IF([test "x$image_hash" != x"no"],
+	[AC_CHECK_CIMG()])
+
+AC_ARG_ENABLE([video-hash], [AC_HELP_STRING([--enable-video-hash], [include support 
+for perceptual video hashes @<:@default=yes@:>@])],
+[], [video_hash=yes])
+AC_IF([test "x$video_hash" != x"no"],
+	[AC_CHECK_FFMPEG(); AC_CHECK_CIMG()])
+
+AC_ARG_ENABLE([audio-hash], [AC_HELP_STRING([--enable-audio-hash], [include support 
+for perceptual audio hashes @<:@default=yes@:>@])],
+[], [audio_hash=yes])
+AC_IF([test "x$audio_hash" != x"no"],
+	[AC_CHECK_FFMPEG(); AC_CHECK_FFTW3()])
+
+
+# Checks for libraries.
+
+
+AC_CHECK_LIB([jpeg], [jpeg_read_header], [use_jpeg="y"])
+AC_CHECK_LIB([m], [sqrt])
+AC_CHECK_LIB([png], [png_create_read_struct], [use_png="y"])
+AC_CHECK_LIB([pthread], [pthread_create])
+
+AC_IF([test "$use_jpeg" = "y"],
+[
 	CPPFLAGS="$CPPFLAGS -Dcimg_use_jpeg"
 	LDFLAGS="$LDFLAGS -ljpeg"
-fi
-if test "$use_png" = "y"; then
+])
+AC_IF([test "$use_png" = "y"],
+[
 	CPPFLAGS="$CPPFLAGS -Dcimg_use_png"
 	LDFLAGS="$LDFLAGS -lpng"
-fi
+])
 
 
 # Checks for header files.
 AC_CHECK_HEADERS([limits.h stdlib.h string.h sys/time.h unistd.h])
-AC_CHECK_HEADER([CImg.h], [], [found_cimg="n"])
-if test "$found_cimg" = "n"; then
-	if test `ls|grep CImg.h` = "CImg.h"; then
-		echo "Found CImg.h in current directory."
-	else
-		AC_MSG_ERROR([
 
-*** You need CImg.h. Get it at <http://cimg.sf.net/>
-])
-	fi
-fi
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
 AC_C_INLINE
