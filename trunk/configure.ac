@@ -13,11 +13,13 @@ AC_PROG_CC
 
 CXXFLAGS="-O3 -ffast-math"
 
-AC_MSG_CHECKING(whether to enable debugging)
-AC_ARG_ENABLE(debug, [AC_HELP_STRING([--enable-debug],[compile with debugging support @<:@default=no@:>@])], ok=$enableval, ok=no)
-if test "$ok" = "yes"; then
+AC_MSG_CHECKING([whether to enable debugging])
+AC_ARG_ENABLE(debug, [AC_HELP_STRING([--enable-debug],
+[compile with debugging support @<:@default=no@:>@])], debug=$enableval, debug=no)
+AS_IF([test "$debug" = "yes"],
+[
 	CXXFLAGS="-g"
-fi
+])
 
 
 AC_PROG_INSTALL
@@ -27,7 +29,9 @@ AC_PROG_LIBTOOL
 
 
 AC_DEFUN([AC_CHECK_CIMG],
-[AC_CHECK_HEADER([CImg.h], [], [found_cimg="n"])
+[
+AC_MSG_CHECKING([whether CImg.h is present])
+AC_CHECK_HEADER([CImg.h], [], [found_cimg="n"])
 AS_IF([test "$found_cimg" = "n"],
 	[AS_IF([test ls|grep 'CImg.h' >/dev/null 2>&1],
 		[echo "Found CImg.h in current directory."],
@@ -40,6 +44,7 @@ You need CImg.h. Get it at <http://cimg.sf.net/>
 
 AC_DEFUN([AC_CHECK_FFTW3],
 [
+AC_MSG_CHECKING([whether FFTW3 is present])
 AC_CHECK_LIB([fftw3], [fftw_plan_dft_r2c_1d], [], AC_MSG_ERROR([
 
 *** libfftw3 not found.
@@ -50,6 +55,7 @@ You need FFTW3. Get it at <http://fftw.org/>
 AC_DEFUN([AC_CHECK_FFMPEG],
 [
 INCLUDES = "$INCLUDES -I libavformat -I libavcodec -I libswscale"
+AC_MSG_CHECKING([whether FFmpeg is present])
 AC_CHECK_LIB([avcodec], [avcodec_alloc_frame], [], AC_MSG_ERROR([
 
 *** libavcodec not found.
