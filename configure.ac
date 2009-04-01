@@ -31,10 +31,12 @@ AC_DEFUN([AC_CHECK_CIMG],
 AS_IF([test "$found_cimg" = "n"],
 	[AS_IF([test ls|grep 'CImg.h' >/dev/null 2>&1],
 		[echo "Found CImg.h in current directory."],
-		[AC_MSG_ERROR([
+		AC_MSG_ERROR([
 
-*** You need CImg.h. Get it at <http://cimg.sf.net/>
-])]])
+*** CImg.h not found.
+You need CImg.h. Get it at <http://cimg.sf.net/>
+])
+]])
 
 AC_DEFUN([AC_CHECK_FFTW3],
 [
