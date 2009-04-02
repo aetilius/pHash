@@ -23,7 +23,6 @@
 */
 
 #include "audiophash.h"
-
 int ph_count_samples(const char *filename, int sr,int channels){
 
 
@@ -219,7 +218,6 @@ float* ph_readaudio(const char *filename, int sr, int channels, int &N)
 	
 	return buf;
 } 
-
 
 
 uint32_t* ph_audiohash(float *buf, int N, int sr, int &nb_frames){
