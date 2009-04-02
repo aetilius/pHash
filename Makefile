@@ -35,8 +35,11 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = i686-pc-linux-gnu
 host_triplet = i686-pc-linux-gnu
-bin_PROGRAMS = test_audio$(EXEEXT) test_image$(EXEEXT) \
-	test_video$(EXEEXT)
+bin_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3)
+am__append_1 = test_audio
+am__append_2 = audiophash.cpp
+am__append_3 = test_image
+am__append_4 = test_video
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(include_HEADERS) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
@@ -63,17 +66,31 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libpHash_la_LIBADD =
-am_libpHash_la_OBJECTS = pHash.lo audiophash.lo
+am__libpHash_la_SOURCES_DIST = pHash.cpp audiophash.cpp
+am__objects_1 = audiophash.lo
+am_libpHash_la_OBJECTS = pHash.lo $(am__objects_1)
 libpHash_la_OBJECTS = $(am_libpHash_la_OBJECTS)
+libpHash_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(libpHash_la_LDFLAGS) $(LDFLAGS) -o $@
+am__EXEEXT_1 = test_audio$(EXEEXT)
+am__EXEEXT_2 = test_image$(EXEEXT)
+am__EXEEXT_3 = test_video$(EXEEXT)
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
-am_test_audio_OBJECTS = test_audiophash.$(OBJEXT)
+am__test_audio_SOURCES_DIST = test_audiophash.cpp
+am_test_audio_OBJECTS =  \
+	test_audiophash.$(OBJEXT)
 test_audio_OBJECTS = $(am_test_audio_OBJECTS)
 test_audio_DEPENDENCIES = libpHash.la
-am_test_image_OBJECTS = test_imagephash.$(OBJEXT)
+am__test_image_SOURCES_DIST = test_imagephash.cpp
+am_test_image_OBJECTS =  \
+	test_imagephash.$(OBJEXT)
 test_image_OBJECTS = $(am_test_image_OBJECTS)
 test_image_DEPENDENCIES = libpHash.la
-am_test_video_OBJECTS = test_videophash.$(OBJEXT)
+am__test_video_SOURCES_DIST = test_videophash.cpp
+am_test_video_OBJECTS =  \
+	test_videophash.$(OBJEXT)
 test_video_OBJECTS = $(am_test_video_OBJECTS)
 test_video_DEPENDENCIES = libpHash.la
 DEFAULT_INCLUDES = -I.
@@ -88,19 +105,11 @@ CXXLD = $(CXX)
 CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
-	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-LTCOMPILE = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-CCLD = $(CC)
-LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
 SOURCES = $(libpHash_la_SOURCES) $(test_audio_SOURCES) \
 	$(test_image_SOURCES) $(test_video_SOURCES)
-DIST_SOURCES = $(libpHash_la_SOURCES) $(test_audio_SOURCES) \
-	$(test_image_SOURCES) $(test_video_SOURCES)
+DIST_SOURCES = $(am__libpHash_la_SOURCES_DIST) \
+	$(am__test_audio_SOURCES_DIST) $(am__test_image_SOURCES_DIST) \
+	$(am__test_video_SOURCES_DIST)
 pkgconfigDATA_INSTALL = $(INSTALL_DATA)
 DATA = $(pkgconfig_DATA)
 includeHEADERS_INSTALL = $(INSTALL_HEADER)
@@ -129,7 +138,7 @@ CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS = -g -O2
 CPP = gcc -E
-CPPFLAGS =  -Dcimg_use_jpeg -Dcimg_use_png
+CPPFLAGS =  -DHAVE_IMAGE_HASH=1 -DHAVE_VIDEO_HASH=1 -DHAVE_AUDIO_HASH=1 -Dcimg_use_jpeg -Dcimg_use_png
 CXX = g++
 CXXCPP = g++ -E
 CXXDEPMODE = depmode=gcc3
@@ -152,7 +161,7 @@ INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 LDFLAGS =  -ljpeg -lpng
 LIBOBJS = 
-LIBS = -lswscale -lpthread -lm -lfftw3 -lavutil -lavformat -lavcodec 
+LIBS = -lpthread -lm -lfftw3 -lswscale -lavutil -lavformat -lavcodec 
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
 LN_S = ln -s
 LTLIBOBJS = 
@@ -163,17 +172,16 @@ OBJEXT = o
 PACKAGE = pHash
 PACKAGE_BUGREPORT = support@phash.org
 PACKAGE_NAME = pHash
-PACKAGE_STRING = pHash 0.0.5
+PACKAGE_STRING = pHash 0.5.0
 PACKAGE_TARNAME = phash
-PACKAGE_VERSION = 0.0.5
+PACKAGE_VERSION = 0.5.0
 PATH_SEPARATOR = :
-PHASH_VERSION = 
 RANLIB = ranlib
 SED = /bin/sed
 SET_MAKE = 
 SHELL = /bin/sh
 STRIP = strip
-VERSION = 0.0.5
+VERSION = 0.5.0
 abs_builddir = /home/eklinger/pHash/trunk
 abs_srcdir = /home/eklinger/pHash/trunk
 abs_top_builddir = /home/eklinger/pHash/trunk
@@ -226,13 +234,15 @@ top_build_prefix =
 top_builddir = .
 top_srcdir = .
 lib_LTLIBRARIES = libpHash.la
-libpHash_la_SOURCES = pHash.cpp audiophash.cpp cimgffmpeg.h
-include_HEADERS = pHash.h audiophash.h
+libpHash_la_SOURCES = pHash.cpp $(am__append_2)
+libpHash_la_LDFLAGS = -no-undefined
+include_HEADERS = pHash.h
+EXAMPLES = 
 test_audio_SOURCES = test_audiophash.cpp
-test_image_SOURCES = test_imagephash.cpp
-test_video_SOURCES = test_videophash.cpp
 test_audio_LDADD = libpHash.la
+test_image_SOURCES = test_imagephash.cpp
 test_image_LDADD = libpHash.la
+test_video_SOURCES = test_videophash.cpp
 test_video_LDADD = libpHash.la
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = pHash.pc
@@ -321,7 +331,7 @@ clean-libLTLIBRARIES:
 	  rm -f "$${dir}/so_locations"; \
 	done
 libpHash.la: $(libpHash_la_OBJECTS) $(libpHash_la_DEPENDENCIES) 
-	$(CXXLINK) -rpath $(libdir) $(libpHash_la_OBJECTS) $(libpHash_la_LIBADD) $(LIBS)
+	$(libpHash_la_LINK) -rpath $(libdir) $(libpHash_la_OBJECTS) $(libpHash_la_LIBADD) $(LIBS)
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"

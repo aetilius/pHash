@@ -791,6 +791,12 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+HAVE_AUDIO_HASH_FALSE
+HAVE_AUDIO_HASH_TRUE
+HAVE_VIDEO_HASH_FALSE
+HAVE_VIDEO_HASH_TRUE
+HAVE_IMAGE_HASH_FALSE
+HAVE_IMAGE_HASH_TRUE
 LIBTOOL
 CXXCPP
 CPP
@@ -4114,11 +4120,8 @@ else
 fi
 
 
-
 CXXFLAGS="-O3 -ffast-math"
 
-{ $as_echo "$as_me:$LINENO: checking whether to enable debugging" >&5
-$as_echo_n "checking whether to enable debugging... " >&6; }
 # Check whether --enable-debug was given.
 if test "${enable_debug+set}" = set; then
   enableval=$enable_debug; debug=$enableval
@@ -4128,7 +4131,7 @@ fi
 
 if test "$debug" != "no"; then
 
-	CXXFLAGS="$CXXFLAGS -g"
+	CXXFLAGS="-g"
 
 fi
 
@@ -5008,7 +5011,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 5011 "configure"' > conftest.$ac_ext
+  echo '#line 5014 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -7347,11 +7350,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7350: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7353: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7354: \$? = $ac_status" >&5
+   echo "$as_me:7357: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7637,11 +7640,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7640: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7643: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7644: \$? = $ac_status" >&5
+   echo "$as_me:7647: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7741,11 +7744,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7744: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7747: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:7748: \$? = $ac_status" >&5
+   echo "$as_me:7751: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -10143,7 +10146,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10146 "configure"
+#line 10149 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10243,7 +10246,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10246 "configure"
+#line 10249 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12652,11 +12655,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12655: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:12658: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:12659: \$? = $ac_status" >&5
+   echo "$as_me:12662: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -12756,11 +12759,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12759: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:12762: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:12763: \$? = $ac_status" >&5
+   echo "$as_me:12766: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -14048,11 +14051,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14051: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14054: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:14055: \$? = $ac_status" >&5
+   echo "$as_me:14058: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14338,11 +14341,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14341: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14344: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:14345: \$? = $ac_status" >&5
+   echo "$as_me:14348: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14442,11 +14445,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14445: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14448: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14449: \$? = $ac_status" >&5
+   echo "$as_me:14452: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -17140,8 +17143,8 @@ fi
 if test x"$image_hash" != x"no"; then
 
 
-{ $as_echo "$as_me:$LINENO: checking whether CImg.h is present" >&5
-$as_echo_n "checking whether CImg.h is present... " >&6; }
+{ $as_echo "$as_me:$LINENO: checking whether CImg.h is present in system directories." >&5
+$as_echo_n "checking whether CImg.h is present in system directories.... " >&6; }
 if test "${ac_cv_header_CImg_h+set}" = set; then
   { $as_echo "$as_me:$LINENO: checking for CImg.h" >&5
 $as_echo_n "checking for CImg.h... " >&6; }
@@ -17283,27 +17286,25 @@ fi
 
 
 if test "$found_cimg" = "n"; then
+	{ $as_echo "$as_me:$LINENO: checking whether CImg.h is in the current directory." >&5
+$as_echo_n "checking whether CImg.h is in the current directory.... " >&6; }
 
-	if test `ls|grep 'CImg.h'` = "CImg.h"; then
-		echo Found CImg.h in current directory.
+	if test `ls | grep "CImg.h"` = "CImg.h"; then
+		echo yes
 		found_cimg="y"
-	else
-	{ { $as_echo "$as_me:$LINENO: error:
-
-*** CImg.h not found.
-You need CImg.h. Get it at <http://cimg.sf.net/>
-	" >&5
-$as_echo "$as_me: error:
-
-*** CImg.h not found.
-You need CImg.h. Get it at <http://cimg.sf.net/>
-	" >&2;}
-   { (exit 1); exit 1; }; }
 	fi
 fi
 
 	CPPFLAGS="$CPPFLAGS -DHAVE_IMAGE_HASH=1"
 
+fi
+
+ if test x$image_hash != xno; then
+  HAVE_IMAGE_HASH_TRUE=
+  HAVE_IMAGE_HASH_FALSE='#'
+else
+  HAVE_IMAGE_HASH_TRUE='#'
+  HAVE_IMAGE_HASH_FALSE=
 fi
 
 
@@ -17316,8 +17317,8 @@ fi
 
 if test x"$video_hash" != x"no"; then
 
+	if test "$found_ffmpeg" != "y"; then
 
-INCLUDES = "$INCLUDES -I libavformat -I libavcodec -I libswscale"
 { $as_echo "$as_me:$LINENO: checking whether FFmpeg is present" >&5
 $as_echo_n "checking whether FFmpeg is present... " >&6; }
 
@@ -17671,10 +17672,13 @@ You need FFmpeg. Get it at <http://ffmpeg.org/>
    { (exit 1); exit 1; }; }
 fi
 
+found_ffmpeg="y"
 
+	fi
+	if test "$found_cimg" != "y"; then
 
-{ $as_echo "$as_me:$LINENO: checking whether CImg.h is present" >&5
-$as_echo_n "checking whether CImg.h is present... " >&6; }
+{ $as_echo "$as_me:$LINENO: checking whether CImg.h is present in system directories." >&5
+$as_echo_n "checking whether CImg.h is present in system directories.... " >&6; }
 if test "${ac_cv_header_CImg_h+set}" = set; then
   { $as_echo "$as_me:$LINENO: checking for CImg.h" >&5
 $as_echo_n "checking for CImg.h... " >&6; }
@@ -17816,27 +17820,26 @@ fi
 
 
 if test "$found_cimg" = "n"; then
+	{ $as_echo "$as_me:$LINENO: checking whether CImg.h is in the current directory." >&5
+$as_echo_n "checking whether CImg.h is in the current directory.... " >&6; }
 
-	if test `ls|grep 'CImg.h'` = "CImg.h"; then
-		echo Found CImg.h in current directory.
+	if test `ls | grep "CImg.h"` = "CImg.h"; then
+		echo yes
 		found_cimg="y"
-	else
-	{ { $as_echo "$as_me:$LINENO: error:
-
-*** CImg.h not found.
-You need CImg.h. Get it at <http://cimg.sf.net/>
-	" >&5
-$as_echo "$as_me: error:
-
-*** CImg.h not found.
-You need CImg.h. Get it at <http://cimg.sf.net/>
-	" >&2;}
-   { (exit 1); exit 1; }; }
 	fi
 fi
 
-	CPPFLAGS="$CPPFLAGS -DHAVE_VIDEO_HASH=1
+	fi
+	CPPFLAGS="$CPPFLAGS -DHAVE_VIDEO_HASH=1"
 
+fi
+
+ if test x$video_hash != xno; then
+  HAVE_VIDEO_HASH_TRUE=
+  HAVE_VIDEO_HASH_FALSE='#'
+else
+  HAVE_VIDEO_HASH_TRUE='#'
+  HAVE_VIDEO_HASH_FALSE=
 fi
 
 
@@ -17849,8 +17852,8 @@ fi
 
 if test x"$audio_hash" != x"no"; then
 
+	if test "$found_ffmpeg" != "y"; then
 
-INCLUDES = "$INCLUDES -I libavformat -I libavcodec -I libswscale"
 { $as_echo "$as_me:$LINENO: checking whether FFmpeg is present" >&5
 $as_echo_n "checking whether FFmpeg is present... " >&6; }
 
@@ -18204,7 +18207,10 @@ You need FFmpeg. Get it at <http://ffmpeg.org/>
    { (exit 1); exit 1; }; }
 fi
 
+found_ffmpeg="y"
 
+	fi
+	if test "$found_fftw" != "y"; then
 
 
 { $as_echo "$as_me:$LINENO: checking whether FFTW3 is present" >&5
@@ -18296,11 +18302,20 @@ You need FFTW3. Get it at <http://fftw.org/>
    { (exit 1); exit 1; }; }
 fi
 
+found_fftw="y"
 
-	CPPFLAGS="$CPPFLAGS -DHAVE_AUDIO_HASH=1
+	fi
+	CPPFLAGS="$CPPFLAGS -DHAVE_AUDIO_HASH=1"
 
 fi
 
+ if test x$audio_hash != xno; then
+  HAVE_AUDIO_HASH_TRUE=
+  HAVE_AUDIO_HASH_FALSE='#'
+else
+  HAVE_AUDIO_HASH_TRUE='#'
+  HAVE_AUDIO_HASH_FALSE=
+fi
 
 
 # Checks for libraries.
@@ -20333,6 +20348,27 @@ if test -z "${am__fastdepCC_TRUE}" && test -z "${am__fastdepCC_FALSE}"; then
   { { $as_echo "$as_me:$LINENO: error: conditional \"am__fastdepCC\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
 $as_echo "$as_me: error: conditional \"am__fastdepCC\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${HAVE_IMAGE_HASH_TRUE}" && test -z "${HAVE_IMAGE_HASH_FALSE}"; then
+  { { $as_echo "$as_me:$LINENO: error: conditional \"HAVE_IMAGE_HASH\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+$as_echo "$as_me: error: conditional \"HAVE_IMAGE_HASH\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${HAVE_VIDEO_HASH_TRUE}" && test -z "${HAVE_VIDEO_HASH_FALSE}"; then
+  { { $as_echo "$as_me:$LINENO: error: conditional \"HAVE_VIDEO_HASH\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+$as_echo "$as_me: error: conditional \"HAVE_VIDEO_HASH\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${HAVE_AUDIO_HASH_TRUE}" && test -z "${HAVE_AUDIO_HASH_FALSE}"; then
+  { { $as_echo "$as_me:$LINENO: error: conditional \"HAVE_AUDIO_HASH\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+$as_echo "$as_me: error: conditional \"HAVE_AUDIO_HASH\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi

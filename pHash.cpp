@@ -34,7 +34,7 @@ const char* ph_about(){
 	snprintf(phash_version, sizeof(phash_version), phash_project, VERSION);
 	return phash_version;
 }
-
+#ifdef HAVE_IMAGE_HASH
 int ph_radon_projections(const CImg<uint8_t> &img,int N,Projections &projs){
 
     int width = img.dimx();
@@ -357,7 +357,8 @@ int ph_dct_imagehash(const char* file,ulong64 &hash){
 
     return 0;
 }
-
+#endif
+#if defined(HAVE_VIDEO_HASH) && defined(HAVE_IMAGE_HASH)
 int ph_dct_videohash(const char* file,ulong64 &hash){
 
 
@@ -415,18 +416,6 @@ int ph_dct_videohash(const char* file,ulong64 &hash){
     delete pDCTList;
 
     return 0;
-}
-
-int ph_hamming_distance(const ulong64 hash1,const ulong64 hash2){
-    ulong64 x = hash1^hash2;
-    const ulong64 m1  = 0x5555555555555555ULL;
-    const ulong64 m2  = 0x3333333333333333ULL;
-    const ulong64 h01 = 0x0101010101010101ULL;
-    const ulong64 m4  = 0x0f0f0f0f0f0f0f0fULL;
-    x -= (x >> 1) & m1;
-    x = (x & m2) + ((x >> 2) & m2);
-    x = (x + (x >> 4)) & m4;
-    return (x * h01)>>56;
 }
 
 int ph_rash_videodigest(const char* file,CImg<uint8_t> *p_videodigest){
@@ -492,4 +481,17 @@ int ph_rash_videodigest(const char* file,CImg<uint8_t> *p_videodigest){
     delete pframes;
 
     return 0;
+}
+#endif
+
+int ph_hamming_distance(const ulong64 hash1,const ulong64 hash2){
+    ulong64 x = hash1^hash2;
+    const ulong64 m1  = 0x5555555555555555ULL;
+    const ulong64 m2  = 0x3333333333333333ULL;
+    const ulong64 h01 = 0x0101010101010101ULL;
+    const ulong64 m4  = 0x0f0f0f0f0f0f0f0fULL;
+    x -= (x >> 1) & m1;
+    x = (x & m2) + ((x >> 2) & m2);
+    x = (x + (x >> 4)) & m4;
+    return (x * h01)>>56;
 }
