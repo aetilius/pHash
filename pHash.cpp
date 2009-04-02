@@ -28,7 +28,7 @@
 #include "cimgffmpeg.h"
 #endif
 
-const char phash_project[] = "%s. Copyright 2008-2009 David Starkweather & Evan Klinger";
+const char phash_project[] = "%s. Copyright 2008-2009 Aetilius, Inc.";
 char phash_version[255] = {0};
 const char* ph_about(){
 	if(phash_version[0] != 0)
