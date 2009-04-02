@@ -84,6 +84,9 @@ AC_ARG_ENABLE([image-hash], [AS_HELP_STRING([--enable-image-hash],[include suppo
 [image_hash=$enableval], [image_hash=yes])
 AS_IF([test x"$image_hash" != x"no"],
 	[
+	echo
+	echo "*** Configuring image hash ***"
+	echo
 	AC_CHECK_CIMG()
 	CPPFLAGS="$CPPFLAGS -DHAVE_IMAGE_HASH=1"
 	])
@@ -93,6 +96,9 @@ AC_ARG_ENABLE([video-hash], [AS_HELP_STRING([--enable-video-hash],[include suppo
 [video_hash=$enableval], [video_hash=yes])
 AS_IF([test x"$video_hash" != x"no"],
 	[
+	echo
+	echo "*** Configuring video Hash ***"
+	echo
 	if test "$found_ffmpeg" != "y"; then
 		AC_CHECK_FFMPEG() 
 	fi
@@ -107,6 +113,9 @@ AC_ARG_ENABLE([audio-hash], [AS_HELP_STRING([--enable-audio-hash],[include suppo
 [audio_hash=$enableval], [audio_hash=yes])
 AS_IF([test x"$audio_hash" != x"no"],
 	[
+	echo
+	echo "*** Configuring audio hash ***"
+	echo
 	if test "$found_ffmpeg" != "y"; then
 		AC_CHECK_FFMPEG() 
 	fi

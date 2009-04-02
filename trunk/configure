@@ -17142,6 +17142,9 @@ fi
 
 if test x"$image_hash" != x"no"; then
 
+	echo
+	echo "*** Configuring image hash ***"
+	echo
 
 { $as_echo "$as_me:$LINENO: checking whether CImg.h is present in system directories." >&5
 $as_echo_n "checking whether CImg.h is present in system directories.... " >&6; }
@@ -17317,6 +17320,9 @@ fi
 
 if test x"$video_hash" != x"no"; then
 
+	echo
+	echo "*** Configuring Video Hash ***"
+	echo
 	if test "$found_ffmpeg" != "y"; then
 
 { $as_echo "$as_me:$LINENO: checking whether FFmpeg is present" >&5
@@ -17852,6 +17858,9 @@ fi
 
 if test x"$audio_hash" != x"no"; then
 
+	echo
+	echo "*** Configuring audio hash ***"
+	echo
 	if test "$found_ffmpeg" != "y"; then
 
 { $as_echo "$as_me:$LINENO: checking whether FFmpeg is present" >&5
