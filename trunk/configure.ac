@@ -13,13 +13,12 @@ AC_PROG_CC
 
 CXXFLAGS="-O3 -ffast-math"
 
-AC_MSG_CHECKING([whether to enable debugging])
 AC_ARG_ENABLE(debug, [AS_HELP_STRING([--enable-debug],
 [compile with debugging support @<:@default=no@:>@])], 
 debug=$enableval, debug=no)
 AS_IF([test "$debug" != "no"],
 [
-	CXXFLAGS="$CXXFLAGS -g"
+	CXXFLAGS="-g"
 ])
 
 
@@ -29,20 +28,15 @@ m4_defun([_LT_AC_LANG_F77_CONFIG], [:])
 AC_PROG_LIBTOOL
 
 AC_DEFUN([AC_CHECK_CIMG], [
-AC_MSG_CHECKING([whether CImg.h is present])
+AC_MSG_CHECKING([whether CImg.h is present in system directories.])
 AC_CHECK_HEADER([CImg.h], [found_cimg="y"], [found_cimg="n"])
 
-if [test "$found_cimg" = "n"]; then
+if test "$found_cimg" = "n"; then
+	AC_MSG_CHECKING([whether CImg.h is in the current directory.])
 	
-	if [test `ls|grep 'CImg.h'` = "CImg.h"]; then
-		echo Found CImg.h in current directory.
+	if [test `ls | grep "CImg.h"` = "CImg.h"]; then
+		echo yes
 		found_cimg="y"
-	else
-	AC_MSG_ERROR([
-
-*** CImg.h not found.
-You need CImg.h. Get it at <http://cimg.sf.net/>
-	])
 	fi
 fi
 ])
@@ -50,40 +44,42 @@ AC_DEFUN([AC_CHECK_FFTW3],
 [
 
 AC_MSG_CHECKING([whether FFTW3 is present])
-AC_CHECK_LIB([fftw3], [fftw_plan_dft_r2c_1d], [], AC_MSG_ERROR([
+AC_CHECK_LIB([fftw3], [fftw_plan_dft_r2c_1d], [], [AC_MSG_ERROR([
 
 *** libfftw3 not found.
 You need FFTW3. Get it at <http://fftw.org/>
-]))
+])])
+found_fftw="y"
 ])
 
 AC_DEFUN([AC_CHECK_FFMPEG],
 [
-INCLUDES = "$INCLUDES -I libavformat -I libavcodec -I libswscale"
+#AC_DEFINE_UNQUOTED([CPPFLAGS], "$CPPFLAGS -I libavformat -I libavcodec -I libswscale")
 AC_MSG_CHECKING([whether FFmpeg is present])
-AC_CHECK_LIB([avcodec], [avcodec_alloc_frame], [], AC_MSG_ERROR([
+AC_CHECK_LIB([avcodec], [avcodec_alloc_frame], [], [AC_MSG_ERROR([
 
 *** libavcodec not found.
 You need FFmpeg. Get it at <http://ffmpeg.org/>
-]))
+])])
 
-AC_CHECK_LIB([avformat], [avformat_alloc_context], [], AC_MSG_ERROR([
+AC_CHECK_LIB([avformat], [avformat_alloc_context], [], [AC_MSG_ERROR([
 
 *** libavformat not found.
 You need FFmpeg. Get it at <http://ffmpeg.org/>
-]))
+])])
 
-AC_CHECK_LIB([avutil], [avutil_version], [], AC_MSG_ERROR([
+AC_CHECK_LIB([avutil], [avutil_version], [], [AC_MSG_ERROR([
 
 *** libavutil not found.
 You need FFmpeg. Get it at <http://ffmpeg.org/>
-]))
+])])
 
-AC_CHECK_LIB([swscale], [sws_getContext], [], AC_MSG_ERROR([
+AC_CHECK_LIB([swscale], [sws_getContext], [], [AC_MSG_ERROR([
 
 *** libswscale not found.
 You need FFmpeg. Get it at <http://ffmpeg.org/>
-]))
+])])
+found_ffmpeg="y"
 ])
 
 AC_ARG_ENABLE([image-hash], [AS_HELP_STRING([--enable-image-hash],[include support for perceptual image hashes @<:@default=yes@:>@])],
@@ -98,18 +94,26 @@ AC_ARG_ENABLE([video-hash], [AS_HELP_STRING([--enable-video-hash],[include suppo
 [video_hash=$enableval], [video_hash=yes])
 AS_IF([test x"$video_hash" != x"no"],
 	[
-	AC_CHECK_FFMPEG() 
-	AC_CHECK_CIMG()
-	CPPFLAGS="$CPPFLAGS -DHAVE_VIDEO_HASH=1
+	if test "$found_ffmpeg" != "y"; then
+		AC_CHECK_FFMPEG() 
+	fi
+	if test "$found_cimg" != "y"; then
+		AC_CHECK_CIMG()
+	fi
+	CPPFLAGS="$CPPFLAGS -DHAVE_VIDEO_HASH=1"
 	])
 
 AC_ARG_ENABLE([audio-hash], [AS_HELP_STRING([--enable-audio-hash],[include support for perceptual audio hashes @<:@default=yes@:>@])],
 [audio_hash=$enableval], [audio_hash=yes])
 AS_IF([test x"$audio_hash" != x"no"],
 	[
-	AC_CHECK_FFMPEG() 
-	AC_CHECK_FFTW3() 
-	CPPFLAGS="$CPPFLAGS -DHAVE_AUDIO_HASH=1
+	if test "$found_ffmpeg" != "y"; then
+		AC_CHECK_FFMPEG() 
+	fi
+	if test "$found_fftw" != "y"; then
+		AC_CHECK_FFTW3() 
+	fi
+	CPPFLAGS="$CPPFLAGS -DHAVE_AUDIO_HASH=1"
 	])
 
 
