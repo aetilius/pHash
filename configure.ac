@@ -1,8 +1,8 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.63])
-AC_INIT([pHash], [0.5.0], [support@phash.org])
+AC_PREREQ(2.63)
+AC_INIT([pHash],[0.5.0],[support@phash.org])
 AM_INIT_AUTOMAKE($PACKAGE_NAME,$PACKAGE_VERSION)
 AC_CONFIG_SRCDIR([test_audiophash_main.cpp])
 AC_CONFIG_HEADERS([config.h])
@@ -14,11 +14,12 @@ AC_PROG_CC
 CXXFLAGS="-O3 -ffast-math"
 
 AC_MSG_CHECKING([whether to enable debugging])
-AC_ARG_ENABLE(debug, [AC_HELP_STRING([--enable-debug],
-[compile with debugging support @<:@default=no@:>@])], debug=$enableval, debug=no)
-AS_IF([test "$debug" = "yes"],
+AC_ARG_ENABLE(debug, [AS_HELP_STRING([--enable-debug],
+[compile with debugging support @<:@default=no@:>@])], 
+debug=$enableval, debug=no)
+AS_IF([test "$debug" != "no"],
 [
-	CXXFLAGS="-g"
+	CXXFLAGS="$CXXFLAGS -g"
 ])
 
 
@@ -27,31 +28,33 @@ AC_PROG_LN_S
 m4_defun([_LT_AC_LANG_F77_CONFIG], [:])
 AC_PROG_LIBTOOL
 
-
-AC_DEFUN([AC_CHECK_CIMG],
-[
+AC_DEFUN([AC_CHECK_CIMG], [
 AC_MSG_CHECKING([whether CImg.h is present])
-AC_CHECK_HEADER([CImg.h], [], [found_cimg="n"])
-AS_IF([test "$found_cimg" = "n"],
-	[AS_IF([test ls|grep 'CImg.h' >/dev/null 2>&1],
-		[echo "Found CImg.h in current directory."],
-		AC_MSG_ERROR([
+AC_CHECK_HEADER([CImg.h], [found_cimg="y"], [found_cimg="n"])
+
+if [test "$found_cimg" = "n"]; then
+	
+	if [test `ls|grep 'CImg.h'` = "CImg.h"]; then
+		echo Found CImg.h in current directory.
+		found_cimg="y"
+	else
+	AC_MSG_ERROR([
 
 *** CImg.h not found.
 You need CImg.h. Get it at <http://cimg.sf.net/>
+	])
+	fi
+fi
 ])
-found_cimg="y"
-]])
-
 AC_DEFUN([AC_CHECK_FFTW3],
 [
+
 AC_MSG_CHECKING([whether FFTW3 is present])
 AC_CHECK_LIB([fftw3], [fftw_plan_dft_r2c_1d], [], AC_MSG_ERROR([
 
 *** libfftw3 not found.
 You need FFTW3. Get it at <http://fftw.org/>
 ]))
-found_fftw="y"
 ])
 
 AC_DEFUN([AC_CHECK_FFMPEG],
@@ -81,26 +84,33 @@ AC_CHECK_LIB([swscale], [sws_getContext], [], AC_MSG_ERROR([
 *** libswscale not found.
 You need FFmpeg. Get it at <http://ffmpeg.org/>
 ]))
-found_ffmpeg="y"
 ])
 
-AC_ARG_ENABLE([image-hash], [AC_HELP_STRING([--enable-image-hash], 
-[include support for perceptual image hashes @<:@default=yes@:>@])],
+AC_ARG_ENABLE([image-hash], [AS_HELP_STRING([--enable-image-hash],[include support for perceptual image hashes @<:@default=yes@:>@])],
 [image_hash=$enableval], [image_hash=yes])
 AS_IF([test x"$image_hash" != x"no"],
-	[AC_CHECK_CIMG(); AC_DEFINE([HAVE_IMAGE_HASH],[1])])
+	[
+	AC_CHECK_CIMG()
+	CPPFLAGS="$CPPFLAGS -DHAVE_IMAGE_HASH=1"
+	])
 
-AC_ARG_ENABLE([video-hash], [AC_HELP_STRING([--enable-video-hash], 
-[include support for perceptual video hashes @<:@default=yes@:>@])],
+AC_ARG_ENABLE([video-hash], [AS_HELP_STRING([--enable-video-hash],[include support for perceptual video hashes @<:@default=yes@:>@])],
 [video_hash=$enableval], [video_hash=yes])
 AS_IF([test x"$video_hash" != x"no"],
-	[AC_CHECK_FFMPEG(); AC_CHECK_CIMG(); AC_DEFINE([HAVE_VIDEO_HASH],[1])])
+	[
+	AC_CHECK_FFMPEG() 
+	AC_CHECK_CIMG()
+	CPPFLAGS="$CPPFLAGS -DHAVE_VIDEO_HASH=1
+	])
 
-AC_ARG_ENABLE([audio-hash], [AC_HELP_STRING([--enable-audio-hash], 
-[include support for perceptual audio hashes @<:@default=yes@:>@])],
+AC_ARG_ENABLE([audio-hash], [AS_HELP_STRING([--enable-audio-hash],[include support for perceptual audio hashes @<:@default=yes@:>@])],
 [audio_hash=$enableval], [audio_hash=yes])
 AS_IF([test x"$audio_hash" != x"no"],
-	[AC_CHECK_FFMPEG(); AC_CHECK_FFTW3(); AC_DEFINE([HAVE_AUDIO_HASH],[1])])
+	[
+	AC_CHECK_FFMPEG() 
+	AC_CHECK_FFTW3() 
+	CPPFLAGS="$CPPFLAGS -DHAVE_AUDIO_HASH=1
+	])
 
 
 # Checks for libraries.
@@ -137,7 +147,7 @@ AC_CHECK_TYPE([uint64_t],[],[AC_MSG_ERROR([
 
 *** Required type uint64_t not found. 
 pHash requires 64-bit integers for video and image hashes.
-]))
+])])
 
 # Checks for library functions.
 AC_FUNC_ERROR_AT_LINE
