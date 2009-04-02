@@ -23,7 +23,10 @@
 */
 
 #include "pHash.h"
+
+#ifdef HAVE_VIDEO_HASH
 #include "cimgffmpeg.h"
+#endif
 
 const char phash_project[] = "%s. Copyright 2008-2009 David Starkweather & Evan Klinger";
 char phash_version[255] = {0};
