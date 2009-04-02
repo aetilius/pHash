@@ -25,13 +25,13 @@
 #include "pHash.h"
 #include "cimgffmpeg.h"
 
-const char phash_project[] = "pHash %s Copyright 2008-2009 David Starkweather & Evan Klinger";
+const char phash_project[] = "%s. Copyright 2008-2009 David Starkweather & Evan Klinger";
 char phash_version[255] = {0};
 const char* ph_about(){
 	if(phash_version[0] != 0)
 		return phash_version;
 	
-	snprintf(phash_version, sizeof(phash_version), phash_project, VERSION);
+	snprintf(phash_version, sizeof(phash_version), phash_project, PACKAGE_STRING);
 	return phash_version;
 }
 #ifdef HAVE_IMAGE_HASH
