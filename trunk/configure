@@ -17289,6 +17289,7 @@ fi
 
 
 if test "$found_cimg" = "n"; then
+	echo no
 	{ $as_echo "$as_me:$LINENO: checking whether CImg.h is in the current directory." >&5
 $as_echo_n "checking whether CImg.h is in the current directory.... " >&6; }
 
@@ -17321,7 +17322,7 @@ fi
 if test x"$video_hash" != x"no"; then
 
 	echo
-	echo "*** Configuring Video Hash ***"
+	echo "*** Configuring video Hash ***"
 	echo
 	if test "$found_ffmpeg" != "y"; then
 
@@ -17826,6 +17827,7 @@ fi
 
 
 if test "$found_cimg" = "n"; then
+	echo no
 	{ $as_echo "$as_me:$LINENO: checking whether CImg.h is in the current directory." >&5
 $as_echo_n "checking whether CImg.h is in the current directory.... " >&6; }
 
