@@ -374,7 +374,7 @@ int ph_dct_videohash(const char* file,ulong64 &hash){
 
     int frames_read = ReadFrames(file,pframeList,0,nb_frames,1,nb_frames);
     if (frames_read < 0){
-	delete pFrameList;
+	delete pframeList;
 	return -1;
     }
 
