@@ -374,8 +374,8 @@ int ph_dct_videohash(const char* file,ulong64 &hash){
 
     int frames_read = ReadFrames(file,pframeList,0,nb_frames,1,nb_frames);
     if (frames_read < 0){
-	printf("error reading frames\n");
-	exit(1);
+	delete pFrameList;
+	return -1;
     }
 
     CImg<float> video_cube = pframeList->get_append('z');
@@ -431,15 +431,12 @@ int ph_rash_videodigest(const char* file,CImg<uint8_t> *p_videodigest){
     CImgList<uint8_t> *pframes = new CImgList<uint8_t>();
     
     long N = GetNumberVideoFrames(file);
-    printf("number of video frames %li\n",N);
 
     int frames_read = ReadFrames(file,pframes,0,N,1,N);
     if (frames_read < 0){
-	printf("unable to read frames\n");
-	exit(1);
+	delete pframes;
+	return -1;
     }
-    printf("frames read %d\n",frames_read);
-    printf("frame list is size = %d\n",pframes->size);
 
 #ifdef max
 #undef max
@@ -476,11 +473,6 @@ int ph_rash_videodigest(const char* file,CImg<uint8_t> *p_videodigest){
 	    bnds[k] = 0;
     }
 #endif
-    printf("boundaries\n");
-    for (int i=0;i<N;i++){
-	printf("%d",bnds[i]);
-    }
-    printf("END\n");
     delete pframes;
 
     return 0;
