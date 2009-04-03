@@ -36,8 +36,7 @@ if test "$found_cimg" = "n"; then
 		echo yes
 		found_cimg="y"
 	fi
-fi
-])
+fi])
 AC_DEFUN([AC_CHECK_FFTW3],
 [
 
@@ -45,10 +44,8 @@ AC_MSG_CHECKING([whether FFTW3 is present])
 AC_CHECK_LIB([fftw3], [fftw_plan_dft_r2c_1d], [], [AC_MSG_ERROR([
 
 *** libfftw3 not found.
-You need FFTW3. Get it at <http://fftw.org/>
-])])
-found_fftw="y"
-])
+You need FFTW3. Get it at <http://fftw.org/>])])
+found_fftw="y"])
 
 AC_DEFUN([AC_CHECK_FFMPEG],
 [
@@ -56,28 +53,23 @@ AC_MSG_CHECKING([whether FFmpeg is present])
 AC_CHECK_LIB([avcodec], [avcodec_alloc_frame], [], [AC_MSG_ERROR([
 
 *** libavcodec not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>
-])])
+You need FFmpeg. Get it at <http://ffmpeg.org/>])])
 
 AC_CHECK_LIB([avformat], [avformat_alloc_context], [], [AC_MSG_ERROR([
 
 *** libavformat not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>
-])])
+You need FFmpeg. Get it at <http://ffmpeg.org/>])])
 
 AC_CHECK_LIB([avutil], [avutil_version], [], [AC_MSG_ERROR([
 
 *** libavutil not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>
-])])
+You need FFmpeg. Get it at <http://ffmpeg.org/>])])
 
 AC_CHECK_LIB([swscale], [sws_getContext], [], [AC_MSG_ERROR([
 
 *** libswscale not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>
-])])
-found_ffmpeg="y"
-])
+You need FFmpeg. Get it at <http://ffmpeg.org/>])])
+found_ffmpeg="y"])
 
 AC_ARG_ENABLE([image-hash], [AS_HELP_STRING([--enable-image-hash],[include support for perceptual image hashes @<:@default=yes@:>@])],
 [image_hash=$enableval], [image_hash=yes])
@@ -87,8 +79,7 @@ AS_IF([test x"$image_hash" != x"no"],
 	echo "*** Configuring image hash ***"
 	echo
 	AC_CHECK_CIMG()
-	CPPFLAGS="$CPPFLAGS -DHAVE_IMAGE_HASH=1"
-	])
+	CPPFLAGS="$CPPFLAGS -DHAVE_IMAGE_HASH=1"])
 AM_CONDITIONAL(HAVE_IMAGE_HASH, test x$image_hash != xno)
 
 AC_ARG_ENABLE([video-hash], [AS_HELP_STRING([--enable-video-hash],[include support for perceptual video hashes @<:@default=yes@:>@])],
@@ -104,8 +95,7 @@ AS_IF([test x"$video_hash" != x"no"],
 	if test "$found_cimg" != "y"; then
 		AC_CHECK_CIMG()
 	fi
-	CPPFLAGS="$CPPFLAGS -DHAVE_VIDEO_HASH=1"
-	])
+	CPPFLAGS="$CPPFLAGS -DHAVE_VIDEO_HASH=1"])
 AM_CONDITIONAL(HAVE_VIDEO_HASH, test x$video_hash != xno)
 
 AC_ARG_ENABLE([audio-hash], [AS_HELP_STRING([--enable-audio-hash],[include support for perceptual audio hashes @<:@default=yes@:>@])],
@@ -121,8 +111,7 @@ AS_IF([test x"$audio_hash" != x"no"],
 	if test "$found_fftw" != "y"; then
 		AC_CHECK_FFTW3() 
 	fi
-	CPPFLAGS="$CPPFLAGS -DHAVE_AUDIO_HASH=1"
-	])
+	CPPFLAGS="$CPPFLAGS -DHAVE_AUDIO_HASH=1"])
 AM_CONDITIONAL(HAVE_AUDIO_HASH, test x$audio_hash != xno)
 
 # Checks for libraries.
@@ -136,13 +125,11 @@ AC_CHECK_LIB([pthread], [pthread_create])
 AS_IF([test "$use_jpeg" = "y"],
 [
 	CPPFLAGS="$CPPFLAGS -Dcimg_use_jpeg"
-	LDFLAGS="$LDFLAGS -ljpeg"
-])
+	LDFLAGS="$LDFLAGS -ljpeg"])
 AS_IF([test "$use_png" = "y"],
 [
 	CPPFLAGS="$CPPFLAGS -Dcimg_use_png"
-	LDFLAGS="$LDFLAGS -lpng"
-])
+	LDFLAGS="$LDFLAGS -lpng"])
 
 
 # Checks for header files.
@@ -158,8 +145,7 @@ AC_TYPE_UINT8_T
 AC_CHECK_TYPE([uint64_t],[],[AC_MSG_ERROR([
 
 *** Required type uint64_t not found. 
-pHash requires 64-bit integers for video and image hashes.
-])])
+pHash requires 64-bit integers for video and image hashes.])])
 
 # Checks for library functions.
 AC_FUNC_ERROR_AT_LINE
