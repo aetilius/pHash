@@ -10,15 +10,13 @@ AC_CONFIG_HEADERS([config.h])
 
 AC_PROG_CXX
 AC_PROG_CC
-CXXFLAGS="-O3 -ffast-math"
 
 AC_ARG_ENABLE(debug, [AS_HELP_STRING([--enable-debug],
 [compile with debugging support @<:@default=no@:>@])], 
 debug=$enableval, debug=no)
 AS_IF([test "$debug" != "no"],
-[
-	CXXFLAGS="-g"
-])
+	[CXXFLAGS += "-O0 -g"],
+	[CXXFLAGS += "-O3 -ffast-math"])
 
 
 AC_PROG_INSTALL
