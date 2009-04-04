@@ -1,7 +1,14 @@
-lib_LTLIBRARIES = libpHashjni.la
-libpHashjni_la_SOURCES = pHash-jni.cpp
-
+lib_LTLIBRARIES = libpHash-jni.la
+libpHash_jni_la_SOURCES = pHash-jni.cpp
 include_HEADERS = pHash-jni.h
 
-#libpHashjni_LDADD = libpHash.la
-#libpHashjni_LIBADD = libpHash.la
+clean:
+	rm -f *.class *.so *.la *.lo
+
+all: pHash.class
+pHash.java: pHashjni.la
+
+pHash.class: pHash.java
+	$(GCJ) -C pHash.java 
+
+libpHash_jni_la_LIBADD = ../../libpHash.la
