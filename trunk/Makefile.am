@@ -4,7 +4,8 @@ libpHash_la_LDFLAGS = -no-undefined
 include_HEADERS = pHash.h
 bin_PROGRAMS =
 
-EXAMPLES = 
+SUBDIRS = . bindings
+
 if HAVE_AUDIO_HASH
 bin_PROGRAMS += test_audio
 
