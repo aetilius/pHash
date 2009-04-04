@@ -3,7 +3,7 @@ libpHash_jni_la_SOURCES = pHash-jni.cpp
 include_HEADERS = pHash-jni.h
 
 clean:
-	rm -f *.class *.so *.la *.lo
+	rm -f *.class *.so *.la *.lo *.o
 
 all: pHash.class
 pHash.java: libpHash-jni.la
