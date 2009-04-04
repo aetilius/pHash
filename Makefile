@@ -110,12 +110,22 @@ SOURCES = $(libpHash_la_SOURCES) $(test_audio_SOURCES) \
 DIST_SOURCES = $(am__libpHash_la_SOURCES_DIST) \
 	$(am__test_audio_SOURCES_DIST) $(am__test_image_SOURCES_DIST) \
 	$(am__test_video_SOURCES_DIST)
+RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
+	html-recursive info-recursive install-data-recursive \
+	install-dvi-recursive install-exec-recursive \
+	install-html-recursive install-info-recursive \
+	install-pdf-recursive install-ps-recursive install-recursive \
+	installcheck-recursive installdirs-recursive pdf-recursive \
+	ps-recursive uninstall-recursive
 pkgconfigDATA_INSTALL = $(INSTALL_DATA)
 DATA = $(pkgconfig_DATA)
 includeHEADERS_INSTALL = $(INSTALL_HEADER)
 HEADERS = $(include_HEADERS)
+RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
+  distclean-recursive maintainer-clean-recursive
 ETAGS = etags
 CTAGS = ctags
+DIST_SUBDIRS = $(SUBDIRS)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -142,7 +152,7 @@ CPPFLAGS =  -DHAVE_IMAGE_HASH=1 -DHAVE_VIDEO_HASH=1 -DHAVE_AUDIO_HASH=1 -Dcimg_u
 CXX = g++
 CXXCPP = g++ -E
 CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -O3 -ffast-math
+CXXFLAGS = -g -O2
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
@@ -153,6 +163,9 @@ ECHO_N = -n
 ECHO_T = 
 EGREP = /bin/grep -E
 EXEEXT = 
+GCJ = gcj
+GCJDEPMODE = depmode=gcc3
+GCJFLAGS = -g -O2
 GREP = /bin/grep
 INSTALL = /usr/bin/install -c
 INSTALL_DATA = ${INSTALL} -m 644
@@ -237,7 +250,7 @@ lib_LTLIBRARIES = libpHash.la
 libpHash_la_SOURCES = pHash.cpp $(am__append_2)
 libpHash_la_LDFLAGS = -no-undefined
 include_HEADERS = pHash.h
-EXAMPLES = 
+SUBDIRS = . bindings
 test_audio_SOURCES = test_audiophash.cpp
 test_audio_LDADD = libpHash.la
 test_image_SOURCES = test_imagephash.cpp
@@ -247,7 +260,7 @@ test_video_LDADD = libpHash.la
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = pHash.pc
 all: config.h
-	$(MAKE) $(AM_MAKEFLAGS) all-am
+	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
 .SUFFIXES:
 .SUFFIXES: .cpp .lo .o .obj
@@ -446,6 +459,76 @@ uninstall-includeHEADERS:
 	  rm -f "$(DESTDIR)$(includedir)/$$f"; \
 	done
 
+# This directory's subdirectories are mostly independent; you can cd
+# into them and run `make' without going through this Makefile.
+# To change the values of `make' variables: instead of editing Makefiles,
+# (1) if the variable is set in `config.status', edit `config.status'
+#     (which will cause the Makefiles to be regenerated when you run `make');
+# (2) otherwise, pass the desired values on the `make' command line.
+$(RECURSIVE_TARGETS):
+	@failcom='exit 1'; \
+	for f in x $$MAKEFLAGS; do \
+	  case $$f in \
+	    *=* | --[!k]*);; \
+	    *k*) failcom='fail=yes';; \
+	  esac; \
+	done; \
+	dot_seen=no; \
+	target=`echo $@ | sed s/-recursive//`; \
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+	  echo "Making $$target in $$subdir"; \
+	  if test "$$subdir" = "."; then \
+	    dot_seen=yes; \
+	    local_target="$$target-am"; \
+	  else \
+	    local_target="$$target"; \
+	  fi; \
+	  (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) $$local_target) \
+	  || eval $$failcom; \
+	done; \
+	if test "$$dot_seen" = "no"; then \
+	  $(MAKE) $(AM_MAKEFLAGS) "$$target-am" || exit 1; \
+	fi; test -z "$$fail"
+
+$(RECURSIVE_CLEAN_TARGETS):
+	@failcom='exit 1'; \
+	for f in x $$MAKEFLAGS; do \
+	  case $$f in \
+	    *=* | --[!k]*);; \
+	    *k*) failcom='fail=yes';; \
+	  esac; \
+	done; \
+	dot_seen=no; \
+	case "$@" in \
+	  distclean-* | maintainer-clean-*) list='$(DIST_SUBDIRS)' ;; \
+	  *) list='$(SUBDIRS)' ;; \
+	esac; \
+	rev=''; for subdir in $$list; do \
+	  if test "$$subdir" = "."; then :; else \
+	    rev="$$subdir $$rev"; \
+	  fi; \
+	done; \
+	rev="$$rev ."; \
+	target=`echo $@ | sed s/-recursive//`; \
+	for subdir in $$rev; do \
+	  echo "Making $$target in $$subdir"; \
+	  if test "$$subdir" = "."; then \
+	    local_target="$$target-am"; \
+	  else \
+	    local_target="$$target"; \
+	  fi; \
+	  (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) $$local_target) \
+	  || eval $$failcom; \
+	done && test -z "$$fail"
+tags-recursive:
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+	  test "$$subdir" = . || (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) tags); \
+	done
+ctags-recursive:
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+	  test "$$subdir" = . || (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) ctags); \
+	done
+
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
 	unique=`for i in $$list; do \
@@ -456,10 +539,23 @@ ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	mkid -fID $$unique
 tags: TAGS
 
-TAGS:  $(HEADERS) $(SOURCES) config.h.in $(TAGS_DEPENDENCIES) \
+TAGS: tags-recursive $(HEADERS) $(SOURCES) config.h.in $(TAGS_DEPENDENCIES) \
 		$(TAGS_FILES) $(LISP)
 	tags=; \
 	here=`pwd`; \
+	if ($(ETAGS) --etags-include --version) >/dev/null 2>&1; then \
+	  include_option=--etags-include; \
+	  empty_fix=.; \
+	else \
+	  include_option=--include; \
+	  empty_fix=; \
+	fi; \
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+	  if test "$$subdir" = .; then :; else \
+	    test ! -f $$subdir/TAGS || \
+	      tags="$$tags $$include_option=$$here/$$subdir/TAGS"; \
+	  fi; \
+	done; \
 	list='$(SOURCES) $(HEADERS) config.h.in $(LISP) $(TAGS_FILES)'; \
 	unique=`for i in $$list; do \
 	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
@@ -472,7 +568,7 @@ TAGS:  $(HEADERS) $(SOURCES) config.h.in $(TAGS_DEPENDENCIES) \
 	    $$tags $$unique; \
 	fi
 ctags: CTAGS
-CTAGS:  $(HEADERS) $(SOURCES) config.h.in $(TAGS_DEPENDENCIES) \
+CTAGS: ctags-recursive $(HEADERS) $(SOURCES) config.h.in $(TAGS_DEPENDENCIES) \
 		$(TAGS_FILES) $(LISP)
 	tags=; \
 	list='$(SOURCES) $(HEADERS) config.h.in $(LISP) $(TAGS_FILES)'; \
@@ -519,6 +615,23 @@ distdir: $(DISTFILES)
 	    test -f $(distdir)/$$file \
 	    || cp -p $$d/$$file $(distdir)/$$file \
 	    || exit 1; \
+	  fi; \
+	done
+	list='$(DIST_SUBDIRS)'; for subdir in $$list; do \
+	  if test "$$subdir" = .; then :; else \
+	    test -d "$(distdir)/$$subdir" \
+	    || $(MKDIR_P) "$(distdir)/$$subdir" \
+	    || exit 1; \
+	    distdir=`$(am__cd) $(distdir) && pwd`; \
+	    top_distdir=`$(am__cd) $(top_distdir) && pwd`; \
+	    (cd $$subdir && \
+	      $(MAKE) $(AM_MAKEFLAGS) \
+	        top_distdir="$$top_distdir" \
+	        distdir="$$distdir/$$subdir" \
+		am__remove_distdir=: \
+		am__skip_length_check=: \
+	        distdir) \
+	      || exit 1; \
 	  fi; \
 	done
 	-find $(distdir) -type d ! -perm -777 -exec chmod a+rwx {} \; -o \
@@ -625,24 +738,25 @@ distcleancheck: distclean
 	       $(distcleancheck_listfiles) ; \
 	       exit 1; } >&2
 check-am: all-am
-check: check-am
+check: check-recursive
 all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(DATA) $(HEADERS) \
 		config.h
 install-binPROGRAMS: install-libLTLIBRARIES
 
-installdirs:
+installdirs: installdirs-recursive
+installdirs-am:
 	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(pkgconfigdir)" "$(DESTDIR)$(includedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
-install: install-am
-install-exec: install-exec-am
-install-data: install-data-am
-uninstall: uninstall-am
+install: install-recursive
+install-exec: install-exec-recursive
+install-data: install-data-recursive
+uninstall: uninstall-recursive
 
 install-am: all-am
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
 
-installcheck: installcheck-am
+installcheck: installcheck-recursive
 install-strip:
 	$(MAKE) $(AM_MAKEFLAGS) INSTALL_PROGRAM="$(INSTALL_STRIP_PROGRAM)" \
 	  install_sh_PROGRAM="$(INSTALL_STRIP_PROGRAM)" INSTALL_STRIP_FLAG=-s \
@@ -658,75 +772,77 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
-clean: clean-am
+clean: clean-recursive
 
 clean-am: clean-binPROGRAMS clean-generic clean-libLTLIBRARIES \
 	clean-libtool mostlyclean-am
 
-distclean: distclean-am
+distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-tags
 
-dvi: dvi-am
+dvi: dvi-recursive
 
 dvi-am:
 
-html: html-am
+html: html-recursive
 
-info: info-am
+info: info-recursive
 
 info-am:
 
 install-data-am: install-includeHEADERS install-pkgconfigDATA
 
-install-dvi: install-dvi-am
+install-dvi: install-dvi-recursive
 
 install-exec-am: install-binPROGRAMS install-libLTLIBRARIES
 
-install-html: install-html-am
+install-html: install-html-recursive
 
-install-info: install-info-am
+install-info: install-info-recursive
 
 install-man:
 
-install-pdf: install-pdf-am
+install-pdf: install-pdf-recursive
 
-install-ps: install-ps-am
+install-ps: install-ps-recursive
 
 installcheck-am:
 
-maintainer-clean: maintainer-clean-am
+maintainer-clean: maintainer-clean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
 	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
-mostlyclean: mostlyclean-am
+mostlyclean: mostlyclean-recursive
 
 mostlyclean-am: mostlyclean-compile mostlyclean-generic \
 	mostlyclean-libtool
 
-pdf: pdf-am
+pdf: pdf-recursive
 
 pdf-am:
 
-ps: ps-am
+ps: ps-recursive
 
 ps-am:
 
 uninstall-am: uninstall-binPROGRAMS uninstall-includeHEADERS \
 	uninstall-libLTLIBRARIES uninstall-pkgconfigDATA
 
-.MAKE: install-am install-strip
+.MAKE: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) install-am \
+	install-strip
 
-.PHONY: CTAGS GTAGS all all-am am--refresh check check-am clean \
-	clean-binPROGRAMS clean-generic clean-libLTLIBRARIES \
-	clean-libtool ctags dist dist-all dist-bzip2 dist-gzip \
-	dist-lzma dist-shar dist-tarZ dist-zip distcheck distclean \
+.PHONY: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) CTAGS GTAGS \
+	all all-am am--refresh check check-am clean clean-binPROGRAMS \
+	clean-generic clean-libLTLIBRARIES clean-libtool ctags \
+	ctags-recursive dist dist-all dist-bzip2 dist-gzip dist-lzma \
+	dist-shar dist-tarZ dist-zip distcheck distclean \
 	distclean-compile distclean-generic distclean-hdr \
 	distclean-libtool distclean-tags distcleancheck distdir \
 	distuninstallcheck dvi dvi-am html html-am info info-am \
@@ -736,12 +852,12 @@ uninstall-am: uninstall-binPROGRAMS uninstall-includeHEADERS \
 	install-includeHEADERS install-info install-info-am \
 	install-libLTLIBRARIES install-man install-pdf install-pdf-am \
 	install-pkgconfigDATA install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags uninstall uninstall-am uninstall-binPROGRAMS \
-	uninstall-includeHEADERS uninstall-libLTLIBRARIES \
-	uninstall-pkgconfigDATA
+	installcheck installcheck-am installdirs installdirs-am \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
+	pdf pdf-am ps ps-am tags tags-recursive uninstall uninstall-am \
+	uninstall-binPROGRAMS uninstall-includeHEADERS \
+	uninstall-libLTLIBRARIES uninstall-pkgconfigDATA
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

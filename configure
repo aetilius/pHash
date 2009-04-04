@@ -725,6 +725,8 @@ fi
 
 tagnames=${tagnames+${tagnames},}CXX
 
+tagnames=${tagnames+${tagnames},}GCJ
+
 exec 7<&0 </dev/null 6>&1
 
 # Name of the host.
@@ -817,6 +819,13 @@ build_vendor
 build_cpu
 build
 LN_S
+am__fastdepGCJ_FALSE
+am__fastdepGCJ_TRUE
+GCJDEPMODE
+GCJFLAGS
+GCJ
+WITH_JAVA_FALSE
+WITH_JAVA_TRUE
 am__fastdepCC_FALSE
 am__fastdepCC_TRUE
 CCDEPMODE
@@ -904,6 +913,7 @@ ac_user_opts='
 enable_option_checking
 enable_dependency_tracking
 enable_debug
+enable_java
 enable_shared
 enable_static
 enable_fast_install
@@ -1561,6 +1571,7 @@ Optional Features:
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
   --enable-debug          compile with debugging support [default=no]
+  --enable-java           compile java (JNI) binding for pHash [default=no]
   --enable-shared[=PKGS]  build shared libraries [default=yes]
   --enable-static[=PKGS]  build static libraries [default=yes]
   --enable-fast-install[=PKGS]
@@ -4120,7 +4131,6 @@ else
 fi
 
 
-CXXFLAGS="-O3 -ffast-math"
 
 # Check whether --enable-debug was given.
 if test "${enable_debug+set}" = set; then
@@ -4129,14 +4139,192 @@ else
   debug=no
 fi
 
-if test "$debug" != "no"; then
+if test x"$debug" != x"no"; then
+  CXXFLAGS += "-O0 -g"
+else
+  CXXFLAGS += "-O3 -ffast-math"
+fi
 
-	CXXFLAGS="-g"
 
+# Check whether --enable-java was given.
+if test "${enable_java+set}" = set; then
+  enableval=$enable_java; java=$enableval
+else
+  java=no
+fi
+
+ if test x$java != xno; then
+  WITH_JAVA_TRUE=
+  WITH_JAVA_FALSE='#'
+else
+  WITH_JAVA_TRUE='#'
+  WITH_JAVA_FALSE=
+fi
+
+if test x$java != xno; then
+#	AC_SUBST([GCJ],[1])
+
+for ac_prog in gcj
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:$LINENO: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if test "${ac_cv_prog_GCJ+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$GCJ"; then
+  ac_cv_prog_GCJ="$GCJ" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_prog_GCJ="$ac_prog"
+    $as_echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+IFS=$as_save_IFS
+
+fi
+fi
+GCJ=$ac_cv_prog_GCJ
+if test -n "$GCJ"; then
+  { $as_echo "$as_me:$LINENO: result: $GCJ" >&5
+$as_echo "$GCJ" >&6; }
+else
+  { $as_echo "$as_me:$LINENO: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$GCJ" && break
+done
+test -n "$GCJ" || GCJ="gcj"
+
+test -z "$GCJ" && { { $as_echo "$as_me:$LINENO: error: no acceptable gcj found in \$PATH" >&5
+$as_echo "$as_me: error: no acceptable gcj found in \$PATH" >&2;}
+   { (exit 1); exit 1; }; }
+if test "x${GCJFLAGS-unset}" = xunset; then
+   GCJFLAGS="-g -O2"
+fi
+
+
+depcc="$GCJ"  am_compiler_list='gcc3 gcc'
+
+{ $as_echo "$as_me:$LINENO: checking dependency style of $depcc" >&5
+$as_echo_n "checking dependency style of $depcc... " >&6; }
+if test "${am_cv_GCJ_dependencies_compiler_type+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  if test -z "$AMDEP_TRUE" && test -f "$am_depcomp"; then
+  # We make a subdir and do the tests there.  Otherwise we can end up
+  # making bogus files that we don't know about and never remove.  For
+  # instance it was reported that on HP-UX the gcc test will end up
+  # making a dummy file named `D' -- because `-MD' means `put the output
+  # in D'.
+  mkdir conftest.dir
+  # Copy depcomp to subdir because otherwise we won't find it if we're
+  # using a relative directory.
+  cp "$am_depcomp" conftest.dir
+  cd conftest.dir
+  # We will build objects and dependencies in a subdirectory because
+  # it helps to detect inapplicable dependency modes.  For instance
+  # both Tru64's cc and ICC support -MD to output dependencies as a
+  # side effect of compilation, but ICC will put the dependencies in
+  # the current directory while Tru64 will put them in the object
+  # directory.
+  mkdir sub
+
+  am_cv_GCJ_dependencies_compiler_type=none
+  if test "$am_compiler_list" = ""; then
+     am_compiler_list=`sed -n 's/^#*\([a-zA-Z0-9]*\))$/\1/p' < ./depcomp`
+  fi
+  for depmode in $am_compiler_list; do
+    # Setup a source with many dependencies, because some compilers
+    # like to wrap large dependency lists on column 80 (with \), and
+    # we should not choose a depcomp mode which is confused by this.
+    #
+    # We need to recreate these files for each test, as the compiler may
+    # overwrite some of them when testing with obscure command lines.
+    # This happens at least with the AIX C compiler.
+    : > sub/conftest.c
+    for i in 1 2 3 4 5 6; do
+      echo '#include "conftst'$i'.h"' >> sub/conftest.c
+      # Using `: > sub/conftst$i.h' creates only sub/conftst1.h with
+      # Solaris 8's {/usr,}/bin/sh.
+      touch sub/conftst$i.h
+    done
+    echo "${am__include} ${am__quote}sub/conftest.Po${am__quote}" > confmf
+
+    case $depmode in
+    nosideeffect)
+      # after this tag, mechanisms are not by side-effect, so they'll
+      # only be used when explicitly requested
+      if test "x$enable_dependency_tracking" = xyes; then
+	continue
+      else
+	break
+      fi
+      ;;
+    none) break ;;
+    esac
+    # We check with `-c' and `-o' for the sake of the "dashmstdout"
+    # mode.  It turns out that the SunPro C++ compiler does not properly
+    # handle `-M -o', and we need to detect this.
+    if depmode=$depmode \
+       source=sub/conftest.c object=sub/conftest.${OBJEXT-o} \
+       depfile=sub/conftest.Po tmpdepfile=sub/conftest.TPo \
+       $SHELL ./depcomp $depcc -c -o sub/conftest.${OBJEXT-o} sub/conftest.c \
+         >/dev/null 2>conftest.err &&
+       grep sub/conftst1.h sub/conftest.Po > /dev/null 2>&1 &&
+       grep sub/conftst6.h sub/conftest.Po > /dev/null 2>&1 &&
+       grep sub/conftest.${OBJEXT-o} sub/conftest.Po > /dev/null 2>&1 &&
+       ${MAKE-make} -s -f confmf > /dev/null 2>&1; then
+      # icc doesn't choke on unknown options, it will just issue warnings
+      # or remarks (even with -Werror).  So we grep stderr for any message
+      # that says an option was ignored or not supported.
+      # When given -MP, icc 7.0 and 7.1 complain thusly:
+      #   icc: Command line warning: ignoring option '-M'; no argument required
+      # The diagnosis changed in icc 8.0:
+      #   icc: Command line remark: option '-MP' not supported
+      if (grep 'ignoring option' conftest.err ||
+          grep 'not supported' conftest.err) >/dev/null 2>&1; then :; else
+        am_cv_GCJ_dependencies_compiler_type=$depmode
+        break
+      fi
+    fi
+  done
+
+  cd ..
+  rm -rf conftest.dir
+else
+  am_cv_GCJ_dependencies_compiler_type=none
+fi
+
+fi
+{ $as_echo "$as_me:$LINENO: result: $am_cv_GCJ_dependencies_compiler_type" >&5
+$as_echo "$am_cv_GCJ_dependencies_compiler_type" >&6; }
+GCJDEPMODE=depmode=$am_cv_GCJ_dependencies_compiler_type
+
+ if
+  test "x$enable_dependency_tracking" != xno \
+  && test "$am_cv_GCJ_dependencies_compiler_type" = gcc3; then
+  am__fastdepGCJ_TRUE=
+  am__fastdepGCJ_FALSE='#'
+else
+  am__fastdepGCJ_TRUE='#'
+  am__fastdepGCJ_FALSE=
 fi
 
 
 
+fi
 # Find a good install program.  We prefer a C program (faster),
 # so one script is as good as another.  But avoid the broken or
 # incompatible versions:
@@ -5011,7 +5199,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 5014 "configure"' > conftest.$ac_ext
+  echo '#line 5202 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -7350,11 +7538,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7353: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7541: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7357: \$? = $ac_status" >&5
+   echo "$as_me:7545: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7640,11 +7828,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7643: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7831: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7647: \$? = $ac_status" >&5
+   echo "$as_me:7835: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7744,11 +7932,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7747: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7935: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:7751: \$? = $ac_status" >&5
+   echo "$as_me:7939: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -10146,7 +10334,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10149 "configure"
+#line 10337 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10246,7 +10434,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10249 "configure"
+#line 10437 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12655,11 +12843,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12658: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:12846: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:12662: \$? = $ac_status" >&5
+   echo "$as_me:12850: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -12759,11 +12947,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12762: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:12950: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:12766: \$? = $ac_status" >&5
+   echo "$as_me:12954: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -14051,11 +14239,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14054: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14242: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:14058: \$? = $ac_status" >&5
+   echo "$as_me:14246: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14341,11 +14529,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14344: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14532: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:14348: \$? = $ac_status" >&5
+   echo "$as_me:14536: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14445,11 +14633,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14448: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14636: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14452: \$? = $ac_status" >&5
+   echo "$as_me:14640: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -17133,6 +17321,9 @@ LIBTOOL='$(SHELL) $(top_builddir)/libtool'
 
 
 
+
+
+
 # Check whether --enable-image-hash was given.
 if test "${enable_image_hash+set}" = set; then
   enableval=$enable_image_hash; image_hash=$enableval
@@ -17298,9 +17489,7 @@ $as_echo_n "checking whether CImg.h is in the current directory.... " >&6; }
 		found_cimg="y"
 	fi
 fi
-
 	CPPFLAGS="$CPPFLAGS -DHAVE_IMAGE_HASH=1"
-
 fi
 
  if test x$image_hash != xno; then
@@ -17405,13 +17594,11 @@ else
   { { $as_echo "$as_me:$LINENO: error:
 
 *** libavcodec not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>
-" >&5
+You need FFmpeg. Get it at <http://ffmpeg.org/>" >&5
 $as_echo "$as_me: error:
 
 *** libavcodec not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>
-" >&2;}
+You need FFmpeg. Get it at <http://ffmpeg.org/>" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -17493,13 +17680,11 @@ else
   { { $as_echo "$as_me:$LINENO: error:
 
 *** libavformat not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>
-" >&5
+You need FFmpeg. Get it at <http://ffmpeg.org/>" >&5
 $as_echo "$as_me: error:
 
 *** libavformat not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>
-" >&2;}
+You need FFmpeg. Get it at <http://ffmpeg.org/>" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -17581,13 +17766,11 @@ else
   { { $as_echo "$as_me:$LINENO: error:
 
 *** libavutil not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>
-" >&5
+You need FFmpeg. Get it at <http://ffmpeg.org/>" >&5
 $as_echo "$as_me: error:
 
 *** libavutil not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>
-" >&2;}
+You need FFmpeg. Get it at <http://ffmpeg.org/>" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -17669,18 +17852,15 @@ else
   { { $as_echo "$as_me:$LINENO: error:
 
 *** libswscale not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>
-" >&5
+You need FFmpeg. Get it at <http://ffmpeg.org/>" >&5
 $as_echo "$as_me: error:
 
 *** libswscale not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>
-" >&2;}
+You need FFmpeg. Get it at <http://ffmpeg.org/>" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
 found_ffmpeg="y"
-
 	fi
 	if test "$found_cimg" != "y"; then
 
@@ -17836,10 +18016,8 @@ $as_echo_n "checking whether CImg.h is in the current directory.... " >&6; }
 		found_cimg="y"
 	fi
 fi
-
 	fi
 	CPPFLAGS="$CPPFLAGS -DHAVE_VIDEO_HASH=1"
-
 fi
 
  if test x$video_hash != xno; then
@@ -17944,13 +18122,11 @@ else
   { { $as_echo "$as_me:$LINENO: error:
 
 *** libavcodec not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>
-" >&5
+You need FFmpeg. Get it at <http://ffmpeg.org/>" >&5
 $as_echo "$as_me: error:
 
 *** libavcodec not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>
-" >&2;}
+You need FFmpeg. Get it at <http://ffmpeg.org/>" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -18032,13 +18208,11 @@ else
   { { $as_echo "$as_me:$LINENO: error:
 
 *** libavformat not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>
-" >&5
+You need FFmpeg. Get it at <http://ffmpeg.org/>" >&5
 $as_echo "$as_me: error:
 
 *** libavformat not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>
-" >&2;}
+You need FFmpeg. Get it at <http://ffmpeg.org/>" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -18120,13 +18294,11 @@ else
   { { $as_echo "$as_me:$LINENO: error:
 
 *** libavutil not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>
-" >&5
+You need FFmpeg. Get it at <http://ffmpeg.org/>" >&5
 $as_echo "$as_me: error:
 
 *** libavutil not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>
-" >&2;}
+You need FFmpeg. Get it at <http://ffmpeg.org/>" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -18208,18 +18380,15 @@ else
   { { $as_echo "$as_me:$LINENO: error:
 
 *** libswscale not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>
-" >&5
+You need FFmpeg. Get it at <http://ffmpeg.org/>" >&5
 $as_echo "$as_me: error:
 
 *** libswscale not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>
-" >&2;}
+You need FFmpeg. Get it at <http://ffmpeg.org/>" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
 found_ffmpeg="y"
-
 	fi
 	if test "$found_fftw" != "y"; then
 
@@ -18303,21 +18472,17 @@ else
   { { $as_echo "$as_me:$LINENO: error:
 
 *** libfftw3 not found.
-You need FFTW3. Get it at <http://fftw.org/>
-" >&5
+You need FFTW3. Get it at <http://fftw.org/>" >&5
 $as_echo "$as_me: error:
 
 *** libfftw3 not found.
-You need FFTW3. Get it at <http://fftw.org/>
-" >&2;}
+You need FFTW3. Get it at <http://fftw.org/>" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
 found_fftw="y"
-
 	fi
 	CPPFLAGS="$CPPFLAGS -DHAVE_AUDIO_HASH=1"
-
 fi
 
  if test x$audio_hash != xno; then
@@ -18625,14 +18790,12 @@ if test "$use_jpeg" = "y"; then
 
 	CPPFLAGS="$CPPFLAGS -Dcimg_use_jpeg"
 	LDFLAGS="$LDFLAGS -ljpeg"
-
 fi
 
 if test "$use_png" = "y"; then
 
 	CPPFLAGS="$CPPFLAGS -Dcimg_use_png"
 	LDFLAGS="$LDFLAGS -lpng"
-
 fi
 
 
@@ -19569,13 +19732,11 @@ else
   { { $as_echo "$as_me:$LINENO: error:
 
 *** Required type uint64_t not found.
-pHash requires 64-bit integers for video and image hashes.
-" >&5
+pHash requires 64-bit integers for video and image hashes." >&5
 $as_echo "$as_me: error:
 
 *** Required type uint64_t not found.
-pHash requires 64-bit integers for video and image hashes.
-" >&2;}
+pHash requires 64-bit integers for video and image hashes." >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -20242,7 +20403,7 @@ _ACEOF
 fi
 done
 
-ac_config_files="$ac_config_files Makefile pHash.pc bindings/java/Makefile"
+ac_config_files="$ac_config_files Makefile pHash.pc bindings/Makefile bindings/java/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -20359,6 +20520,20 @@ if test -z "${am__fastdepCC_TRUE}" && test -z "${am__fastdepCC_FALSE}"; then
   { { $as_echo "$as_me:$LINENO: error: conditional \"am__fastdepCC\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
 $as_echo "$as_me: error: conditional \"am__fastdepCC\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${WITH_JAVA_TRUE}" && test -z "${WITH_JAVA_FALSE}"; then
+  { { $as_echo "$as_me:$LINENO: error: conditional \"WITH_JAVA\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+$as_echo "$as_me: error: conditional \"WITH_JAVA\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${am__fastdepGCJ_TRUE}" && test -z "${am__fastdepGCJ_FALSE}"; then
+  { { $as_echo "$as_me:$LINENO: error: conditional \"am__fastdepGCJ\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+$as_echo "$as_me: error: conditional \"am__fastdepGCJ\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -20895,6 +21070,7 @@ do
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "pHash.pc") CONFIG_FILES="$CONFIG_FILES pHash.pc" ;;
+    "bindings/Makefile") CONFIG_FILES="$CONFIG_FILES bindings/Makefile" ;;
     "bindings/java/Makefile") CONFIG_FILES="$CONFIG_FILES bindings/java/Makefile" ;;
 
   *) { { $as_echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
