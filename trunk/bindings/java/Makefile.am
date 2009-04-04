@@ -6,7 +6,7 @@ clean:
 	rm -f *.class *.so *.la *.lo
 
 all: pHash.class
-pHash.java: libpHashjni.la
+pHash.java: libpHash_jni.la
 
 pHash.class: pHash.java
 	$(GCJ) -C pHash.java 
