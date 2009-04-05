@@ -17480,14 +17480,18 @@ fi
 
 
 if test "$found_cimg" = "n"; then
-	echo no
 	{ $as_echo "$as_me:$LINENO: checking whether CImg.h is in the current directory." >&5
 $as_echo_n "checking whether CImg.h is in the current directory.... " >&6; }
 
 	if test `ls | grep "CImg.h"` = "CImg.h"; then
-		echo yes
+		{ $as_echo "$as_me:$LINENO: result: yes" >&5
+$as_echo "yes" >&6; }
 		found_cimg="y"
+	else
+		{ $as_echo "$as_me:$LINENO: result: no" >&5
+$as_echo "no" >&6; }
 	fi
+
 fi
 	CPPFLAGS="$CPPFLAGS -DHAVE_IMAGE_HASH=1"
 fi
@@ -18007,14 +18011,18 @@ fi
 
 
 if test "$found_cimg" = "n"; then
-	echo no
 	{ $as_echo "$as_me:$LINENO: checking whether CImg.h is in the current directory." >&5
 $as_echo_n "checking whether CImg.h is in the current directory.... " >&6; }
 
 	if test `ls | grep "CImg.h"` = "CImg.h"; then
-		echo yes
+		{ $as_echo "$as_me:$LINENO: result: yes" >&5
+$as_echo "yes" >&6; }
 		found_cimg="y"
+	else
+		{ $as_echo "$as_me:$LINENO: result: no" >&5
+$as_echo "no" >&6; }
 	fi
+
 fi
 	fi
 	CPPFLAGS="$CPPFLAGS -DHAVE_VIDEO_HASH=1"

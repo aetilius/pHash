@@ -36,13 +36,15 @@ AC_MSG_CHECKING([whether CImg.h is present in system directories.])
 AC_CHECK_HEADER([CImg.h], [found_cimg="y"], [found_cimg="n"])
 
 if test "$found_cimg" = "n"; then
-	echo no
 	AC_MSG_CHECKING([whether CImg.h is in the current directory.])
 	
 	if [test `ls | grep "CImg.h"` = "CImg.h"]; then
-		echo yes
+		AC_MSG_RESULT([yes])
 		found_cimg="y"
+	else
+		AC_MSG_RESULT([no])
 	fi
+	
 fi])
 AC_DEFUN([AC_CHECK_FFTW3],
 [
