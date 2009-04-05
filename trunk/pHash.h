@@ -70,6 +70,61 @@ typedef struct ph_digest {
     int size;                   //the size of the coeff array
 } Digest;
 
+
+/**
+ *  DO NOT CHANGE.  For use in experimenting with the size and shape of the mvp tree structure.
+**/
+#define M 2                      //number of brances in tree      (adjustable)
+#define LENGTH_M1  M-1           //number of first level pivots   (leave alone)
+#define LENGTH_M2  M*(LENGTH_M1) //number of 2nd level pivots     (leave alone)
+#define FANOUT M*M               //fanout per node                (leave alone)
+#define P 5                      //path length                    (adjustable)
+#define K 25                     //number points, Np in leaf node (adjustable)
+#define CAPACITY 500             //maximum number of files in tree(adjustable)
+
+/* do not change */
+static int BranchFactor = M;     //changed by save/read functions for mvptree
+static int LengthM1 = LENGTH_M1;
+static int LengthM2 = LENGTH_M2;
+static int Fanout   = FANOUT;
+static int PathLength = P;
+static int LeafCapacity = K;
+
+
+/* structure for a single image hash */
+struct datapoint {
+    char *id;
+    ulong64 hash;
+    int *path;
+};
+
+typedef struct datapoint DP;
+
+/* /brief alloc a single data point
+ *  allocates path array, does nto set id or path
+ */
+DP* ph_malloc_datapoint();
+
+/** /brief free a datapoint and its path
+ *
+ */
+void ph_free_datapoint(DP *dp);
+
+/**
+ *    /brief alloc a leaf for an mvptree
+ **/
+Node* ph_malloc_leaf();
+
+/**  /brief alloc an inner node for mvptree
+ *
+ **/
+Node* ph_malloc_inner();
+
+/** /brief free a node of an mvptree
+ *
+ **/
+void ph_free_node(Node *node);
+
 /*! /brief copyright information
  */
 const char* ph_about();
@@ -189,5 +244,97 @@ int ph_dct_videohash(const char* file,ulong64 &hash);
 int ph_hamming_distance(const ulong64 hash1,const ulong64 hash2);
 
 int ph_rash_videodigest(const char* file,CImg<uint8_t> *p_videodigest);
+
+/** /brief creat an mvptree
+ *  /param points - array of pointers to datapoint struct's
+ *  /param nbpoints - int value number of datapoints
+ *  /param level - int value to track recursion (user can ignore)
+ *  /return Node pointer to top of created tree (NULL for error)
+ **/
+Node* CreateMVPTree(DP **points, int nbpoints, int level=0);
+
+/** /brief add a new datapoint to an existing tree
+ *  /param tree - node pointer to top of an existing tree
+ *  /param dp   - pointer to a new datapoint struct
+ *  /param level - int value to track recursion (user can ignore)
+ *  /return Node pointer to top of new tree (NULL for error)
+ **/
+Node* AddDPtoMVPTree(Node *tree,DP *dp,int level=0);
+
+/** /brief create a list of datapoint's directly from a directory of image files
+ *  /param dirname - path and name of directory containg all image file names
+ *  /param capacity - int value for upper limit on number of hashes
+ *  /param count - number of hashes created (out param)
+ *  /return pointer to a list of DP pointers (NULL for error)
+ **/
+DP** ReadImageHashes(const char *dirname,int capacity, int &count);
+
+/** /brief get all the filenames in specified directory
+ *  /param dirname - string value for path and filename
+ *  /param cap - int value for upper limit to number of files
+ *  /param count - int value for number of file names returned
+ *  /return array of pointers to string file names (NULL for error)
+ **/
+char** readfilenames(const char *dirname,int cap,int &count);
+
+/** /brief save a datapoint to file 
+ *  auxiliary function for saving the mvp tree structure
+ *  /param dp - pointer to a datapoint struct
+ *  /param pfile - FILE pointer to an opened file
+ *  /return 0 for success, -1 for error
+ **/
+int SaveDP(DP *dp, FILE *pfile);
+
+/** /brief read a datapoint from file
+ *  auxiliary function for reading mvp tree from file
+ *  /param pfile - FILE pointer to opened file
+ *  /return DP* - pointer value to a newly read datapoint, NULL for error
+ **/
+DP* ReadDP(FILE *pfile);
+
+/** /brief read mvp tree from file
+ *  auxiliary function for reading from file
+ *  /param pfile - FILE pointer to opened file
+ *  /return Node ptr to top of tree, NULL for error
+ **/
+Node* ReadMVPTree(FILE *pfile);
+
+/** /brief read mvp tree from specified file
+ *  /param filename - string value
+ *  /return Node ptr to newly read tree, NULL on error
+ **/ 
+Node* ReadMVPTree(const char *filename);
+
+/** /brief save mvptree to file
+ *  /param tree - Node ptr to tree
+ *  /param pfile - FILE ptr to opened file
+ *  /return int value, 0 for success, -1 for error 
+ **/
+int SaveMVPTree(Node *tree, FILE *pfile);
+
+/** /brief save tree to specified file
+ *  /param tree - Node ptr to tope of tree
+ *  /param filename - string value 
+ *  /return int value, 0 for success, -1 on error
+ **/
+int SaveMVPTree(Node *tree, const char *filename);
+
+/** /brief print out a tree 
+ *  for debugging purposes
+ **/
+void PrintMVPTree(Node *tree);
+
+/** /brief query mvp tree 
+ *  /param tree - node ptr to top of tree 
+ *  /param query - specific datapoint to query
+ *  /param r - int value for radius of search query
+ *  /param k - return k nearest neighbors
+ *  /param path - int array of length P to track path distances from query to vantage points.(alloc before call)
+ *  /param results - array of pointers to k datapoints (allocated before call)
+ *  /param count - int value for number of results found (out param).
+ *  /param level - int to track recursion depth (user can ignore).
+ **/
+int QueryMVPTree(Node *tree, DP *query, int r, int k, int *path, DP **results, int &count,int level=0);
+
 
 #endif

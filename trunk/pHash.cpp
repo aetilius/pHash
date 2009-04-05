@@ -490,3 +490,709 @@ int ph_hamming_distance(const ulong64 hash1,const ulong64 hash2){
     x = (x + (x >> 4)) & m4;
     return (x * h01)>>56;
 }
+
+
+
+/**   /brief struct for leaf node in mvptree
+ *
+ **/
+struct leaf_node {
+    int node_type;//0=leaf node, 1=internal_node
+    DP *sv1, *sv2;
+    DP **points;
+    int *D1;
+    int *D2;
+    int Np;
+};
+
+typedef struct leaf_node Leaf;
+
+
+union Node;
+
+/**
+ *   /brief struct for internal_node of mvptree
+ **/
+struct internal_node {
+    int node_type; //0=leaf_node, 1=internal_node
+    DP *sv1, *sv2;
+    float *M1;
+    float *M2;
+    Node **child;
+    int Nc;
+};
+
+typedef struct internal_node InternalNode;
+
+//node of the mvptree
+union Node {
+    Leaf leaf;
+    InternalNode internal;
+};
+
+
+DP* ph_malloc_datapoint(){
+    DP* dp = (DP*)malloc(sizeof(DP));
+    dp->hash = 0LLU;
+    dp->id = NULL;
+    dp->path = (int*)malloc(PathLength*sizeof(int));
+    for (int i=0;i<PathLength;i++){
+	dp->path[i] = -1;
+    }
+    return dp;
+}
+void ph_free_datapoint(DP *dp){
+    if (!dp){
+	free(dp->path);
+	free(dp->id);
+    }
+    free(dp);
+}
+
+
+Node* ph_malloc_leaf(){
+    Node *newnode = (Node*)malloc(sizeof(Node));
+    newnode->leaf.node_type = 0;
+    return (newnode);
+}
+
+Node* ph_malloc_inner(){
+    Node *newnode = (Node*)malloc(sizeof(Node));
+    newnode->internal.node_type = 1;
+    newnode->internal.M1 = (float*)malloc(LengthM1*sizeof(float));
+    newnode->internal.M2 = (float*)malloc(LengthM2*sizeof(float));
+    return (newnode);
+}
+
+void ph_free_node(Node *node){
+    if (node->leaf.node_type == 0){
+        ph_free_datapoint(node->leaf.sv1);
+	ph_free_datapoint(node->leaf.sv2);
+	free(node->leaf.D1);
+	free(node->leaf.D2);
+	free(node->leaf.points);
+    } else if (node->internal.node_type == 1){
+        ph_free_datapoint(node->leaf.sv1);
+	ph_free_datapoint(node->leaf.sv2);
+	for (int i=0;i<node->internal.Nc;i++){
+	    Node *child_node = (Node*)node->internal.child[i];
+	    ph_free_node(child_node);
+	}
+	free(node->internal.M1);
+	free(node->internal.M2);
+	free(node->internal.child);
+    }
+    free(node);
+}
+
+
+Node* CreateMVPTree(DP **points, int nbpoints, int level=0){
+    Node *new_node = NULL;
+    int Np = nbpoints - 2;
+    if (nbpoints <= 0){
+	return NULL;
+    }
+    if (nbpoints <= K+2) { //create leaf node
+        new_node = ph_malloc_leaf();
+	if (Np >= 0){
+	     new_node->leaf.sv1 = points[0];
+	     new_node->leaf.points = (DP**)malloc(Np*sizeof(DP**));
+	     new_node->leaf.D1 = (int*)calloc(Np,sizeof(int));
+	     new_node->leaf.D2 = (int*)calloc(Np,sizeof(int));
+	     new_node->leaf.Np = Np;
+	     int max_dist = 0;
+	     int max_pos = 1;
+	     int d;
+	     for (int i=0;i<nbpoints;i++){
+		d = ph_hamming_distance(new_node->leaf.sv1->hash, points[i]->hash);
+		if (d > max_dist){
+		    max_dist = d;
+		    max_pos = i;
+		}
+	    }
+	    new_node->leaf.sv2 = *(points+max_pos);
+	    int index = 1;
+	    for (int i=0;i<Np;i++){
+		if (index == max_pos)
+		    index++;
+		d = ph_hamming_distance(new_node->leaf.sv1->hash, points[index]->hash);
+		new_node->leaf.D1[i] = d;
+		d = ph_hamming_distance(new_node->leaf.sv2->hash, points[index]->hash);
+		new_node->leaf.D2[i] = d;
+		new_node->leaf.points[i] = points[index];
+		index++;
+	    }
+	} else if (Np == -1){ //Np == -1
+	    new_node->leaf.sv1 = points[0];
+	    new_node->leaf.sv2 = NULL;
+	    new_node->leaf.points = NULL;
+	    new_node->leaf.D1 = NULL;
+	    new_node->leaf.D2 = NULL;
+	    new_node->leaf.Np = 0;
+	} 
+    }else { //create internal_node - nodes greater than K 
+	new_node = ph_malloc_inner();
+	//chose sv1,sv2
+	new_node->internal.sv1 = points[0];
+	int max_dist = 0, min_dist = 100,d;
+	int max_pos = 1;
+        int *dist = (int*)malloc(nbpoints*sizeof(int));
+	for (int i=1;i<nbpoints;i++){
+	    dist[i] = ph_hamming_distance(new_node->internal.sv1->hash,points[i]->hash);
+            if (level <= PathLength)
+		points[i]->path[level] = dist[i];
+	    if ((dist[i] < min_dist)&&(dist[i] != 0))
+		min_dist = dist[i];
+	    if (dist[i] > max_dist){
+		max_dist = dist[i];
+		max_pos = i;
+	    }
+	}
+	new_node->internal.sv2 = *(points + max_pos);
+	for (int i=0;i<nbpoints;i++){
+	    if (level < PathLength){
+		d = ph_hamming_distance(new_node->internal.sv2->hash,points[i]->hash);
+		points[i]->path[level+1] = d;
+	    }
+	}
+	//determine median values
+	float slice = (max_dist - min_dist)/BranchFactor;
+	float step = slice;
+	
+	for (int i=0;i < LengthM1;i++){
+	    new_node->internal.M1[i] = min_dist + slice;
+	    slice += step;
+	}
+
+	//set up 1st bins
+	DP ***bins = (DP***)malloc(BranchFactor*sizeof(DP***));
+	int *mlens = (int*)calloc(BranchFactor,sizeof(int));
+	for (int i=0;i < BranchFactor;i++){
+	    bins[i] = (DP**)malloc(((int)Np)*sizeof(DP**));
+	}
+
+        //sort into bins
+	for (int i=1;i<nbpoints;i++){
+	    if (i == max_pos)
+		continue;
+	    int cur_dist = dist[i];
+	    for (int j=0;j < LengthM1;j++){
+		if (cur_dist <= new_node->internal.M1[j]){
+		    bins[j][mlens[j]] = points[i];
+		    mlens[j]++;
+                    break;
+		}
+	    }
+	    if (cur_dist > new_node->internal.M1[LengthM1-1]){
+		bins[BranchFactor-1][mlens[BranchFactor-1]] = points[i];
+		mlens[BranchFactor-1]++;
+	    }
+	}
+
+	//set up 2nd set of bins
+	DP ***bins2 = (DP***)malloc(BranchFactor*sizeof(DP***));
+	int *mlens2 = (int*)calloc(BranchFactor,sizeof(int));
+	for (int i=0;i < BranchFactor;i++){
+	    bins2[i] = (DP**)malloc(Np*sizeof(DP**));
+	}
+
+        new_node->internal.child = (Node**)malloc(Fanout*sizeof(Node*));
+        new_node->internal.Nc = Fanout;
+
+	//for each row of bin
+        for (int i=0;i < BranchFactor;i++){
+	    int d_len = mlens[i];
+	    for (int j=0;j < BranchFactor;j++){ //reset bins2 array 
+		mlens2[j] = 0;
+	    }
+	    dist = (int*)realloc(dist,d_len*sizeof(int));
+	    max_dist = 0;
+	    min_dist = 100;
+	    for (int j=0;j<d_len;j++){
+	       dist[j]=ph_hamming_distance(new_node->internal.sv2->hash,bins[i][j]->hash);
+	       if (dist[j] > max_dist)
+		   max_dist = dist[j];
+	       if (dist[j] < min_dist)
+		   min_dist = dist[j];
+	    }
+	    slice = (max_dist - min_dist)/BranchFactor;
+	    step = slice;
+	    for (int j=0;j < LengthM1;j++){
+		new_node->internal.M2[j + i*(LengthM1)] = slice + min_dist;
+		slice += step;
+	    }
+
+	    //sort bins[i][]  into bins2 
+	    for (int j=0;j < d_len;j++){
+	        DP *current = bins[i][j];
+		for (int k=0;k < LengthM1 ;k++){
+		    if (dist[j] <= new_node->internal.M2[k + i*(LengthM1)]){
+			bins2[k][mlens2[k]] = current;
+			mlens2[k]++;
+			break;
+		    }
+		}
+	   	if (dist[j] > new_node->internal.M2[(LengthM1-1)+i*(LengthM1)]){
+		    bins2[BranchFactor-1][mlens2[BranchFactor-1]] = current;
+		    mlens2[BranchFactor-1]++;
+		}
+	    } 
+	    //create child nodes
+	    for (int j=0;j < BranchFactor;j++){
+		Node *child_node = CreateMVPTree(bins2[j],mlens2[j],level+2);
+	        new_node->internal.child[j+i*BranchFactor] = child_node;
+	    }
+	}
+	//cleanup
+	free(dist);
+	free(mlens);
+	free(mlens2);
+	free(bins);
+	free(bins2);
+    }
+    return new_node;
+}
+
+
+Node* AddDPtoMVPTree(Node *tree,DP *dp,int level=0){
+    Node *ret_node = NULL;
+    if (tree->leaf.node_type ==0){
+	int Np = tree->leaf.Np;
+	DP *sv1 = tree->leaf.sv1;
+	DP *sv2 = tree->leaf.sv2;
+	DP **dplist = (DP**)malloc((Np+3)*sizeof(DP**));
+
+	int count = 0;
+	dplist[count++] = sv1;
+        dplist[count++] = sv2;
+	for (int i=0;i<Np;i++){
+	    dplist[count++] = tree->leaf.points[i];
+	}
+	dplist[count++] = dp;
+        ret_node = CreateMVPTree(dplist,count,level+2);
+        free(dplist);
+    } else {
+	int d1 = ph_hamming_distance(tree->internal.sv1->hash,dp->hash);
+	int d2 = ph_hamming_distance(tree->internal.sv2->hash,dp->hash);
+	if (level <= PathLength){
+	    dp->path[level] = d1;
+	}
+	if (level < PathLength){
+	    dp->path[level+1] = d2;
+	}
+	for (int pivot1=0;pivot1<LengthM1;pivot1++){
+	    if (d1 <= tree->internal.M1[pivot1]){
+		for (int pivot2=0;pivot2<LengthM1;pivot2++){
+		    if (d2 <= tree->internal.M2[pivot2 + pivot1*(LengthM1)]){
+			Node *subtree = tree->internal.child[pivot2 + pivot1*BranchFactor];
+			Node *newsub = AddDPtoMVPTree(subtree,dp,level+2);
+			free(subtree);
+			tree->internal.child[pivot2+pivot1*BranchFactor] = newsub;
+		    }
+		}
+                if (d2 > tree->internal.M2[LengthM1-1 + pivot1*(LengthM1)]){
+		    Node *subtree = tree->internal.child[BranchFactor-1+pivot1*BranchFactor];
+		    Node *newsub = AddDPtoMVPTree(subtree,dp, level+2);
+		    free(subtree);
+		    tree->internal.child[BranchFactor-1+pivot1*BranchFactor] = newsub;
+		}
+	    }
+	}
+	if (d1 > tree->internal.M1[LengthM1-1]){
+	    for (int pivot2=0;pivot2<LengthM1;pivot2++){
+		if (d2 <= tree->internal.M2[pivot2 + (LengthM1)*(LengthM1)]){
+		    Node *subtree = tree->internal.child[pivot2 + (LengthM1)*BranchFactor];
+		    Node *newsub = AddDPtoMVPTree(subtree,dp,level+2);
+		    free(subtree);
+		    tree->internal.child[pivot2+(LengthM1)*BranchFactor] = newsub;
+		}
+	    }
+	    if (d2 > tree->internal.M2[LengthM1-1+(LengthM1)*(LengthM1)]){
+		Node *subtree = tree->internal.child[BranchFactor-1+(LengthM1)*BranchFactor];
+		Node *newsub = AddDPtoMVPTree(subtree,dp,level+2);
+		free(subtree);
+		tree->internal.child[BranchFactor-1+(LengthM1)*BranchFactor] = newsub;
+	    }
+	}
+	ret_node = tree;
+    }
+    return ret_node;
+}
+
+DP** ReadImageHashes(const char *dirname,int capacity, int &count){
+
+    count = 0;
+    struct dirent *dir_entry;
+    DIR *dir = opendir(dirname);
+    if (!dir)
+	exit(1);
+
+    DP **hashlist = (DP**)malloc(capacity*sizeof(DP**));
+    if (!hashlist)
+	exit(1);
+
+    DP *dp = NULL;
+    errno = 0;
+    ulong64 tmphash = 0;
+    char path[100];
+    path[0] = '\0';
+
+    while ((dir_entry = readdir(dir)) != 0){
+	if (strcmp(dir_entry->d_name,".") && strcmp(dir_entry->d_name,"..")){
+	    strcat(path, dirname);
+	    strcat(path, "/");
+	    strcat(path, dir_entry->d_name);
+	    if (ph_dct_imagehash(path, tmphash) < 0)  //calculate the hash
+		continue;
+	    dp = ph_malloc_datapoint();
+	    dp->id = strdup(path);
+	    dp->hash = tmphash;
+	    hashlist[count] = dp;
+	    count++;
+	}
+	errno = 0;
+        path[0]='\0';
+    }
+    if (errno)
+	exit(1);
+
+    return hashlist;
+
+}
+
+char** readfilenames(const char *dirname,int cap,int &count){
+    count = 0;
+    struct dirent *dir_entry;
+    DIR *dir = opendir(dirname);
+    if (!dir)
+	exit(1);
+
+    char **filelist = (char**)malloc(cap*sizeof(char*));
+    if (!filelist)
+	exit(1);
+
+    errno = 0;
+    char path[100];
+    path[0] = '\0';
+
+    while ((dir_entry = readdir(dir)) != 0){
+	if (strcmp(dir_entry->d_name,".") && strcmp(dir_entry->d_name,"..")){
+	    strcat(path, dirname);
+	    strcat(path, "/");
+	    strcat(path, dir_entry->d_name);
+	    filelist[count++] = strdup(path);
+	}
+	errno = 0;
+        path[0]='\0';
+    }
+    if (errno)
+	exit(1);
+
+    return filelist;
+}
+
+
+int SaveDP(DP *dp, FILE *pfile){
+    int length_p = P;
+    char c = '\0';
+    if (!pfile)
+	return -1;
+    if (!dp){
+	fwrite(&c,sizeof(char),1,pfile);
+	return 0;
+    }
+    fputs(dp->id,pfile);
+    fputc(c,pfile);
+    fwrite(&(dp->hash), sizeof(ulong64), 1, pfile);
+    fwrite(&length_p, sizeof(int), 1, pfile);
+    fwrite(dp->path, sizeof(int),length_p, pfile);
+    return 0;
+}
+DP * ReadDP(FILE *pfile){
+    if (!pfile)
+	return NULL;
+    char id[100];
+    ulong64 hash;
+    int length_p;
+    DP *dp = ph_malloc_datapoint();
+    char c;
+    int i=0;
+    do {
+	fread(&c, sizeof(char),1,pfile);
+	id[i++]=c;
+    } while (c != '\0');
+    if (id[0] == '\0')
+	return NULL;
+    dp->id = strdup(id);
+    fread(&hash, sizeof(ulong64),1,pfile);
+    dp->hash = hash;
+    fread(&length_p, sizeof(int),1,pfile);
+    fread(dp->path, sizeof(int),length_p,pfile);
+   
+    return dp;
+}
+
+
+Node* ReadMVPTree(FILE *pfile){
+    Node *new_node = NULL;
+    if (!pfile){
+	return NULL;
+    }
+    int node_type;
+    fread(&node_type,sizeof(int),1,pfile);
+    if (node_type == 0){ //create leaf
+	new_node = ph_malloc_leaf();
+	int Np;
+	new_node->leaf.sv1 = ReadDP(pfile);
+	new_node->leaf.sv2 = ReadDP(pfile);
+	fread(&Np, sizeof(int),1,pfile);
+	new_node->leaf.Np = Np;
+	new_node->leaf.points = (DP**)malloc(Np*sizeof(DP*));
+	new_node->leaf.D1 = (int*)malloc(Np*sizeof(int));
+	new_node->leaf.D2 = (int*)malloc(Np*sizeof(int));
+	for (int i=0;i<Np;i++){
+	    new_node->leaf.points[i] = ReadDP(pfile);
+	}
+	fread(new_node->leaf.D1,sizeof(int), Np, pfile);
+	fread(new_node->leaf.D2,sizeof(int), Np, pfile);
+    } else { //creat internal node
+	new_node = ph_malloc_inner();
+	new_node->internal.sv1 = ReadDP(pfile);
+	new_node->internal.sv2 = ReadDP(pfile);
+
+	fread(new_node->internal.M1, sizeof(float),LengthM1,pfile);
+	fread(new_node->internal.M2, sizeof(float),LengthM2,pfile);
+	new_node->internal.Nc = Fanout;
+	new_node->internal.child = (Node**)malloc(Fanout*sizeof(Node*));
+	for (int i=0;i<Fanout;i++){
+	    new_node->internal.child[i] = ReadMVPTree(pfile);
+	}
+    }
+    return new_node;
+}
+
+
+Node* ReadMVPTree(const char *filename){
+    FILE *pfile = fopen(filename,"r");
+    if (!pfile)
+	return NULL;
+    fread(&BranchFactor,sizeof(int),1,pfile);
+    fread(&PathLength,sizeof(int),1,pfile);
+    fread(&LeafCapacity,sizeof(int),1,pfile);
+    LengthM1 = BranchFactor - 1;
+    LengthM2 = BranchFactor*LengthM1;
+    Fanout   = BranchFactor*BranchFactor;
+    Node *node = ReadMVPTree(pfile);
+    fclose(pfile);
+    return (node);
+}
+
+int SaveMVPTree(Node *tree, FILE *pfile){
+    if (!pfile){
+	printf("no file\n");
+	return -1;
+    }
+    if (!tree){
+	printf("null\n");
+	return 0;
+    }
+    
+    if (tree->leaf.node_type==0){
+	fwrite(&(tree->leaf.node_type),sizeof(int),1,pfile);
+	int Np = tree->leaf.Np;
+	if (SaveDP(tree->leaf.sv1,pfile) < 0)
+	    return -1;
+	if (SaveDP(tree->leaf.sv2,pfile) < 0)
+	    return -1;
+	fwrite(&Np, sizeof(int),1,pfile);
+	for (int i=0;i<Np;i++){
+	    DP *current = tree->leaf.points[i];
+	    if (SaveDP(current,pfile) < 0)
+		return -1;
+	}
+        fwrite(tree->leaf.D1, sizeof(int), Np, pfile);
+	fwrite(tree->leaf.D2, sizeof(int), Np, pfile);
+    } else {
+	fwrite(&(tree->internal.node_type),sizeof(int),1,pfile);
+	if (SaveDP(tree->internal.sv1, pfile) < 0)
+	    return -1;
+	if (SaveDP(tree->internal.sv2, pfile) < 0)
+	    return -1;
+	fwrite(tree->internal.M1, sizeof(float),LengthM1, pfile);
+	fwrite(tree->internal.M2, sizeof(float),LengthM2, pfile);
+	for (int i=0;i < Fanout;i++){
+	    Node *current = tree->internal.child[i];
+	    if (SaveMVPTree(current, pfile) < 0)
+		return -1;
+	}
+
+    }
+    return 0;
+}
+
+
+int SaveMVPTree(Node *tree, const char *filename){
+    int m = M;
+    int p = P;
+    int k = K;
+    FILE *pfile = fopen(filename,"w");
+    if (!pfile)
+	return -1;
+    fwrite(&m,sizeof(int),1,pfile);
+    fwrite(&p,sizeof(int),1,pfile);
+    fwrite(&k,sizeof(int),1,pfile);
+    int result = SaveMVPTree(tree,pfile);
+    fclose(pfile);
+    return result;
+}
+
+void PrintMVPTree(Node *tree){
+    if (!tree){
+	printf("\nNULL\n");
+	return;
+    }
+    if (tree->leaf.node_type == 0){ //if leaf node
+	printf("\nleaf node\n");
+	DP *sv1=NULL, *sv2=NULL;
+	sv1 = tree->leaf.sv1;
+	sv2 = tree->leaf.sv2;
+	if (sv1){
+	    printf("sv1: %s\n",sv1->id);
+	}
+	if (sv2){
+	    printf("sv2: %s\n",sv2->id);
+	}
+	printf("number points: Np = %d\n", tree->leaf.Np);
+        for (int i=0;i< tree->leaf.Np;i++){
+	    printf("point:%s,D[%d]=%d, D[%d]=%d\n", tree->leaf.points[i]->id,i,tree->leaf.D1[i],i,tree->leaf.D2[i]);
+	}
+    } else {
+	printf("\ninternal node\n");
+	DP *sv1 = tree->internal.sv1;
+	DP *sv2 = tree->internal.sv2;
+	if (sv1){
+	    printf("sv1: %s\n", sv1->id);
+	}
+	if (sv2){
+	    printf("sv2: %s\n", sv2->id);
+	}
+	printf("First level pivot points:\n");
+	for (int i=0;i<LengthM1;i++){
+	    printf(" M1[%d]=%f ",i,tree->internal.M1[i]);
+	}
+	printf("\n");
+	printf("Second level pivot points:\n");
+	for (int i=0;i<LengthM2;i++){
+	    printf(" M2[%d]=%f ",i,tree->internal.M2[i]);
+	}
+	printf("\n");
+
+	for (int i=0;i < Fanout;i++){
+	    printf(" %d child node", i);
+	    Node *child = (Node*)tree->internal.child[i];
+	    PrintMVPTree(child);
+	}
+    }
+}
+
+
+int QueryMVPTree(Node *tree, DP *query, int r, int k, int *path, DP **results, int &count,int level=0){
+    int d1,d2;
+    if (level == 0){
+	count = 0;
+    }
+    if (!results){
+	return -1;
+    }
+    if (!tree){
+	return 0;
+    }
+    if (tree->leaf.node_type == 0){ //if leaf node
+	DP *sv1=NULL, *sv2=NULL;
+	sv1 = tree->leaf.sv1;
+	sv2 = tree->leaf.sv2;
+	d1 = ph_hamming_distance(query->hash,sv1->hash);
+	if (d1 <= r){
+	    results[count++]=sv1;
+	}
+	if (sv2){
+	    d2 = ph_hamming_distance(query->hash,sv2->hash);
+	    if (d2 <= r){
+		    results[count++]=sv2;
+	    }
+	    for (int i=0;i < tree->leaf.Np;i++){
+		DP *current = tree->leaf.points[i];
+		int da = tree->leaf.D1[i];
+		int db = tree->leaf.D2[i];
+		int include = 1;
+		if (((d1-r <= da)&&(d1+r >= da)) && ((d2 -r <= db)&&(d2+r >= db))){
+		    for (int j=0;j < PathLength;j++){
+			if ((path[j]-r <= current->path[j]) && (path[j]+r >= current->path[j]))
+			    if (ph_hamming_distance(query->hash, current->hash)>r){
+				include = 0;
+				break;
+			    }
+		    }
+		    if (include){
+		    results[count++] = current;
+		    }
+		}
+	    }
+	}
+    } else {
+	DP *sv1 = tree->internal.sv1;
+	DP *sv2 = tree->internal.sv2;
+	d1 = ph_hamming_distance(query->hash, sv1->hash);
+	d2 = ph_hamming_distance(query->hash, sv2->hash);
+	if (d1 <= r){
+	    results[count++]=sv1;
+	}
+	if (d2 <= r){
+	    results[count++]=sv2;
+        }
+        if (level < PathLength)
+	    path[level]=d1;
+	if (level < PathLength-1)
+	    path[level+1] = d2;
+
+	int pivot1;
+	int pivot2;
+
+	//check <= each M1 pivot
+	for (pivot1=0;pivot1 < LengthM1;pivot1++){
+	    if (d1 - r <= tree->internal.M1[pivot1]){
+		//check <= each M2 pivot
+		for (pivot2=0;pivot2 < LengthM1;pivot2++){
+		    if (d2 - r <= tree->internal.M2[pivot2+pivot1*(LengthM1)]){
+			Node *child = (Node*)tree->internal.child[pivot2+pivot1*BranchFactor];
+			QueryMVPTree(child,query,r,k,path,results,count, level+2);
+		    }
+		}
+		//check > last M2 pivot
+		if (d2+r >= tree->internal.M2[LengthM1-1+pivot1*(LengthM1)]){
+		    Node *child = (Node*)tree->internal.child[BranchFactor-1+pivot1*BranchFactor];
+		    QueryMVPTree(child,query,r,k,path,results,count,level+2);
+		}
+	    }
+	}
+
+        if (d1+r >= tree->internal.M1[LengthM1-1])  {
+
+	    //check > last M1 pivot
+	    for (pivot2=0;pivot2<LengthM1;pivot2++){
+		if (d2-r <= tree->internal.M2[pivot2+(LengthM1)*(LengthM1)]){
+		    Node *child = (Node*)tree->internal.child[pivot2+(LengthM1)*BranchFactor];
+		    QueryMVPTree(child,query,r,k,path,results,count,level+2);
+		}
+	        
+	    }
+	    if (d2+r > tree->internal.M2[LengthM1-1+(LengthM1)*(LengthM1)]){
+		Node *child = (Node*)tree->internal.child[BranchFactor-1+(LengthM1)*BranchFactor];
+		QueryMVPTree(child,query,r,k,path,results,count,level+2);
+	    }
+	}
+
+    }
+
+    return count;
+}

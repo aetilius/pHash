@@ -17,10 +17,10 @@
 #define HAVE_LIBAVCODEC 1
 
 /* Define to 1 if you have the `avformat' library (-lavformat). */
-#define HAVE_LIBAVFORMAT 1
+/* #undef HAVE_LIBAVFORMAT */
 
 /* Define to 1 if you have the `avutil' library (-lavutil). */
-#define HAVE_LIBAVUTIL 1
+/* #undef HAVE_LIBAVUTIL */
 
 /* Define to 1 if you have the `fftw3' library (-lfftw3). */
 #define HAVE_LIBFFTW3 1
