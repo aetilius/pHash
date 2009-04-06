@@ -16,8 +16,10 @@ AC_ARG_ENABLE(debug, [AS_HELP_STRING([--enable-debug],
 [compile with debugging support @<:@default=no@:>@])], 
 debug=$enableval, debug=no)
 AS_IF([test x"$debug" != x"no"],
-	[CXXFLAGS+=" -O0 -g"],
-	[CXXFLAGS+=" -O3 -ffast-math"])
+	[CXXFLAGS="`echo $CXXFLAGS' ' | sed 's/-O[0-9]//g'`"
+	CXXFLAGS="$CXXFLAGS -O0 -g"],
+	[CXXFLAGS="`echo $CXXFLAGS' -ffast-math' | sed 's/-g//g' | sed 's/-O[0-9]//g'`"
+	CXXFLAGS="$CXXFLAGS -O3"])
 
 AC_ARG_ENABLE(java, [AS_HELP_STRING([--enable-java],
 [compile java (JNI) binding for pHash @<:@default=no@:>@])], 
@@ -158,5 +160,5 @@ AC_FUNC_ERROR_AT_LINE
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([floor gettimeofday memmove memset pow sqrt strcasecmp strdup strncasecmp])
-AC_CONFIG_FILES([Makefile pHash.pc bindings/Makefile])
+AC_CONFIG_FILES([Makefile pHash.pc bindings/Makefile bindings/java/Makefile])
 AC_OUTPUT
