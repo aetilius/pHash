@@ -819,13 +819,13 @@ build_vendor
 build_cpu
 build
 LN_S
+WITH_JAVA_FALSE
+WITH_JAVA_TRUE
 am__fastdepGCJ_FALSE
 am__fastdepGCJ_TRUE
 GCJDEPMODE
 GCJFLAGS
 GCJ
-WITH_JAVA_FALSE
-WITH_JAVA_TRUE
 am__fastdepCC_FALSE
 am__fastdepCC_TRUE
 CCDEPMODE
@@ -4132,38 +4132,6 @@ fi
 
 
 
-# Check whether --enable-debug was given.
-if test "${enable_debug+set}" = set; then
-  enableval=$enable_debug; debug=$enableval
-else
-  debug=no
-fi
-
-if test x"$debug" != x"no"; then
-  CXXFLAGS += "-O0 -g"
-else
-  CXXFLAGS += "-O3 -ffast-math"
-fi
-
-
-# Check whether --enable-java was given.
-if test "${enable_java+set}" = set; then
-  enableval=$enable_java; java=$enableval
-else
-  java=no
-fi
-
- if test x$java != xno; then
-  WITH_JAVA_TRUE=
-  WITH_JAVA_FALSE='#'
-else
-  WITH_JAVA_TRUE='#'
-  WITH_JAVA_FALSE=
-fi
-
-if test x$java != xno; then
-#	AC_SUBST([GCJ],[1])
-
 for ac_prog in gcj
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
@@ -4324,7 +4292,36 @@ fi
 
 
 
+
+# Check whether --enable-debug was given.
+if test "${enable_debug+set}" = set; then
+  enableval=$enable_debug; debug=$enableval
+else
+  debug=no
 fi
+
+if test x"$debug" != x"no"; then
+  CXXFLAGS+=" -O0 -g"
+else
+  CXXFLAGS+=" -O3 -ffast-math"
+fi
+
+
+# Check whether --enable-java was given.
+if test "${enable_java+set}" = set; then
+  enableval=$enable_java; java=$enableval
+else
+  java=no
+fi
+
+ if test x$java != xno; then
+  WITH_JAVA_TRUE=
+  WITH_JAVA_FALSE='#'
+else
+  WITH_JAVA_TRUE='#'
+  WITH_JAVA_FALSE=
+fi
+
 # Find a good install program.  We prefer a C program (faster),
 # so one script is as good as another.  But avoid the broken or
 # incompatible versions:
@@ -5199,7 +5196,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 5202 "configure"' > conftest.$ac_ext
+  echo '#line 5199 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -7538,11 +7535,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7541: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7538: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7545: \$? = $ac_status" >&5
+   echo "$as_me:7542: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7828,11 +7825,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7831: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7828: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7835: \$? = $ac_status" >&5
+   echo "$as_me:7832: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7932,11 +7929,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7935: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7932: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:7939: \$? = $ac_status" >&5
+   echo "$as_me:7936: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -10334,7 +10331,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10337 "configure"
+#line 10334 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10434,7 +10431,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10437 "configure"
+#line 10434 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12843,11 +12840,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12846: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:12843: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:12850: \$? = $ac_status" >&5
+   echo "$as_me:12847: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -12947,11 +12944,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12950: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:12947: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:12954: \$? = $ac_status" >&5
+   echo "$as_me:12951: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -14239,11 +14236,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14242: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14239: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:14246: \$? = $ac_status" >&5
+   echo "$as_me:14243: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14529,11 +14526,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14532: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14529: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:14536: \$? = $ac_status" >&5
+   echo "$as_me:14533: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14633,11 +14630,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14636: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14633: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14640: \$? = $ac_status" >&5
+   echo "$as_me:14637: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -20411,7 +20408,7 @@ _ACEOF
 fi
 done
 
-ac_config_files="$ac_config_files Makefile pHash.pc bindings/Makefile bindings/java/Makefile"
+ac_config_files="$ac_config_files Makefile pHash.pc bindings/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -20531,17 +20528,17 @@ $as_echo "$as_me: error: conditional \"am__fastdepCC\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${WITH_JAVA_TRUE}" && test -z "${WITH_JAVA_FALSE}"; then
-  { { $as_echo "$as_me:$LINENO: error: conditional \"WITH_JAVA\" was never defined.
-Usually this means the macro was only invoked conditionally." >&5
-$as_echo "$as_me: error: conditional \"WITH_JAVA\" was never defined.
-Usually this means the macro was only invoked conditionally." >&2;}
-   { (exit 1); exit 1; }; }
-fi
 if test -z "${am__fastdepGCJ_TRUE}" && test -z "${am__fastdepGCJ_FALSE}"; then
   { { $as_echo "$as_me:$LINENO: error: conditional \"am__fastdepGCJ\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
 $as_echo "$as_me: error: conditional \"am__fastdepGCJ\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${WITH_JAVA_TRUE}" && test -z "${WITH_JAVA_FALSE}"; then
+  { { $as_echo "$as_me:$LINENO: error: conditional \"WITH_JAVA\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+$as_echo "$as_me: error: conditional \"WITH_JAVA\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -21079,7 +21076,6 @@ do
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "pHash.pc") CONFIG_FILES="$CONFIG_FILES pHash.pc" ;;
     "bindings/Makefile") CONFIG_FILES="$CONFIG_FILES bindings/Makefile" ;;
-    "bindings/java/Makefile") CONFIG_FILES="$CONFIG_FILES bindings/java/Makefile" ;;
 
   *) { { $as_echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 $as_echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
