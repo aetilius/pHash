@@ -10,22 +10,19 @@ AC_CONFIG_HEADERS([config.h])
 
 AC_PROG_CXX
 AC_PROG_CC
+AM_PROG_GCJ
 
 AC_ARG_ENABLE(debug, [AS_HELP_STRING([--enable-debug],
 [compile with debugging support @<:@default=no@:>@])], 
 debug=$enableval, debug=no)
 AS_IF([test x"$debug" != x"no"],
-	[CXXFLAGS += "-O0 -g"],
-	[CXXFLAGS += "-O3 -ffast-math"])
+	[CXXFLAGS+=" -O0 -g"],
+	[CXXFLAGS+=" -O3 -ffast-math"])
 
 AC_ARG_ENABLE(java, [AS_HELP_STRING([--enable-java],
 [compile java (JNI) binding for pHash @<:@default=no@:>@])], 
 java=$enableval, java=no)
 AM_CONDITIONAL([WITH_JAVA], test x$java != xno)
-if test x$java != xno; then
-#	AC_SUBST([GCJ],[1])
-	AM_PROG_GCJ
-fi
 AC_PROG_INSTALL
 AC_PROG_LN_S
 m4_defun([_LT_AC_LANG_F77_CONFIG], [:])
@@ -161,5 +158,5 @@ AC_FUNC_ERROR_AT_LINE
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([floor gettimeofday memmove memset pow sqrt strcasecmp strdup strncasecmp])
-AC_CONFIG_FILES([Makefile pHash.pc bindings/Makefile bindings/java/Makefile])
+AC_CONFIG_FILES([Makefile pHash.pc bindings/Makefile])
 AC_OUTPUT

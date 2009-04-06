@@ -2,6 +2,14 @@ import java.util.*;
 
 public class pHash
 {
+	class VideoMVPTree
+	{
+		native VideoMVPTree createTree(VideoHashRecord[] hashes);
+		public VideoMVPTree(VideoHashRecord[] hashes)
+		{
+			createTree(hashes);
+		}
+	}
 	native static long videoHash(String file);
 	native static int[]  audioHash(String file);
 	native static long imageHash(String file);
