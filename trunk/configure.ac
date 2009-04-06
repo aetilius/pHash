@@ -30,6 +30,7 @@ AC_PROG_LN_S
 m4_defun([_LT_AC_LANG_F77_CONFIG], [:])
 AC_PROG_LIBTOOL
 
+LDFLAGS="$LDFLAGS -L/usr/local/lib"
 AC_DEFUN([AC_CHECK_CIMG], [
 AC_MSG_CHECKING([whether CImg.h is present in system directories.])
 AC_CHECK_HEADER([CImg.h], [found_cimg="y"], [found_cimg="n"])
