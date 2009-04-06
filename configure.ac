@@ -31,8 +31,10 @@ m4_defun([_LT_AC_LANG_F77_CONFIG], [:])
 AC_PROG_LIBTOOL
 
 LDFLAGS="$LDFLAGS -L/usr/local/lib"
+CPPFLAGS="$CPPFLAGS -I/usr/local/include"
 AC_DEFUN([AC_CHECK_CIMG], [
 AC_MSG_CHECKING([whether CImg.h is present in system directories.])
+AC_MSG_RESULT([])
 AC_CHECK_HEADER([CImg.h], [found_cimg="y"], [found_cimg="n"])
 
 if test "$found_cimg" = "n"; then
