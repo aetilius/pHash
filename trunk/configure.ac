@@ -40,7 +40,7 @@ AC_CHECK_HEADER([CImg.h], [found_cimg="y"], [found_cimg="n"])
 if test "$found_cimg" = "n"; then
 	AC_MSG_CHECKING([whether CImg.h is in the current directory.])
 	
-	if [test `ls | grep "CImg.h"` = "CImg.h"]; then
+	if [test `ls | grep "CImg.h"` >/dev/null 2>&1]; then
 		AC_MSG_RESULT([yes])
 		found_cimg="y"
 	else

@@ -44,7 +44,7 @@ available_tags=" CXX GCJ"
 
 # ### BEGIN LIBTOOL CONFIG
 
-# Libtool was configured on host midnight-raider:
+# Libtool was configured on host beaudry:
 
 # Shell to use when invoking shell scripts.
 SHELL="/bin/sh"
@@ -147,7 +147,7 @@ pic_flag=" -fPIC -DPIC"
 pic_mode=default
 
 # What is the maximum length of a command?
-max_cmd_len=1966080
+max_cmd_len=98304
 
 # Does compiler simultaneously support -c and -o options?
 compiler_c_o="yes"
@@ -332,7 +332,7 @@ link_all_deplibs=unknown
 sys_lib_search_path_spec="/usr/lib /lib /usr/local/lib"
 
 # Run-time system search path for libraries
-sys_lib_dlsearch_path_spec="/usr/lib /lib /usr/lib/atlas /usr/local/lib /usr/lib/mysql /usr/lib/octave-3.0.3 /usr/lib/qt-3.3/lib /usr/lib/wine/ /usr/lib/xulrunner-1.9 "
+sys_lib_dlsearch_path_spec="/usr/lib /lib /usr/X11R6/lib /usr/lib/libc5-compat /lib/libc5-compat /usr/i486-linuxlibc1/lib "
 
 # Fix the shell variable $srcfile for the compiler.
 fix_srcfile_path=""
@@ -7312,7 +7312,7 @@ disable_libs=static
 # End:
 # ### BEGIN LIBTOOL TAG CONFIG: CXX
 
-# Libtool was configured on host midnight-raider:
+# Libtool was configured on host beaudry:
 
 # Shell to use when invoking shell scripts.
 SHELL="/bin/sh"
@@ -7415,7 +7415,7 @@ pic_flag=" -fPIC -DPIC"
 pic_mode=default
 
 # What is the maximum length of a command?
-max_cmd_len=1966080
+max_cmd_len=98304
 
 # Does compiler simultaneously support -c and -o options?
 compiler_c_o="yes"
@@ -7494,11 +7494,11 @@ striplib="strip --strip-unneeded"
 
 # Dependencies to place before the objects being linked to create a
 # shared library.
-predep_objects="/usr/lib/gcc/i386-redhat-linux/4.3.2/../../../crti.o /usr/lib/gcc/i386-redhat-linux/4.3.2/crtbeginS.o"
+predep_objects="/usr/lib/gcc-lib/i486-linux/3.3.5/../../../crti.o /usr/lib/gcc-lib/i486-linux/3.3.5/crtbeginS.o"
 
 # Dependencies to place after the objects being linked to create a
 # shared library.
-postdep_objects="/usr/lib/gcc/i386-redhat-linux/4.3.2/crtendS.o /usr/lib/gcc/i386-redhat-linux/4.3.2/../../../crtn.o"
+postdep_objects="/usr/lib/gcc-lib/i486-linux/3.3.5/crtendS.o /usr/lib/gcc-lib/i486-linux/3.3.5/../../../crtn.o"
 
 # Dependencies to place before the objects being linked to create a
 # shared library.
@@ -7510,11 +7510,11 @@ postdeps="-lstdc++ -lm -lgcc_s -lc -lgcc_s"
 
 # The directories searched by this compiler when creating a shared
 # library
-compiler_lib_search_dirs="/usr/lib/gcc/i386-redhat-linux/4.3.2 /usr/lib/gcc/i386-redhat-linux/4.3.2 /usr/lib/gcc/i386-redhat-linux/4.3.2/../../.."
+compiler_lib_search_dirs="/usr/lib/gcc-lib/i486-linux/3.3.5 /usr/lib/gcc-lib/i486-linux/3.3.5/../../.."
 
 # The library search path used internally by the compiler when linking
 # a shared library.
-compiler_lib_search_path="-L/usr/lib/gcc/i386-redhat-linux/4.3.2 -L/usr/lib/gcc/i386-redhat-linux/4.3.2 -L/usr/lib/gcc/i386-redhat-linux/4.3.2/../../.."
+compiler_lib_search_path="-L/usr/lib/gcc-lib/i486-linux/3.3.5 -L/usr/lib/gcc-lib/i486-linux/3.3.5/../../.."
 
 # Method to check whether dependent libraries are shared objects.
 deplibs_check_method="pass_all"
@@ -7597,7 +7597,7 @@ link_all_deplibs=unknown
 sys_lib_search_path_spec="/usr/lib /lib /usr/local/lib"
 
 # Run-time system search path for libraries
-sys_lib_dlsearch_path_spec="/usr/lib /lib /usr/lib/atlas /usr/local/lib /usr/lib/mysql /usr/lib/octave-3.0.3 /usr/lib/qt-3.3/lib /usr/lib/wine/ /usr/lib/xulrunner-1.9 "
+sys_lib_dlsearch_path_spec="/usr/lib /lib /usr/X11R6/lib /usr/lib/libc5-compat /lib/libc5-compat /usr/i486-linuxlibc1/lib "
 
 # Fix the shell variable $srcfile for the compiler.
 fix_srcfile_path=""
@@ -7621,7 +7621,7 @@ include_expsyms=""
 
 # ### BEGIN LIBTOOL TAG CONFIG: GCJ
 
-# Libtool was configured on host midnight-raider:
+# Libtool was configured on host beaudry:
 
 # Shell to use when invoking shell scripts.
 SHELL="/bin/sh"
@@ -7720,14 +7720,14 @@ shrext_cmds='.so'
 exeext=""
 
 # Additional compiler flags for building library objects.
-pic_flag=" -fPIC"
+pic_flag=""
 pic_mode=default
 
 # What is the maximum length of a command?
-max_cmd_len=1966080
+max_cmd_len=98304
 
 # Does compiler simultaneously support -c and -o options?
-compiler_c_o="yes"
+compiler_c_o="no"
 
 # Must we lock files when doing compilation?
 need_locks="no"
@@ -7909,7 +7909,7 @@ link_all_deplibs=unknown
 sys_lib_search_path_spec="/usr/lib /lib /usr/local/lib"
 
 # Run-time system search path for libraries
-sys_lib_dlsearch_path_spec="/usr/lib /lib /usr/lib/atlas /usr/local/lib /usr/lib/mysql /usr/lib/octave-3.0.3 /usr/lib/qt-3.3/lib /usr/lib/wine/ /usr/lib/xulrunner-1.9 "
+sys_lib_dlsearch_path_spec="/usr/lib /lib /usr/X11R6/lib /usr/lib/libc5-compat /lib/libc5-compat /usr/i486-linuxlibc1/lib "
 
 # Fix the shell variable $srcfile for the compiler.
 fix_srcfile_path=""
