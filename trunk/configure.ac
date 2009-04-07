@@ -71,11 +71,6 @@ AC_CHECK_LIB([avformat], [av_read_frame], [], [AC_MSG_ERROR([
 *** libavformat not found.
 You need FFmpeg. Get it at <http://ffmpeg.org/>])])
 
-AC_CHECK_LIB([avutil], [avutil_version], [], [AC_MSG_ERROR([
-
-*** libavutil not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>])])
-
 AC_CHECK_LIB([swscale], [sws_getContext], [], [AC_MSG_ERROR([
 
 *** libswscale not found.
