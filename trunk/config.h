@@ -19,9 +19,6 @@
 /* Define to 1 if you have the `avformat' library (-lavformat). */
 #define HAVE_LIBAVFORMAT 1
 
-/* Define to 1 if you have the `avutil' library (-lavutil). */
-#define HAVE_LIBAVUTIL 1
-
 /* Define to 1 if you have the `fftw3' library (-lfftw3). */
 #define HAVE_LIBFFTW3 1
 

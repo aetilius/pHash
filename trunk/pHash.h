@@ -27,6 +27,7 @@
 
 #include <limits.h>
 #include <math.h>
+#include <dirent.h>
 #include "CImg.h"
 #include "config.h"
 
@@ -44,6 +45,54 @@ typedef signed _int64 long64;
 typedef unsigned long long ulong64;
 typedef signed long long long64;
 #endif
+
+
+
+/* structure for a single image hash */
+struct datapoint {
+    char *id;
+    ulong64 hash;
+    int *path;
+};
+
+typedef struct datapoint DP;
+
+/**   /brief struct for leaf node in mvptree
+ *
+ **/
+struct leaf_node {
+    int node_type;//0=leaf node, 1=internal_node
+    DP *sv1, *sv2;
+    DP **points;
+    int *D1;
+    int *D2;
+    int Np;
+};
+
+typedef struct leaf_node Leaf;
+
+
+union Node;
+
+/**
+ *   /brief struct for internal_node of mvptree
+ **/
+struct internal_node {
+    int node_type; //0=leaf_node, 1=internal_node
+    DP *sv1, *sv2;
+    float *M1;
+    float *M2;
+    Node **child;
+    int Nc;
+};
+
+typedef struct internal_node InternalNode;
+
+//node of the mvptree
+union Node {
+    Leaf leaf;
+    InternalNode internal;
+};
 
 typedef unsigned char uint8_t;
 
@@ -90,15 +139,6 @@ static int Fanout   = FANOUT;
 static int PathLength = P;
 static int LeafCapacity = K;
 
-
-/* structure for a single image hash */
-struct datapoint {
-    char *id;
-    ulong64 hash;
-    int *path;
-};
-
-typedef struct datapoint DP;
 
 /* /brief alloc a single data point
  *  allocates path array, does nto set id or path
@@ -251,7 +291,7 @@ int ph_rash_videodigest(const char* file,CImg<uint8_t> *p_videodigest);
  *  /param level - int value to track recursion (user can ignore)
  *  /return Node pointer to top of created tree (NULL for error)
  **/
-Node* CreateMVPTree(DP **points, int nbpoints, int level=0);
+Node* ph_createMVPtree(DP **points, int nbpoints, int level=0);
 
 /** /brief add a new datapoint to an existing tree
  *  /param tree - node pointer to top of an existing tree
@@ -259,7 +299,7 @@ Node* CreateMVPTree(DP **points, int nbpoints, int level=0);
  *  /param level - int value to track recursion (user can ignore)
  *  /return Node pointer to top of new tree (NULL for error)
  **/
-Node* AddDPtoMVPTree(Node *tree,DP *dp,int level=0);
+Node* ph_addDPtoMVPtree(Node *tree,DP *dp,int level=0);
 
 /** /brief create a list of datapoint's directly from a directory of image files
  *  /param dirname - path and name of directory containg all image file names
@@ -267,7 +307,7 @@ Node* AddDPtoMVPTree(Node *tree,DP *dp,int level=0);
  *  /param count - number of hashes created (out param)
  *  /return pointer to a list of DP pointers (NULL for error)
  **/
-DP** ReadImageHashes(const char *dirname,int capacity, int &count);
+DP** ph_read_imagehashes(const char *dirname,int capacity, int &count);
 
 /** /brief get all the filenames in specified directory
  *  /param dirname - string value for path and filename
@@ -275,7 +315,7 @@ DP** ReadImageHashes(const char *dirname,int capacity, int &count);
  *  /param count - int value for number of file names returned
  *  /return array of pointers to string file names (NULL for error)
  **/
-char** readfilenames(const char *dirname,int cap,int &count);
+char** ph_readfilenames(const char *dirname,int cap,int &count);
 
 /** /brief save a datapoint to file 
  *  auxiliary function for saving the mvp tree structure
@@ -283,46 +323,46 @@ char** readfilenames(const char *dirname,int cap,int &count);
  *  /param pfile - FILE pointer to an opened file
  *  /return 0 for success, -1 for error
  **/
-int SaveDP(DP *dp, FILE *pfile);
+int ph_saveDP(DP *dp, FILE *pfile);
 
 /** /brief read a datapoint from file
  *  auxiliary function for reading mvp tree from file
  *  /param pfile - FILE pointer to opened file
  *  /return DP* - pointer value to a newly read datapoint, NULL for error
  **/
-DP* ReadDP(FILE *pfile);
+DP* ph_readDP(FILE *pfile);
 
 /** /brief read mvp tree from file
  *  auxiliary function for reading from file
  *  /param pfile - FILE pointer to opened file
  *  /return Node ptr to top of tree, NULL for error
  **/
-Node* ReadMVPTree(FILE *pfile);
+Node* ph_readMVPtree(FILE *pfile);
 
 /** /brief read mvp tree from specified file
  *  /param filename - string value
  *  /return Node ptr to newly read tree, NULL on error
  **/ 
-Node* ReadMVPTree(const char *filename);
+Node* ph_readMVPtree(const char *filename);
 
 /** /brief save mvptree to file
  *  /param tree - Node ptr to tree
  *  /param pfile - FILE ptr to opened file
  *  /return int value, 0 for success, -1 for error 
  **/
-int SaveMVPTree(Node *tree, FILE *pfile);
+int ph_saveMVPtree(Node *tree, FILE *pfile);
 
 /** /brief save tree to specified file
  *  /param tree - Node ptr to tope of tree
  *  /param filename - string value 
  *  /return int value, 0 for success, -1 on error
  **/
-int SaveMVPTree(Node *tree, const char *filename);
+int ph_saveMVPtree(Node *tree, const char *filename);
 
 /** /brief print out a tree 
  *  for debugging purposes
  **/
-void PrintMVPTree(Node *tree);
+void ph_printMVPtree(Node *tree);
 
 /** /brief query mvp tree 
  *  /param tree - node ptr to top of tree 
@@ -334,7 +374,7 @@ void PrintMVPTree(Node *tree);
  *  /param count - int value for number of results found (out param).
  *  /param level - int to track recursion depth (user can ignore).
  **/
-int QueryMVPTree(Node *tree, DP *query, int r, int k, int *path, DP **results, int &count,int level=0);
+int ph_queryMVPtree(Node *tree,DP *query,int r,int k,int *path,DP **results,int &count,int level=0);
 
 
 #endif

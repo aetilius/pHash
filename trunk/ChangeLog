@@ -1,5 +1,6 @@
 0.5
 ---
+04.10.2009 renamed functions and function calls for mvp trees
 04.05.2009 added functions for multiple vantage point tree (mvp)
 03.30.2009 switch to gnu build system
 	   fixed array out of bounds bug in cross correlation function
