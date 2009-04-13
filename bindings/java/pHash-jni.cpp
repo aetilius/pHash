@@ -1,9 +1,12 @@
 
+#include "config.h"
 #include "pHash-jni.h"
 #include <jni.h>
 #include "pHash.h"
-#include "audiophash.h"
 
+#ifdef HAVE_AUDIO_HASH
+#include "audiophash.h"
+#endif
 JNIEXPORT jint JNICALL Java_pHash_imageDistance
   (JNIEnv *e, jclass cl, jlong hash1, jlong hash2)
 {
@@ -11,6 +14,8 @@ JNIEXPORT jint JNICALL Java_pHash_imageDistance
 	return ph_hamming_distance((ulong64)hash1, (ulong64)hash2);
 	
 }
+
+#ifdef HAVE_AUDIO_HASH
 JNIEXPORT jdouble JNICALL Java_pHash_audioDistance
   (JNIEnv *e, jclass cl, jintArray hash1, jintArray hash2)
 {
@@ -48,6 +53,7 @@ JNIEXPORT jdouble JNICALL Java_pHash_audioDistance
 	return maxC;
 	
 }
+#endif
 
 JNIEXPORT jlong JNICALL Java_pHash_imageHash
   (JNIEnv *e, jclass cl, jstring f)
@@ -62,7 +68,7 @@ JNIEXPORT jlong JNICALL Java_pHash_imageHash
 	return hash;
 	
 }
-
+#ifdef HAVE_VIDEO_HASH
 JNIEXPORT jlong JNICALL Java_pHash_videoHash
   (JNIEnv *e, jclass cl, jstring f)
 {
@@ -76,6 +82,8 @@ JNIEXPORT jlong JNICALL Java_pHash_videoHash
 	return hash;
 	
 }
+#endif
+#ifdef HAVE_AUDIO_HASH
 JNIEXPORT jintArray JNICALL Java_pHash_audioHash
   (JNIEnv *e, jclass cl, jstring f)
 {
@@ -111,3 +119,4 @@ JNIEXPORT jintArray JNICALL Java_pHash_audioHash
 	return ret;
 	
 }
+#endif
