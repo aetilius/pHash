@@ -12,17 +12,19 @@ extern "C" {
  * Method:    videoHash
  * Signature: (Ljava/lang/String;)J
  */
+#ifdef HAVE_VIDEO_HASH
 JNIEXPORT jlong JNICALL Java_pHash_videoHash
   (JNIEnv *, jclass, jstring);
-
+#endif
 /*
  * Class:     pHash
  * Method:    audioHash
  * Signature: (Ljava/lang/String;)[I
  */
+#ifdef HAVE_AUDIO_HASH
 JNIEXPORT jintArray JNICALL Java_pHash_audioHash
   (JNIEnv *, jclass, jstring);
-
+#endif
 /*
  * Class:     pHash
  * Method:    imageHash
@@ -44,9 +46,10 @@ JNIEXPORT jint JNICALL Java_pHash_imageDistance
  * Method:    audioDistance
  * Signature: ([I[I)D
  */
+#ifdef HAVE_AUDIO_HASH
 JNIEXPORT jdouble JNICALL Java_pHash_audioDistance
   (JNIEnv *, jclass, jintArray, jintArray);
-
+#endif
 #ifdef __cplusplus
 }
 #endif
