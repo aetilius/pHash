@@ -1,3 +1,3 @@
 if WITH_JAVA
-	SUBDIRS = java
+SUBDIRS = java
 endif
