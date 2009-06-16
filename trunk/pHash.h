@@ -25,9 +25,20 @@
 #ifndef _PHASH_H
 #define _PHASH_H
 
+#define cimg_debug 0
+#define cimg_display 0
+
 #include <limits.h>
 #include <math.h>
 #include <dirent.h>
+#include <unistd.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <string.h>
+#include <stdint.h>
 #include "CImg.h"
 #include "config.h"
 
@@ -46,55 +57,88 @@ typedef unsigned long long ulong64;
 typedef signed long long long64;
 #endif
 
+const int MaxFileSize = (1<<20); /* 1GB file size limit (for mvp files) */
+const off_t HeaderSize = 64;     /* header size for mvp file */
+
+typedef enum ph_mvp_retcode {
+    PH_SUCCESS = 0,   /* success */
+    PH_ERRPGSIZE,     /* page size error */
+    PH_ERRFILE,       /* file operations */
+    PH_ERRMAP,        /* mmap'ing error */
+    PH_NOSAVEMVP      /* could not save mvp file */
+    PH_ERR_ARGLIST,   /* null arg */
+    PH_ERR_NODISTFUNC, /* no dist function in mvpfile structure */
+    PH_MEMALLOC,       /* mem alloc error - not enough available memory */
+    PH_ERR_NTYPE,      /* unrecognized node type */
+    PH_RESULTSFULL     /* more results found than can be supported in ret array */
+}MVPRetCode;
+
+typedef enum ph_hashtype {
+    BYTEARRAY   = 1,          /* refers to bitwidth of the hash value */
+    UINT16ARRAY = 2,
+    UINT32ARRAY = 4,
+    UINT64ARRAY = 8,
+}HashType;
+
+typedef struct ph_file_offset {
+    off_t offset;
+    uint8_t fileno;
+} FileIndex;
+
+/* call back function for mvp tree functions - to performa distance calc.'s*/
+typedef float (*hash_compareCB)(DP *pointA, DP *pointB);
 
 
-/* structure for a single image hash */
-struct datapoint {
+typedef struct ph_mvp_file {
+    const char *filename;   /* name of db to use */
+    char *buf;
+    off_t file_pos;
+    int fd;
+    uint8_t nbdbfiles;
+    uint8_t branchfactor; /*branch factor of tree, M(=2)*/
+
+    /*length of path to store distances from vantage points in the struct data_point. 
+      used when querying or constructing the tree, P(=5) */
+    uint8_t pathlength;  
+
+    uint8_t leafcapacity; /*maximum number of data points to a leaf, K(=25) */
+
+    uint8_t isleaf;       /*boolean flag used in query function */
+
+    /*size of page size to store a leaf of the tree structure.
+      Must be >= system page size.  Might need to increase above 
+      the system page size to fit all the data points in a leaf.
+       internal_pgsize is the same thing but for internal nodes. 
+       Set to 0 to use the system pg_size */
+    off_t leaf_pgsize;
+    off_t internal_pgsize;
+    HashType hash_type;
+
+    /*callback function to use to calculate the distance between 2 datapoints */
+    hash_compareCB hashdist;
+
+} MVPFile ;
+
+
+/* convenience function to set var's of mvp tree */
+void ph_mvp_init(MVPFile *m){
+    m->branchfactor = 2;
+    m->pathlength = 5;
+    m->leafcapacity = 25;
+    m->leaf_pgsize = sysconf(_SC_PAGE_SIZE);     /* use host page size */
+    m->internal_pgsize = sysconf(_SC_PAGE_SIZE);
+    return;
+}
+
+
+/* structure for a single hash */
+typedef struct datapoint {
     char *id;
-    ulong64 hash;
-    int *path;
-};
-
-typedef struct datapoint DP;
-
-/**   /brief struct for leaf node in mvptree
- *
- **/
-struct leaf_node {
-    int node_type;//0=leaf node, 1=internal_node
-    DP *sv1, *sv2;
-    DP **points;
-    int *D1;
-    int *D2;
-    int Np;
-};
-
-typedef struct leaf_node Leaf;
-
-
-union Node;
-
-/**
- *   /brief struct for internal_node of mvptree
- **/
-struct internal_node {
-    int node_type; //0=leaf_node, 1=internal_node
-    DP *sv1, *sv2;
-    float *M1;
-    float *M2;
-    Node **child;
-    int Nc;
-};
-
-typedef struct internal_node InternalNode;
-
-//node of the mvptree
-union Node {
-    Leaf leaf;
-    InternalNode internal;
-};
-
-typedef unsigned char uint8_t;
+    void *hash;
+    float *path;
+    uint16_t hash_length;
+    uint8_t hash_type;
+}DP;
 
 /*! /brief Radon Projection info
  */
@@ -120,50 +164,15 @@ typedef struct ph_digest {
 } Digest;
 
 
-/**
- *  DO NOT CHANGE.  For use in experimenting with the size and shape of the mvp tree structure.
-**/
-#define M 2                      //number of brances in tree      (adjustable)
-#define LENGTH_M1  M-1           //number of first level pivots   (leave alone)
-#define LENGTH_M2  M*(LENGTH_M1) //number of 2nd level pivots     (leave alone)
-#define FANOUT M*M               //fanout per node                (leave alone)
-#define P 5                      //path length                    (adjustable)
-#define K 25                     //number points, Np in leaf node (adjustable)
-#define CAPACITY 500             //maximum number of files in tree(adjustable)
-
-/* do not change */
-static int BranchFactor = M;     //changed by save/read functions for mvptree
-static int LengthM1 = LENGTH_M1;
-static int LengthM2 = LENGTH_M2;
-static int Fanout   = FANOUT;
-static int PathLength = P;
-static int LeafCapacity = K;
-
-
 /* /brief alloc a single data point
  *  allocates path array, does nto set id or path
  */
-DP* ph_malloc_datapoint();
+DP* ph_malloc_datapoint(int hashtype, int pathlength);
 
 /** /brief free a datapoint and its path
  *
  */
 void ph_free_datapoint(DP *dp);
-
-/**
- *    /brief alloc a leaf for an mvptree
- **/
-Node* ph_malloc_leaf();
-
-/**  /brief alloc an inner node for mvptree
- *
- **/
-Node* ph_malloc_inner();
-
-/** /brief free a node of an mvptree
- *
- **/
-void ph_free_node(Node *node);
 
 /*! /brief copyright information
  */
@@ -285,28 +294,14 @@ int ph_hamming_distance(const ulong64 hash1,const ulong64 hash2);
 
 int ph_rash_videodigest(const char* file,CImg<uint8_t> *p_videodigest);
 
-/** /brief creat an mvptree
- *  /param points - array of pointers to datapoint struct's
- *  /param nbpoints - int value number of datapoints
- *  /param level - int value to track recursion (user can ignore)
- *  /return Node pointer to top of created tree (NULL for error)
- **/
-Node* ph_createMVPtree(DP **points, int nbpoints, int level=0);
-
-/** /brief add a new datapoint to an existing tree
- *  /param tree - node pointer to top of an existing tree
- *  /param dp   - pointer to a new datapoint struct
- *  /param level - int value to track recursion (user can ignore)
- *  /return Node pointer to top of new tree (NULL for error)
- **/
-Node* ph_addDPtoMVPtree(Node *tree,DP *dp,int level=0);
 
 /** /brief create a list of datapoint's directly from a directory of image files
  *  /param dirname - path and name of directory containg all image file names
  *  /param capacity - int value for upper limit on number of hashes
  *  /param count - number of hashes created (out param)
  *  /return pointer to a list of DP pointers (NULL for error)
- **/
+ */
+
 DP** ph_read_imagehashes(const char *dirname,int capacity, int &count);
 
 /** /brief get all the filenames in specified directory
@@ -317,64 +312,58 @@ DP** ph_read_imagehashes(const char *dirname,int capacity, int &count);
  **/
 char** ph_readfilenames(const char *dirname,int cap,int &count);
 
-/** /brief save a datapoint to file 
- *  auxiliary function for saving the mvp tree structure
- *  /param dp - pointer to a datapoint struct
- *  /param pfile - FILE pointer to an opened file
- *  /return 0 for success, -1 for error
- **/
-int ph_saveDP(DP *dp, FILE *pfile);
+DP* ph_read_datapoint(MVPFile *m);
 
-/** /brief read a datapoint from file
- *  auxiliary function for reading mvp tree from file
- *  /param pfile - FILE pointer to opened file
- *  /return DP* - pointer value to a newly read datapoint, NULL for error
- **/
-DP* ph_readDP(FILE *pfile);
+off_t ph_save_datapoint(DP *dp, MVPFile *m);
 
-/** /brief read mvp tree from file
- *  auxiliary function for reading from file
- *  /param pfile - FILE pointer to opened file
- *  /return Node ptr to top of tree, NULL for error
- **/
-Node* ph_readMVPtree(FILE *pfile);
+FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_flag, int level);
 
-/** /brief read mvp tree from specified file
- *  /param filename - string value
- *  /return Node ptr to newly read tree, NULL on error
- **/ 
-Node* ph_readMVPtree(const char *filename);
-
-/** /brief save mvptree to file
- *  /param tree - Node ptr to tree
- *  /param pfile - FILE ptr to opened file
- *  /return int value, 0 for success, -1 for error 
+/** /brief save a list of points into a new mvp file
+ *  /param m - MVPFile struct containing file information
+ *  /param points - array of points to save
+ *  /param nbpoints - int length of points array
+ *  /return MVPRetCode
  **/
-int ph_saveMVPtree(Node *tree, FILE *pfile);
+MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints);
 
-/** /brief save tree to specified file
- *  /param tree - Node ptr to tope of tree
- *  /param filename - string value 
- *  /return int value, 0 for success, -1 on error
- **/
-int ph_saveMVPtree(Node *tree, const char *filename);
+MVPFile* _ph_map_mvpfile(uint8_t filenumber, off_t offset, MVPFile *m);
 
-/** /brief print out a tree 
- *  for debugging purposes
- **/
-void ph_printMVPtree(Node *tree);
+void _ph_unmap_mvpfile(uint8_t filenumber, off_t orig_pos, MVPFile *m, MVPFile *m2);
 
-/** /brief query mvp tree 
- *  /param tree - node ptr to top of tree 
- *  /param query - specific datapoint to query
- *  /param r - int value for radius of search query
- *  /param k - return k nearest neighbors
- *  /param path - int array of length P to track path distances from query to vantage points.(alloc before call)
- *  /param results - array of pointers to k datapoints (allocated before call)
- *  /param count - int value for number of results found (out param).
- *  /param level - int to track recursion depth (user can ignore).
- **/
-int ph_queryMVPtree(Node *tree,DP *query,int r,int k,int *path,DP **results,int &count,int level=0);
+MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level);
+
+
+/** /brief add a list of points to the tree
+ *  /param m - MVPFile struct containing file information
+ *  /param points - DP points to add
+ *  /param nbpoints - the number of points in points
+ *  /param MVPRetCode
+**/
+int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints);
+
+MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, 
+			    DP **results, int *count, int level);
+
+/** /brief query mvp db file for a specific file.
+ *  /param m - MVPFile struct containing file information
+ *  /param query - DP struct containing the hash of the searched file
+ *  /param knearest - int value for the maximum number of results to return.
+ *                    (the length of the results array)
+ *  /param radius   - float value to return all results within a given radius
+ *  /param results  - the found results
+ *  /param count    - ret value for the number of results found
+ *  /return MVPRetCode
+**/
+MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
+			    DP **results, int *count);
+
+
+/** callback function to use for the dct image hashes for the mvp tree functions.
+    a wrapper function around int ph_hammingdistance(ulong64, ulong64) to perform
+    distance calculation between two dct hash values.
+
+**/
+float hammingdistance(DP *pntA, DP *pntB);
 
 
 #endif

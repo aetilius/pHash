@@ -23,12 +23,14 @@ AS_IF([test x"$debug" != x"no"],
 
 AC_ARG_ENABLE(java, [AS_HELP_STRING([--enable-java],
 [compile java (JNI) binding for pHash @<:@default=no@:>@])], 
-java=$enableval, java=no)
+java=yes, java=no)
 AM_CONDITIONAL([WITH_JAVA], test x$java != xno)
 AC_PROG_INSTALL
 AC_PROG_LN_S
 m4_defun([_LT_AC_LANG_F77_CONFIG], [:])
-AC_PROG_LIBTOOL
+
+LT_INIT
+AC_SUBST([LIBTOOLS_DEPS])
 
 LDFLAGS="$LDFLAGS -L/usr/local/lib"
 CPPFLAGS="$CPPFLAGS -I/usr/local/include"
