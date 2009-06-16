@@ -1,5 +1,7 @@
 0.5
 ---
+06.16.2009 added functions for mvp tree hash storage.
+	   removed old mvptree in-mem functions.
 04.10.2009 renamed functions and function calls for mvp trees
 04.05.2009 added functions for multiple vantage point tree (mvp)
 03.30.2009 switch to gnu build system
