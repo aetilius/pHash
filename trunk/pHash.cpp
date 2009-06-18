@@ -495,7 +495,7 @@ DP* ph_malloc_datapoint(int hashtype, int pathlength){
     DP* dp = (DP*)malloc(sizeof(DP));
     dp->hash = NULL;
     dp->id = NULL;
-    dp->path = (float*)calloc(pathLength,sizeof(float));
+    dp->path = (float*)calloc(pathlength,sizeof(float));
     dp->hash_type = hashtype;
 
     return dp;
@@ -516,7 +516,7 @@ void ph_free_datapoint(DP *dp){
 
 
 
-DP** ph_read_imagehashes(const char *dirname,int capacity, int &count){
+DP** ph_read_imagehashes(const char *dirname,int pathlength, int &count){
 
     count = 0;
     struct dirent *dir_entry;
@@ -524,16 +524,23 @@ DP** ph_read_imagehashes(const char *dirname,int capacity, int &count){
     if (!dir)
 	exit(1);
 
-    DP **hashlist = (DP**)malloc(capacity*sizeof(DP**));
+    while ((dir_entry = readdir(dir)) != 0){
+	if (strcmp(dir_entry->d_name,".")&& strcmp(dir_entry->d_name,"..")){
+	    count++;
+	}
+    }
+  
+    DP **hashlist = (DP**)malloc(count*sizeof(DP**));
     if (!hashlist)
 	exit(1);
 
     DP *dp = NULL;
+    int index = 0;
     errno = 0;
     ulong64 tmphash = 0;
     char path[100];
     path[0] = '\0';
-
+    rewinddir(dir);
     while ((dir_entry = readdir(dir)) != 0){
 	if (strcmp(dir_entry->d_name,".") && strcmp(dir_entry->d_name,"..")){
 	    strcat(path, dirname);
@@ -541,11 +548,11 @@ DP** ph_read_imagehashes(const char *dirname,int capacity, int &count){
 	    strcat(path, dir_entry->d_name);
 	    if (ph_dct_imagehash(path, tmphash) < 0)  //calculate the hash
 		continue;
-	    dp = ph_malloc_datapoint();
+	    dp = ph_malloc_datapoint(UINT64ARRAY,pathlength);
 	    dp->id = strdup(path);
-	    dp->hash = tmphash;
-	    hashlist[count] = dp;
-	    count++;
+	    dp->hash = (void*)&tmphash;
+	    dp->hash_length = 1;
+	    hashlist[index++] = dp;
 	}
 	errno = 0;
         path[0]='\0';
@@ -572,7 +579,7 @@ char** ph_readfilenames(const char *dirname,int &count){
     
     /* alloc list of files */
     char **files = (char**)malloc(count*sizeof(*files));
-    if (!file)
+    if (!files)
 	return NULL;
 
     errno = 0;
@@ -590,7 +597,7 @@ char** ph_readfilenames(const char *dirname,int &count){
         path[0]='\0';
     }
     if (errno)
-	exit NULL;
+	return NULL;
 
     return files;
 }
@@ -781,7 +788,7 @@ float hammingdistance(DP *pntA, DP *pntB){
     uint8_t htypeB = pntB->hash_type;
     if (htypeA != htypeB)
 	return -1.0;
-    if (htypeA != Uint64Array)
+    if (htypeA != UINT64ARRAY)
 	return -1.0;
     if ((pntA->hash_length > 1) || (pntB->hash_length > 1))
 	return -1.0;

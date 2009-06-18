@@ -65,12 +65,12 @@ typedef enum ph_mvp_retcode {
     PH_ERRPGSIZE,     /* page size error */
     PH_ERRFILE,       /* file operations */
     PH_ERRMAP,        /* mmap'ing error */
-    PH_NOSAVEMVP      /* could not save mvp file */
+    PH_NOSAVEMVP,      /* could not save mvp file */
     PH_ERR_ARGLIST,   /* null arg */
     PH_ERR_NODISTFUNC, /* no dist function in mvpfile structure */
     PH_MEMALLOC,       /* mem alloc error - not enough available memory */
     PH_ERR_NTYPE,      /* unrecognized node type */
-    PH_RESULTSFULL     /* more results found than can be supported in ret array */
+    PH_RESULTSFULL,     /* more results found than can be supported in ret array */
 }MVPRetCode;
 
 typedef enum ph_hashtype {
@@ -85,9 +85,18 @@ typedef struct ph_file_offset {
     uint8_t fileno;
 } FileIndex;
 
+
+/* structure for a single hash */
+typedef struct datapoint {
+    char *id;
+    void *hash;
+    float *path;
+    uint16_t hash_length;
+    uint8_t hash_type;
+}DP;
+
 /* call back function for mvp tree functions - to performa distance calc.'s*/
 typedef float (*hash_compareCB)(DP *pointA, DP *pointB);
-
 
 typedef struct ph_mvp_file {
     const char *filename;   /* name of db to use */
@@ -131,14 +140,6 @@ void ph_mvp_init(MVPFile *m){
 }
 
 
-/* structure for a single hash */
-typedef struct datapoint {
-    char *id;
-    void *hash;
-    float *path;
-    uint16_t hash_length;
-    uint8_t hash_type;
-}DP;
 
 /*! /brief Radon Projection info
  */
@@ -310,7 +311,7 @@ DP** ph_read_imagehashes(const char *dirname,int capacity, int &count);
  *  /param count - int value for number of file names returned
  *  /return array of pointers to string file names (NULL for error)
  **/
-char** ph_readfilenames(const char *dirname,int cap,int &count);
+char** ph_readfilenames(const char *dirname,int pathlength,int &count);
 
 
 DP* ph_read_datapoint(MVPFile *m);
