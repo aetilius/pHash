@@ -509,7 +509,7 @@ void ph_free_datapoint(DP *dp){
 	free(dp->id);
     if (dp->hash)
 	free(dp->hash);
-	free(dp);
+    free(dp);
     
     return;
 }
@@ -1807,6 +1807,7 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 		    }
 
 		}
+		ph_free_datapoint(sv2);
 	    } else { /* put new point into sv2 pos */
 		m->file_pos = start_pos;
 		ntype = 0;
@@ -1819,6 +1820,7 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 		memcpy(&m->buf[m->file_pos & offset_mask], &Np, sizeof(uint8_t));
 		m->file_pos++;
 	    }
+	    ph_free_datapoint(sv1);
 	} 
     } else if (ntype == 1){
 	int LengthM1 = m->branchfactor - 1;
@@ -1851,6 +1853,9 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 	    new_dp->path[level] = d1;
 	if (level < m->pathlength - 1)
 	    new_dp->path[level+1] = d2;
+
+	ph_free_datapoint(sv1);
+	ph_free_datapoint(sv2);
 
 	int pivot1, pivot2;
 	uint8_t filenumber;
@@ -1946,6 +1951,8 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 		_ph_unmap_mvpfile(filenumber, orig_pos, m, m2);
 	    }
 	}
+	free(M1);
+	free(M2);
     } else {
 	fprintf(stderr,"unknown node type %u\n",ntype);
     }
