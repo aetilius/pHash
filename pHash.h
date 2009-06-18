@@ -312,58 +312,29 @@ DP** ph_read_imagehashes(const char *dirname,int capacity, int &count);
  **/
 char** ph_readfilenames(const char *dirname,int cap,int &count);
 
+
 DP* ph_read_datapoint(MVPFile *m);
 
-off_t ph_save_datapoint(DP *dp, MVPFile *m);
-
-FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_flag, int level);
-
-/** /brief save a list of points into a new mvp file
- *  /param m - MVPFile struct containing file information
- *  /param points - array of points to save
- *  /param nbpoints - int length of points array
- *  /return MVPRetCode
- **/
-MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints);
+off_t ph_save_datapoint(DP *new_dp, MVPFile *m);
 
 MVPFile* _ph_map_mvpfile(uint8_t filenumber, off_t offset, MVPFile *m);
 
 void _ph_unmap_mvpfile(uint8_t filenumber, off_t orig_pos, MVPFile *m, MVPFile *m2);
 
-MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level);
+float hammingdistance(DP *pntA, DP *pntB);
 
-
-/** /brief add a list of points to the tree
- *  /param m - MVPFile struct containing file information
- *  /param points - DP points to add
- *  /param nbpoints - the number of points in points
- *  /param MVPRetCode
-**/
-int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints);
-
-MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, 
+MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
 			    DP **results, int *count, int level);
 
-/** /brief query mvp db file for a specific file.
- *  /param m - MVPFile struct containing file information
- *  /param query - DP struct containing the hash of the searched file
- *  /param knearest - int value for the maximum number of results to return.
- *                    (the length of the results array)
- *  /param radius   - float value to return all results within a given radius
- *  /param results  - the found results
- *  /param count    - ret value for the number of results found
- *  /return MVPRetCode
-**/
 MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
 			    DP **results, int *count);
 
+FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_flag, int level);
 
-/** callback function to use for the dct image hashes for the mvp tree functions.
-    a wrapper function around int ph_hammingdistance(ulong64, ulong64) to perform
-    distance calculation between two dct hash values.
+MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints);
 
-**/
-float hammingdistance(DP *pntA, DP *pntB);
+MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level);
 
+int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints);
 
 #endif
