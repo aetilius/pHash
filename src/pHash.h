@@ -40,7 +40,6 @@
 #include <string.h>
 #include <stdint.h>
 #include "CImg.h"
-#include "config.h"
 
 using namespace cimg_library;
 using namespace std;
@@ -87,7 +86,7 @@ typedef struct ph_file_offset {
 
 
 /* structure for a single hash */
-typedef struct datapoint {
+typedef struct ph_datapoint {
     char *id;
     void *hash;
     float *path;
@@ -311,7 +310,7 @@ DP** ph_read_imagehashes(const char *dirname,int capacity, int &count);
  *  /param count - int value for number of file names returned
  *  /return array of pointers to string file names (NULL for error)
  **/
-char** ph_readfilenames(const char *dirname,int pathlength,int &count);
+char** ph_readfilenames(const char *dirname,int &count);
 
 
 DP* ph_read_datapoint(MVPFile *m);

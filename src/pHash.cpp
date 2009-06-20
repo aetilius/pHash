@@ -23,7 +23,7 @@
 */
 
 #include "pHash.h"
-
+#include "config.h"
 #ifdef HAVE_VIDEO_HASH
 #include "cimgffmpeg.h"
 #endif
@@ -707,7 +707,7 @@ MVPFile* _ph_map_mvpfile(uint8_t filenumber, off_t offset, MVPFile *m){
 	m->isleaf = 0;
 	m->file_pos = offset;
 	if (munmap(m->buf, m->internal_pgsize) < 0){
-	    perror("munmap");
+	    
 	}
 	m->buf = (char*)mmap(NULL,m->internal_pgsize,PROT_WRITE|PROT_READ,MAP_SHARED,m->fd, page_offset);
 	if (madvise(m->buf,m->internal_pgsize,MADV_SEQUENTIAL) < 0){

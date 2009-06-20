@@ -4,7 +4,7 @@
 AC_PREREQ(2.63)
 AC_INIT([pHash],[0.5.0],[support@phash.org])
 AM_INIT_AUTOMAKE($PACKAGE_NAME,$PACKAGE_VERSION)
-AC_CONFIG_SRCDIR([test_audiophash_main.cpp])
+AC_CONFIG_SRCDIR([src/pHash.cpp])
 AC_CONFIG_HEADERS([config.h])
 # Checks for programs.
 
@@ -29,6 +29,7 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 m4_defun([_LT_AC_LANG_F77_CONFIG], [:])
 
+AC_PROG_LIBTOOL
 LT_INIT
 AC_SUBST([LIBTOOLS_DEPS])
 
@@ -160,5 +161,5 @@ AC_FUNC_ERROR_AT_LINE
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([floor gettimeofday memmove memset pow sqrt strcasecmp strdup strncasecmp])
-AC_CONFIG_FILES([Makefile pHash.pc bindings/Makefile bindings/java/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile examples/Makefile pHash.pc bindings/Makefile bindings/java/Makefile])
 AC_OUTPUT
