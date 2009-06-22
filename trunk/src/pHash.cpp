@@ -1275,10 +1275,10 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 	    m2.file_pos += sizeof(off_t);
 	}
 
-	if (msync(m2.buf, sysconf(_SC_PAGE_SIZE), MS_SYNC) < 0){
+	if (msync(m2.buf, m->leaf_pgsize, MS_SYNC) < 0){
 	    perror("msync");
 	}
-	if (munmap(m2.buf, sysconf(_SC_PAGE_SIZE)) < 0)
+	if (munmap(m2.buf, m->leaf_pgsize) < 0)
 	    perror("munmap");
 
 	if (ftruncate(m2.fd, end_pos) < 0)
