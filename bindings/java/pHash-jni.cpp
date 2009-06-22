@@ -7,17 +7,34 @@
 #ifdef HAVE_AUDIO_HASH
 #include "audiophash.h"
 #endif
+static jfieldID txtHash_hash = NULL; 
+static jfieldID imHash_hash = NULL; 
+static jfieldID vidHash_hash = NULL; 
+static jfieldID audioHash_hash = NULL; 
+
 JNIEXPORT jint JNICALL Java_pHash_imageDistance
-  (JNIEnv *e, jclass cl, jlong hash1, jlong hash2)
+  (JNIEnv *e, jclass cl, jobject hash1, jobject hash2)
 {
-    
-	return ph_hamming_distance((ulong64)hash1, (ulong64)hash2);
+    	ulong64 imHash, imHash2;
+     jclass cls = (*env)->GetObjectClass(env, obj);
+     jstring jstr;
+     const char *str;
+ 
+     if (fid_s == NULL) {
+         fid_s = (*env)->GetFieldID(env, cls, "s", 
+                                    "Ljava/lang/String;");
+         if (fid_s == NULL) {
+             return; /* exception already thrown */
+         }
+     }
+
+	return ph_hamming_distance(, (ulong64)hash2);
 	
 }
 
 #ifdef HAVE_AUDIO_HASH
 JNIEXPORT jdouble JNICALL Java_pHash_audioDistance
-  (JNIEnv *e, jclass cl, jintArray hash1, jintArray hash2)
+  (JNIEnv *e, jclass cl, jobject audioHash1, jobject audioHash2)
 {
 
 	if(hash1 == NULL || hash2 == NULL)

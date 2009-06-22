@@ -33,7 +33,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@HAVE_AUDIO_HASH_TRUE@am__append_1 = audiophash.cpp
+@HAVE_AUDIO_HASH_TRUE@am__append_1 = audiophash.cpp audiophash.h
 subdir = src
 DIST_COMMON = $(include_HEADERS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in
@@ -54,7 +54,7 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(includedir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libpHash_la_LIBADD =
-am__libpHash_la_SOURCES_DIST = pHash.cpp audiophash.cpp
+am__libpHash_la_SOURCES_DIST = pHash.cpp audiophash.cpp audiophash.h
 @HAVE_AUDIO_HASH_TRUE@am__objects_1 = audiophash.lo
 am_libpHash_la_OBJECTS = pHash.lo $(am__objects_1)
 libpHash_la_OBJECTS = $(am_libpHash_la_OBJECTS)
@@ -72,6 +72,15 @@ LTCXXCOMPILE = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 CXXLD = $(CXX)
 CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
+COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+LTCOMPILE = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+CCLD = $(CC)
+LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(libpHash_la_SOURCES)
 DIST_SOURCES = $(am__libpHash_la_SOURCES_DIST)
@@ -193,7 +202,7 @@ top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = libpHash.la
 libpHash_la_SOURCES = pHash.cpp $(am__append_1)
 libpHash_la_LDFLAGS = -no-undefined
-include_HEADERS = pHash.h
+include_HEADERS = pHash.h cimgffmpeg.h
 all: all-am
 
 .SUFFIXES:
