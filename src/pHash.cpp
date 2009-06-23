@@ -2062,3 +2062,141 @@ int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints){
 }
 
 
+TxtHashPoint* texthash(const char *filename,int *nbpoints){
+    int count;
+    TxtHashPoint *TxtHash = NULL;
+    TxtHashPoint WinHash[WindowLength];
+    char kgram[KgramLength];
+
+    FILE *pfile = fopen(filename,"r");
+    if (!pfile){
+        printf("unable to open files\n");
+	return NULL;
+    }
+    struct stat fileinfo;
+    fstat(fileno(pfile),&fileinfo);
+    count = fileinfo.st_size - WindowLength + 1;
+    printf("number kgrams = %d\n", count);
+    count = (int)(0.01*count);
+    printf("estimate number = %d\n", count);
+    int d;
+    ulong64 hashword = 0ULL;
+    
+    TxtHash = (TxtHashPoint*)malloc(count*sizeof(struct ph_hash_point));
+    if (!TxtHash){
+	printf("unable to allocat hash array\n");
+	return NULL;
+    }
+    *nbpoints=0;
+    int i, first=0;
+    int text_index = 0;
+    int win_index = 0;
+    for (i=0;i < KgramLength;i++){    /* calc first kgram */
+	d = fgetc(pfile);
+	if (d == EOF){
+	    free(TxtHash);
+	    return NULL;
+	}
+	if (d <= 47)         /*skip cntrl chars*/
+	    continue;
+	if ( ((d >= 58)&&(d <= 64)) || ((d >= 91)&&(d <= 96)) || (d >= 123) ) /*skip punct*/
+	    continue;
+	if ((d >= 65)&&(d<=90))       /*convert upper to lower case */
+	    d = d + 32;
+
+	kgram[i] = (char)d;
+        hashword = hashword << delta;
+        hashword = hashword^((ulong64)d);
+    }
+
+    WinHash[win_index].hash = hashword;
+    WinHash[win_index++].index = text_index;
+    struct ph_hash_point minhash;
+    minhash.hash = ULLONG_MAX;
+    minhash.index = 0;
+    struct ph_hash_point prev_minhash;
+    prev_minhash.hash = ULLONG_MAX;
+    prev_minhash.index = 0;
+
+    while ((d=fgetc(pfile)) != EOF){    /*remaining kgrams */
+        text_index++;
+	if (d == EOF){
+	    free(TxtHash);
+	    return NULL;
+	}
+	if (d <= 47)         /*skip cntrl chars*/
+	    continue;
+	if ( ((d >= 58)&&(d <= 64)) || ((d >= 91)&&(d <= 96)) || (d >= 123) ) /*skip punct*/
+	    continue;
+	if ((d >= 65)&&(d<=90))       /*convert upper to lower case */
+	    d = d + 32;
+	hashword = hashword << delta;
+	hashword = hashword^((ulong64)d);
+	ulong64 oldsym = (ulong64)kgram[first%KgramLength];
+	oldsym = oldsym << delta*KgramLength;
+	hashword = hashword^oldsym;
+	kgram[first%KgramLength] = (char)d;
+	first++;
+
+        WinHash[win_index%WindowLength].hash = hashword;
+	WinHash[win_index%WindowLength].index = text_index;
+	win_index++;
+
+        if (win_index >= WindowLength){
+	    minhash.hash = ULLONG_MAX;
+	    for (i=win_index;i<win_index+WindowLength;i++){
+		if (WinHash[i%WindowLength].hash <= minhash.hash){
+		    minhash.hash = WinHash[i%WindowLength].hash;
+		    minhash.index = WinHash[i%WindowLength].index;
+		}
+	    }
+            if (minhash.hash != prev_minhash.hash){	 
+		TxtHash[(*nbpoints)].hash = minhash.hash;
+		TxtHash[(*nbpoints)++].index = minhash.index;
+		prev_minhash.hash = minhash.hash;
+		prev_minhash.index = minhash.index;
+
+	    } else {
+		TxtHash[*nbpoints].hash = prev_minhash.hash;
+		TxtHash[(*nbpoints)++].index = prev_minhash.index;
+	    }
+	    win_index = 0;
+	}
+    }
+
+    fclose(pfile);
+    return TxtHash;
+}
+
+TxtMatch* ph_compare_text_hashes(TxtHashPoint *hash1, int N1, TxtHashPoint *hash2,int N2, int *nbmatches){
+
+    int max_matches = (N1 >= N2) ? N1:N2;
+    TxtMatch *found_matches = (TxtMatch*)malloc(max_matches*sizeof(TxtMatch));
+    if (!found_matches){
+	return NULL;
+    }
+
+    *nbmatches = 0;
+    int i,j;
+    for (i=0;i<N1;i++){
+	for (j=0;j<N2;j++){
+	    if (hash1[i].hash == hash2[j].hash){
+		int m = i + 1;
+		int n = j + 1;
+                int cnt = 1;
+		while((m < N1)&&(n < N2)&&(hash1[m++].hash == hash2[n++].hash)){
+		    cnt++;
+		}
+                found_matches[*nbmatches].first_index = i;
+		found_matches[*nbmatches].second_index = j;
+		found_matches[*nbmatches].length = cnt;
+		(*nbmatches)++;
+	    }
+	}
+    }
+    return found_matches;
+}
+
+
+
+
