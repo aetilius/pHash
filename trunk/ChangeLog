@@ -1,5 +1,6 @@
 0.5
 ---
+06.22.2009 added text hash functions
 06.18.2009 re-added functions for mvp tree hash storage
 	   added testfiles: build_mvptree.cpp,add_mvptree.cpp,query_mvptree.cpp
 06.16.2009 added functions for mvp tree hash storage.

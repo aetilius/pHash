@@ -163,6 +163,16 @@ typedef struct ph_digest {
     int size;                   //the size of the coeff array
 } Digest;
 
+typedef struct ph_hash_point {
+    ulong64 hash;
+    off_t index; /*pos of hash in orig file */
+} TxtHashPoint;
+
+typedef struct ph_match{
+    off_t first_index; /* offset into first file */
+    off_t second_index; /* offset into second file */
+    uint32_t length;    /*length of match between 2 files */
+} TxtMatch;
 
 /* /brief alloc a single data point
  *  allocates path array, does nto set id or path
@@ -336,5 +346,9 @@ MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints);
 MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level);
 
 int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints);
+
+TxtHashPoint* texthash(const char *filename, int *nbpoints);
+
+TxtMatch* ph_compare_text_hashes(TxtHashPoint *hash1, int N1, TxtHashPoint *hash2, int N2, int *nbmatches);
 
 #endif
