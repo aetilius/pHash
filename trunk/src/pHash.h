@@ -45,6 +45,7 @@ using namespace cimg_library;
 using namespace std;
 
 #define SQRT_TWO 1.4142135623730950488016887242097
+#define ULLONG_MAX 18446744073709551615ULL
 
 #define ROUNDING_FACTOR(x) (((x) >= 0) ? 0.5 : -0.5) 
 
@@ -167,7 +168,7 @@ typedef struct ph_digest {
 /* variables for textual hash */
 const int KgramLength = 50;
 const int WindowLength = 100;
-const it delta = 1;
+const int delta = 1;
 
 typedef struct ph_hash_point {
     ulong64 hash;
