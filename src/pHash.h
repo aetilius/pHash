@@ -163,6 +163,12 @@ typedef struct ph_digest {
     int size;                   //the size of the coeff array
 } Digest;
 
+
+/* variables for textual hash */
+const int KgramLength = 50;
+const int WindowLength = 100;
+const it delta = 1;
+
 typedef struct ph_hash_point {
     ulong64 hash;
     off_t index; /*pos of hash in orig file */
