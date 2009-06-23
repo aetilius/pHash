@@ -45,7 +45,10 @@ using namespace cimg_library;
 using namespace std;
 
 #define SQRT_TWO 1.4142135623730950488016887242097
+
+#ifndef ULLONG_MAX
 #define ULLONG_MAX 18446744073709551615ULL
+#endif
 
 #define ROUNDING_FACTOR(x) (((x) >= 0) ? 0.5 : -0.5) 
 
