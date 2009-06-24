@@ -143,7 +143,6 @@ void ph_mvp_init(MVPFile *m){
 }
 
 
-
 /*! /brief Radon Projection info
  */
 typedef struct ph_projections {
