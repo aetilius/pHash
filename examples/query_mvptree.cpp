@@ -20,7 +20,7 @@ int main(int argc, char **argv){
     char queryfile[256];
     float radius = 21.0;
     const int knearest = 20;
-    DP *results[knearest];
+    DP **results = (DP**)malloc(knearest * sizeof(DP**));
     int nbfound;
 
     DP *query = ph_malloc_datapoint(mvpfile.hash_type, mvpfile.pathlength);
@@ -44,8 +44,8 @@ int main(int argc, char **argv){
 	}
 	printf(" %d files found\n", nbfound);
 	for (int i=0;i<nbfound;i++){
-	    ulong64 *hash = (ulong64*)results[i]->hash;
-	    printf(" %d %s %llx\n", i, results[i]->id, *hash);
+	    ulong64 *ptrhash = (ulong64*)(results[i]->hash);
+	    printf(" %d %s %llx\n", i, results[i]->id, *ptrhash);
 	}
 	printf("again? y/n:");
 	c = fgetc(stdin);
