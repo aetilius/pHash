@@ -888,7 +888,9 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
 				}
 			    }
 			}
-		    } 
+		    } else {
+			include = 0;
+		    }
 		    if (include){
 			results[(*count)++] = dp;
 			if (*count >= knearest)
@@ -1090,6 +1092,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
     if (madvise(m->buf,m->internal_pgsize,MADV_SEQUENTIAL) < 0){
 	perror("madvise");
     }
+    m->isleaf = 0;
 
     char tag[17];
     int version;
@@ -2035,7 +2038,6 @@ int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints){
     m->file_pos = HeaderSize;
 
     int nbsaved = 0;
-    printf("adding %d points ...\n",nbpoints);
     for (int i=0;i<nbpoints;i++){
         m->file_pos = HeaderSize;
 	if (ph_add_mvptree(m, points[i], 0) != 0){

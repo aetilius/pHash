@@ -13,7 +13,7 @@ int main(int argc, char **argv){
     mvpfile.filename = strdup(filename);
     mvpfile.hashdist = hammingdistance;
     mvpfile.hash_type = UINT64ARRAY;
-
+   
 
     ulong64 tmphash = 0;
     
@@ -64,10 +64,6 @@ int main(int argc, char **argv){
     if (n <= 0){
 	printf("unable to add points to %s\n", filename);
     }
-for(int i =0; i < nbfiles; i++)
-	ph_free_datapoint(hashlist[i]);
-
-free(hashlist);
 
     return 0;
 }
