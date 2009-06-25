@@ -2,7 +2,6 @@
 #include <dirent.h>
 #include "pHash.h"
 
-
 int main(int argc, char **argv){
  
     const char *dir_name = argv[1];/* name of dir to retrieve image files */

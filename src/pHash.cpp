@@ -1172,7 +1172,11 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 
 	uint8_t ntype = 0;
 	MVPFile m2;
-	ph_mvp_init(&m2);
+	m2.branchfactor = m->branchfactor;
+	m2.leafcapacity = m->leafcapacity;
+	m2.pathlength = m->pathlength;
+	m2.leaf_pgsize = m->leaf_pgsize;
+	m2.internal_pgsize = m->internal_pgsize;
 
 	/* open new file */
 	char extfile[256];
@@ -1739,7 +1743,10 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 		off_t Np_pos = m->file_pos;
 		memcpy(&Np,&m->buf[m->file_pos & offset_mask], sizeof(uint8_t));
 		m->file_pos++;
- 
+
+
+		start_pos = m->file_pos;
+
 		float d1 = hashdist(sv1,new_dp);
 		float d2 = hashdist(sv2,new_dp);
 		
@@ -1752,10 +1759,11 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 
 		    curr_pos = m->file_pos;
 
-		    m->file_pos += sizeof(off_t);
-		    m->file_pos += (m->leafcapacity-1)*(2*sizeof(float) + sizeof(off_t));
+
+		    m->file_pos = start_pos + (m->leafcapacity)*(2*sizeof(float) + sizeof(off_t));
 		    new_pos = ph_save_datapoint(new_dp, m);
 		    
+		    m->file_pos = curr_pos;
 		    memcpy(&m->buf[m->file_pos & offset_mask], &new_pos, sizeof(off_t));
 		    
 		    Np = 1;
