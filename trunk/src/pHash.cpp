@@ -1294,8 +1294,16 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 	if (close(m2.fd) < 0)
 	    perror("fclose");
     } else {
-	off_t offset_mask = m->internal_pgsize - 1;
-	off_t page_mask = ~(m->internal_pgsize - 1);
+	off_t offset_mask, page_mask, pgsize;
+	if (m->isleaf){
+	    offset_mask = m->leaf_pgsize - 1;
+	    page_mask = ~(m->leaf_pgsize - 1);
+	    pgsize = m->leaf_pgsize;
+	} else {
+	    offset_mask = m->internal_pgsize - 1;
+	    page_mask = ~(m->internal_pgsize - 1);
+	    pgsize = m->internal_pgsize;
+	}
 
 	pOffset->fileno = 0;
 	pOffset->offset = m->file_pos;
@@ -1305,23 +1313,23 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 
         if ((level > 0) && (saveall_flag == 1)){ /* append new page to mainfile, unmap/map to it */
 
-	    if (msync(m->buf, m->internal_pgsize ,MS_SYNC) < 0){
+	    if (msync(m->buf, pgsize ,MS_SYNC) < 0){
 		perror("msync");
 		return NULL;
 	    }
 	    
-	    if (munmap(m->buf, m->internal_pgsize) < 0){
+	    if (munmap(m->buf, pgsize) < 0){
 		perror("munmap");
 	    }
 
 	    m->file_pos = lseek(m->fd, 0, SEEK_END);
-            end_pos = m->file_pos + m->internal_pgsize;
-	    if (ftruncate(m->fd, m->file_pos + m->internal_pgsize) < 0){
+            end_pos = m->file_pos + pgsize;
+	    if (ftruncate(m->fd, m->file_pos + pgsize) < 0){
 		perror("ftruncate");
 		return NULL;
 	    }
 	    off_t pa_offset = m->file_pos & page_mask;
-	    m->buf = (char*)mmap(NULL,m->internal_pgsize,PROT_READ|PROT_WRITE,MAP_SHARED,m->fd,pa_offset);
+	    m->buf = (char*)mmap(NULL,pgsize,PROT_READ|PROT_WRITE,MAP_SHARED,m->fd,pa_offset);
 	    if (m->buf == MAP_FAILED){
 		perror("mmap");
 		free(pOffset);
@@ -1512,7 +1520,7 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 
 	    /* 2nd tier pivots M2[], for row */
 	    max_dist = 0;
-	    min_dist = 1000;
+	    min_dist = 100000;
 	    for (int j=0;j<row_len;j++){
 		dist[j] = hashdist(sv2, bins[i][j]);
 		if ( dist[j] > max_dist)
@@ -1592,13 +1600,13 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
         /* remap to orig_pos */
 	if ((level > 0) && (saveall_flag == 1)){
             /* unmap/remap to page with original position */
-	    if (msync(m->buf, m->internal_pgsize, MS_SYNC) < 0)
+	    if (msync(m->buf, pgsize, MS_SYNC) < 0)
 		perror("msync");
 
-	    if (munmap(m->buf, m->internal_pgsize) < 0)
+	    if (munmap(m->buf, pgsize) < 0)
 		perror("munmap");
 
-	    m->buf=(char*)mmap(NULL,m->internal_pgsize,PROT_WRITE,MAP_SHARED,m->fd,orig_pos & page_mask);
+	    m->buf=(char*)mmap(NULL,pgsize,PROT_WRITE|PROT_READ,MAP_SHARED,m->fd,orig_pos & page_mask);
 	    if (m->buf == MAP_FAILED){
 		perror("mmap");
 	    }
@@ -1744,8 +1752,7 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 		memcpy(&Np,&m->buf[m->file_pos & offset_mask], sizeof(uint8_t));
 		m->file_pos++;
 
-
-		start_pos = m->file_pos;
+		off_t offset_start = m->file_pos;
 
 		float d1 = hashdist(sv1,new_dp);
 		float d2 = hashdist(sv2,new_dp);
@@ -1759,14 +1766,13 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 
 		    curr_pos = m->file_pos;
 
-
-		    m->file_pos = start_pos + (m->leafcapacity)*(2*sizeof(float) + sizeof(off_t));
+		    m->file_pos = offset_start+(m->leafcapacity)*(2*sizeof(float)+sizeof(off_t));
 		    new_pos = ph_save_datapoint(new_dp, m);
 		    
 		    m->file_pos = curr_pos;
 		    memcpy(&m->buf[m->file_pos & offset_mask], &new_pos, sizeof(off_t));
 		    
-		    Np = 1;
+		    Np++;
 		    memcpy(&m->buf[Np_pos & offset_mask], &Np, sizeof(uint8_t));
 		    
 		} else if (Np < m->leafcapacity){
@@ -1799,26 +1805,24 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 		    DP **points = (DP**)malloc((Np+3)*sizeof(DP**));
 		    points[0] = sv1;
 		    points[1] = sv2;
-		    points[2] = new_dp;
 		    
-		    for (int i=0;i<Np;i++){
+		    for (int i=2;i < Np+2;i++){
 			m->file_pos += 2*sizeof(float);
 			memcpy(&point_pos,&m->buf[m->file_pos & offset_mask], sizeof(off_t));
 			m->file_pos += sizeof(off_t);
 			
 			curr_pos = m->file_pos;
 			m->file_pos = point_pos;
-			points[i+3] = ph_read_datapoint(m);
+			points[i] = ph_read_datapoint(m);
 			m->file_pos = curr_pos;
-
 		    }
+		    points[Np+2] = new_dp;
 		    m->file_pos = start_pos;
 		    if (!ph_save_mvptree(m, points, Np+3, 0, level+2)){
 			fprintf(stderr, "unable to save new node\n");
 		    }
-
+		    free(points);
 		}
-		ph_free_datapoint(sv2);
 	    } else { /* put new point into sv2 pos */
 		m->file_pos = start_pos;
 		ntype = 0;
@@ -1831,8 +1835,9 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 		memcpy(&m->buf[m->file_pos & offset_mask], &Np, sizeof(uint8_t));
 		m->file_pos++;
 	    }
-	    ph_free_datapoint(sv1);
-	} 
+	    ph_free_datapoint(sv2);
+	}
+	ph_free_datapoint(sv1);
     } else if (ntype == 1){
 	int LengthM1 = m->branchfactor - 1;
 	int LengthM2 = (m->branchfactor)*LengthM1;
