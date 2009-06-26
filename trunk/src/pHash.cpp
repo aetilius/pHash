@@ -1193,7 +1193,7 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 	fstat(m2.fd, &fileinfo);
 
 	/* test file size and open new file if necessary */
-	if (fileinfo.st_size >= MaxFileSize){
+	while (fileinfo.st_size >= MaxFileSize){
 	    if (close(m2.fd) < 0){
 		perror("fclose");
 	    }
@@ -1206,6 +1206,7 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 		free(pOffset);
 		return NULL;
 	    }
+	    fstat(m2.fd, &fileinfo);
 	}
 
 	m2.file_pos = lseek(m2.fd, 0, SEEK_END);
@@ -1344,7 +1345,7 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 	/* choose vantage points, sv1, sv2 */
 	DP *sv1 = points[0]; 
 	DP *sv2 = NULL;
-	float max_dist = 0.0, min_dist = 1000.0;
+	float max_dist = 0.0, min_dist = INT_MAX;
 	float *dist = (float*)malloc(nbpoints*sizeof(float));
 	if (!dist){
 	    free(pOffset);
@@ -1520,7 +1521,7 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 
 	    /* 2nd tier pivots M2[], for row */
 	    max_dist = 0;
-	    min_dist = 100000;
+	    min_dist = INT_MAX;
 	    for (int j=0;j<row_len;j++){
 		dist[j] = hashdist(sv2, bins[i][j]);
 		if ( dist[j] > max_dist)
