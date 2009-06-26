@@ -46,7 +46,7 @@ int main(int argc, char **argv){
     printf("nb query files = %d\n", nbfiles);
 
     DP *query = NULL;
-    float radius = 2.0;
+    float radius = 3.0;
     const int knearest = 20;
     DP **results = (DP**)malloc(knearest * sizeof(DP**));
     int nbfound = 0, count = 0, sum_calcs = 0;
