@@ -612,7 +612,7 @@ DP* ph_read_datapoint(MVPFile *m){
     int type = m->hash_type;
     int PathLength = m->pathlength;
     off_t file_pos = m->file_pos;
-    off_t offset_mask = m->internal_pgsize - 1; /*BUG: how do i know which page size ??? */
+    off_t offset_mask = m->pgsize - 1; 
 
     memcpy(&active, &(m->buf[file_pos & offset_mask]), sizeof(uint8_t));
     file_pos++;
@@ -655,7 +655,7 @@ off_t ph_save_datapoint(DP *dp, MVPFile *m){
     uint8_t active = 1;
     uint16_t byte_len = 0;
     off_t point_pos = m->file_pos;
-    off_t offset_mask = m->internal_pgsize - 1; /*bug: how do i know which page size?   */
+    off_t offset_mask = m->pgsize - 1; 
     if (dp == NULL){
 	active = 0;
         memcpy(&(m->buf[m->file_pos & offset_mask]),&active, 1);
@@ -701,16 +701,15 @@ MVPFile* _ph_map_mvpfile(uint8_t filenumber, off_t offset, MVPFile *m){
     MVPFile *ret_file = NULL;
 
     if (filenumber == 0){ /* in the file denoted by m , must advance to page containing offset */
-	off_t page_mask = ~(m->internal_pgsize - 1);
+	off_t page_mask = ~(m->pgsize - 1);
 	off_t page_offset = offset & page_mask;
 	ret_file = m;
-	m->isleaf = 0;
 	m->file_pos = offset;
-	if (munmap(m->buf, m->internal_pgsize) < 0){
+	if (munmap(m->buf, m->pgsize) < 0){
 	    
 	}
-	m->buf = (char*)mmap(NULL,m->internal_pgsize,PROT_WRITE|PROT_READ,MAP_SHARED,m->fd, page_offset);
-	if (madvise(m->buf,m->internal_pgsize,MADV_SEQUENTIAL) < 0){
+	m->buf = (char*)mmap(NULL,m->pgsize,PROT_WRITE|PROT_READ,MAP_SHARED,m->fd, page_offset);
+	if (madvise(m->buf,m->pgsize,MADV_SEQUENTIAL) < 0){
 	    perror("madvise");
 	}
 	if (m->buf == MAP_FAILED){
@@ -719,7 +718,7 @@ MVPFile* _ph_map_mvpfile(uint8_t filenumber, off_t offset, MVPFile *m){
 	}
 	
     } else { /* open and map to new file denoted by m->filename and filenumber */
-	off_t page_mask = ~(m->leaf_pgsize - 1);
+	off_t page_mask = ~(m->pgsize - 1);
 	ret_file = (MVPFile*)malloc(sizeof(MVPFile));
         if (!ret_file)
 	    return NULL;
@@ -733,19 +732,17 @@ MVPFile* _ph_map_mvpfile(uint8_t filenumber, off_t offset, MVPFile *m){
 	ret_file->branchfactor = m->branchfactor;
 	ret_file->leafcapacity = m->leafcapacity;
 	ret_file->nbdbfiles  = m->nbdbfiles;
-	ret_file->internal_pgsize = m->internal_pgsize;
-	ret_file->leaf_pgsize = m->leaf_pgsize;
-	ret_file->isleaf = 1;
+	ret_file->pgsize = m->pgsize;
 	ret_file->file_pos = offset;
 	off_t page_offset = offset & page_mask;
 	
-	ret_file->buf = (char*)mmap(NULL, ret_file->leaf_pgsize, PROT_READ|PROT_WRITE, MAP_SHARED, 
+	ret_file->buf = (char*)mmap(NULL, ret_file->pgsize, PROT_READ|PROT_WRITE, MAP_SHARED, 
                                          ret_file->fd, page_offset);
 	if (ret_file->buf == MAP_FAILED){
 	    perror("mmap");
 	    return NULL;
 	}
-	if (madvise(ret_file->buf, ret_file->leaf_pgsize, MADV_SEQUENTIAL) < 0){
+	if (madvise(ret_file->buf, ret_file->pgsize, MADV_SEQUENTIAL) < 0){
 	    perror("madvise");
 	}
 
@@ -758,21 +755,21 @@ MVPFile* _ph_map_mvpfile(uint8_t filenumber, off_t offset, MVPFile *m){
 void _ph_unmap_mvpfile(uint8_t filenumber, off_t orig_pos, MVPFile *m, MVPFile *m2){
 
     if (filenumber == 0){ /*remap to same main file  */
-	off_t page_mask = ~(m->internal_pgsize - 1);
-	if (munmap(m->buf, m->internal_pgsize) < 0){
+	off_t page_mask = ~(m->pgsize - 1);
+	if (munmap(m->buf, m->pgsize) < 0){
 	    perror("munmap");
 	}
 	m->file_pos = orig_pos;
 	off_t pg_offset = orig_pos & page_mask;
-	m->buf = (char*)mmap(NULL, m->internal_pgsize, PROT_WRITE|PROT_READ, MAP_SHARED,m->fd,pg_offset);
+	m->buf = (char*)mmap(NULL, m->pgsize, PROT_WRITE|PROT_READ, MAP_SHARED,m->fd,pg_offset);
 	if (m->buf == MAP_FAILED){
 	    perror("mmap");
 	}
-	if (madvise(m->buf,m->internal_pgsize,MADV_SEQUENTIAL) < 0){
+	if (madvise(m->buf,m->pgsize,MADV_SEQUENTIAL) < 0){
 	    perror("madvise");
 	}
     } else { /*remap to back to main file  */
-	if (munmap(m2->buf, m2->leaf_pgsize) < 0){
+	if (munmap(m2->buf, m2->pgsize) < 0){
 	    perror("munmap");
 	}
 	if (close(m2->fd)<0)
@@ -815,14 +812,9 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
 	return PH_ERR_NODISTFUNC;
 
     off_t offset_mask, page_mask;
-    if (m->isleaf){
-	offset_mask = m->leaf_pgsize - 1;
-	page_mask = ~(m->leaf_pgsize - 1);
-    }
-    else {
-	offset_mask = m->internal_pgsize - 1;
-	page_mask = ~(m->internal_pgsize - 1);
-    }
+
+    offset_mask = m->pgsize - 1;
+    page_mask = ~(m->pgsize - 1);
 
     uint8_t ntype;
     memcpy(&ntype, &m->buf[m->file_pos & offset_mask], sizeof(uint8_t));
@@ -1060,6 +1052,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
 
 MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, 
                                                DP **results, int *count){
+    m->pgsize = sysconf(_SC_PAGESIZE);
 
     char mainfile[256];
     sprintf(mainfile, "%s.mvp", m->filename);
@@ -1069,15 +1062,14 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
 	return PH_ERRFILE;
     }
     m->file_pos = 0;
-    m->buf=(char*)mmap(NULL,m->internal_pgsize,PROT_READ|PROT_WRITE,MAP_SHARED,m->fd,m->file_pos);
+    m->buf=(char*)mmap(NULL,m->pgsize,PROT_READ|PROT_WRITE,MAP_SHARED,m->fd,m->file_pos);
     if (m->buf == MAP_FAILED){
 	perror("mmap");
 	return PH_ERRMAP;
     }
-    if (madvise(m->buf,m->internal_pgsize,MADV_SEQUENTIAL) < 0){
+    if (madvise(m->buf,m->pgsize,MADV_SEQUENTIAL) < 0){
 	perror("madvise");
     }
-    m->isleaf = 0;
 
     char tag[17];
     int version;
@@ -1107,16 +1099,20 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
     
     memcpy(&type, &m->buf[m->file_pos++], 1);
 
-    m->internal_pgsize = int_pgsize;
-    m->leaf_pgsize = leaf_pgsize;
+    m->buf = (char*)mremap(m->buf,m->pgsize,int_pgsize,MREMAP_MAYMOVE);
+    if (m->buf == MAP_FAILED){
+	perror("mremap");
+	return PH_ERRMAP;
+    }
 
+    m->pgsize = int_pgsize;
     m->file_pos = HeaderSize;
 
     /* finish the query by calling the recursive auxiliary function */
     *count = 0;
     MVPRetCode res = ph_query_mvptree(m,query,knearest,radius,results,count,0);
 
-    if (munmap(m->buf, m->internal_pgsize) < 0)
+    if (munmap(m->buf, m->pgsize) < 0)
 	perror("munmap");
     m->buf = NULL;
 
@@ -1150,17 +1146,16 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 	free(pOffset);
 	return NULL;
     }
-    if (nbpoints <= LeafCapacity + 2){ /* leaf */
-	off_t offset_mask = m->leaf_pgsize - 1;
-	off_t page_mask = ~(m->leaf_pgsize - 1);
 
+    off_t offset_mask = m->pgsize - 1;
+    off_t page_mask = ~(m->pgsize - 1);
+    if (nbpoints <= LeafCapacity + 2){ /* leaf */
 	uint8_t ntype = 0;
 	MVPFile m2;
 	m2.branchfactor = m->branchfactor;
 	m2.leafcapacity = m->leafcapacity;
 	m2.pathlength = m->pathlength;
-	m2.leaf_pgsize = m->leaf_pgsize;
-	m2.internal_pgsize = m->internal_pgsize;
+	m2.pgsize = m->pgsize;
 
 	/* open new file */
 	char extfile[256];
@@ -1195,17 +1190,16 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 
 	m2.file_pos = lseek(m2.fd, 0, SEEK_END);
 
-	if (ftruncate(m2.fd, m2.file_pos + m->leaf_pgsize) < 0){
+	if (ftruncate(m2.fd, m2.file_pos + m->pgsize) < 0){
 	    perror("ftruncate");
 	}
 	
-	off_t end_pos = m2.file_pos + m->leaf_pgsize;
+	off_t end_pos = m2.file_pos + m->pgsize;
 	pOffset->fileno = m->nbdbfiles;
 	pOffset->offset = m2.file_pos;
 
 	off_t pa_offset = m2.file_pos & page_mask;
-        m2.buf = (char*)mmap(NULL,m->leaf_pgsize,
-                                 PROT_READ|PROT_WRITE,MAP_SHARED,m2.fd,pa_offset);
+        m2.buf = (char*)mmap(NULL,m->pgsize,PROT_READ|PROT_WRITE,MAP_SHARED,m2.fd,pa_offset);
 	if (m2.buf == MAP_FAILED){
 	    perror("mmap");
 	    close(m2.fd);
@@ -1267,10 +1261,10 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 	    m2.file_pos += sizeof(off_t);
 	}
 
-	if (msync(m2.buf, m->leaf_pgsize, MS_SYNC) < 0){
+	if (msync(m2.buf, m->pgsize, MS_SYNC) < 0){
 	    perror("msync");
 	}
-	if (munmap(m2.buf, m->leaf_pgsize) < 0)
+	if (munmap(m2.buf, m->pgsize) < 0)
 	    perror("munmap");
 
 	if (ftruncate(m2.fd, end_pos) < 0)
@@ -1279,16 +1273,7 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 	if (close(m2.fd) < 0)
 	    perror("fclose");
     } else {
-	off_t offset_mask, page_mask, pgsize;
-	if (m->isleaf){
-	    offset_mask = m->leaf_pgsize - 1;
-	    page_mask = ~(m->leaf_pgsize - 1);
-	    pgsize = m->leaf_pgsize;
-	} else {
-	    offset_mask = m->internal_pgsize - 1;
-	    page_mask = ~(m->internal_pgsize - 1);
-	    pgsize = m->internal_pgsize;
-	}
+	off_t pgsize = m->pgsize;
 
 	pOffset->fileno = 0;
 	pOffset->offset = m->file_pos;
@@ -1591,7 +1576,8 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 	    if (munmap(m->buf, pgsize) < 0)
 		perror("munmap");
 
-	    m->buf=(char*)mmap(NULL,pgsize,PROT_WRITE|PROT_READ,MAP_SHARED,m->fd,orig_pos & page_mask);
+	    m->buf=(char*)mmap(NULL,pgsize,PROT_WRITE|PROT_READ,MAP_SHARED,
+                                  m->fd,orig_pos & page_mask);
 	    if (m->buf == MAP_FAILED){
 		perror("mmap");
 	    }
@@ -1612,25 +1598,18 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 
 MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints){
 
-    if (m->internal_pgsize == 0)
-	m->internal_pgsize = sysconf(_SC_PAGE_SIZE);
-
-    if (m->leaf_pgsize == 0)
-	m->leaf_pgsize = sysconf(_SC_PAGE_SIZE);
-
+    if (m->pgsize == 0)
+	m->pgsize = sysconf(_SC_PAGE_SIZE);
 
     /* check to see that the pg sizes are at least the size of host page size */
     off_t host_pgsize = sysconf(_SC_PAGE_SIZE);
-    if ((m->internal_pgsize < host_pgsize) || (m->leaf_pgsize < host_pgsize)){
+    if (m->pgsize < host_pgsize){
 	return PH_ERRPGSIZE;
     }
 
     /* pg sizes must be a power of zero */
-    if ((m->internal_pgsize) & (m->internal_pgsize - 1))
+    if ((m->pgsize) & (m->pgsize - 1))
 	return PH_ERRPGSIZE;
-    if ((m->leaf_pgsize) & (m->leaf_pgsize - 1))
-	return PH_ERRPGSIZE;
-    
 
     /* open main file */
     char mainfile[256];
@@ -1642,17 +1621,17 @@ MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints){
     }
     /* enlarge to page*/
     m->file_pos = 0;
-    if (ftruncate(m->fd, m->internal_pgsize) < 0){
+    if (ftruncate(m->fd, m->pgsize) < 0){
 	perror("ftruncate");
 	return PH_ERRFILE;
     }
 
-    m->buf  = (char*)mmap(NULL,m->internal_pgsize,PROT_READ|PROT_WRITE,MAP_SHARED,m->fd,m->file_pos);
+    m->buf  = (char*)mmap(NULL,m->pgsize,PROT_READ|PROT_WRITE,MAP_SHARED,m->fd,m->file_pos);
     if (m->buf == MAP_FAILED){
 	perror("mmap");
 	return PH_ERRMAP;
     }
-    if (madvise(m->buf,m->internal_pgsize,MADV_SEQUENTIAL)<0){
+    if (madvise(m->buf,m->pgsize,MADV_SEQUENTIAL)<0){
 	perror("madvise");
     }
     m->nbdbfiles = 1;
@@ -1660,8 +1639,8 @@ MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints){
     /* write header within first HeaderSize bytes */
     char tag[17] = "pHashMVPfile2009";
     int version = 0;
-    int int_pgsize = (int)(m->internal_pgsize);
-    int leaf_pgsize = (int)(m->leaf_pgsize);
+    int int_pgsize = (int)(m->pgsize);
+    int leaf_pgsize = (int)(m->pgsize);
 
     memcpy(&m->buf[m->file_pos], tag, 16);
     m->file_pos += 16;
@@ -1694,12 +1673,12 @@ MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints){
 
     memcpy(&m->buf[nbfiles_pos],&m->nbdbfiles, sizeof(uint8_t));
 
-    if (msync(m->buf, m->internal_pgsize, MS_SYNC) < 0){
+    if (msync(m->buf, m->pgsize, MS_SYNC) < 0){
 	perror("msync");
 	return PH_NOSAVEMVP;
     }
 
-    if (munmap(m->buf, m->internal_pgsize) < 0){
+    if (munmap(m->buf, m->pgsize) < 0){
 	perror("munmap");
     }
       
@@ -1717,13 +1696,10 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
     uint8_t ntype;
     off_t offset_mask, page_mask;
     hash_compareCB hashdist = m->hashdist;
-    if (m->isleaf){
-	offset_mask = m->leaf_pgsize - 1;
-	page_mask = ~(m->leaf_pgsize - 1);
-    } else {
-	offset_mask = m->internal_pgsize - 1;
-	page_mask = ~(m->internal_pgsize - 1);
-    }
+
+    offset_mask = m->pgsize - 1;
+    page_mask = ~(m->pgsize - 1);
+
     off_t start_pos = m->file_pos;
 
     memcpy(&ntype, &m->buf[m->file_pos++ & offset_mask], sizeof(uint8_t));
@@ -1973,14 +1949,16 @@ int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints){
 	perror("open");
 	return -1;
     }
+    m->pgsize = sysconf(_SC_PAGESIZE);
+
     /* map to first page */
     m->file_pos = 0;
-    m->buf  = (char*)mmap(NULL,m->internal_pgsize,PROT_READ|PROT_WRITE,MAP_SHARED,m->fd,m->file_pos);
+    m->buf  = (char*)mmap(NULL,m->pgsize,PROT_READ|PROT_WRITE,MAP_SHARED,m->fd,m->file_pos);
     if (m->buf == MAP_FAILED){
 	perror("mmap");
 	return -1;
     }
-    if ( madvise(m->buf, m->internal_pgsize,MADV_SEQUENTIAL) < 0){
+    if ( madvise(m->buf, m->pgsize,MADV_SEQUENTIAL) < 0){
 	perror("madvise");
     }
 
@@ -2013,13 +1991,15 @@ int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints){
 
     memcpy(&m->hash_type, &m->buf[m->file_pos++], 1);
 
-    m->isleaf = 0;/* first file is never a leaf */
     m->file_pos = HeaderSize;
 
 
-    m->internal_pgsize = int_pgsize;
-    m->leaf_pgsize = leaf_pgsize;
-
+    m->buf = (char*)mremap(m->buf, m->pgsize, int_pgsize, MREMAP_MAYMOVE);
+    if (m->buf == MAP_FAILED){
+	perror("mremap");
+	return -1;
+    }
+    m->pgsize = int_pgsize;
     int nbsaved = 0;
     for (int i=0;i<nbpoints;i++){
         m->file_pos = HeaderSize;
@@ -2030,12 +2010,12 @@ int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints){
 	nbsaved++;
     }
 
-    if (msync(m->buf, m->internal_pgsize, MS_SYNC) < 0){
+    if (msync(m->buf, m->pgsize, MS_SYNC) < 0){
 	perror("msync");
 	return -1;
     }
 
-    if (munmap(m->buf, m->internal_pgsize) < 0){
+    if (munmap(m->buf, m->pgsize) < 0){
 	perror("ph_save_mvptree");
     }
    
