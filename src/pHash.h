@@ -60,7 +60,7 @@ typedef unsigned long long ulong64;
 typedef signed long long long64;
 #endif
 
-const int MaxFileSize = (1<<20); /* 1GB file size limit (for mvp files) */
+const int MaxFileSize = (1<<30); /* 1GB file size limit (for mvp files) */
 const off_t HeaderSize = 64;     /* header size for mvp file */
 
 typedef enum ph_mvp_retcode {
@@ -115,15 +115,11 @@ typedef struct ph_mvp_file {
 
     uint8_t leafcapacity; /*maximum number of data points to a leaf, K(=25) */
 
-    uint8_t isleaf;       /*boolean flag used in query function */
-
     /*size of page size to store a leaf of the tree structure.
       Must be >= system page size.  Might need to increase above 
       the system page size to fit all the data points in a leaf.
-       internal_pgsize is the same thing but for internal nodes. 
-       Set to 0 to use the system pg_size */
-    off_t leaf_pgsize;
-    off_t internal_pgsize;
+    */
+    off_t pgsize;
     HashType hash_type;
 
     /*callback function to use to calculate the distance between 2 datapoints */
@@ -137,8 +133,7 @@ void ph_mvp_init(MVPFile *m){
     m->branchfactor = 2;
     m->pathlength = 5;
     m->leafcapacity = 25;
-    m->leaf_pgsize = sysconf(_SC_PAGE_SIZE);     /* use host page size */
-    m->internal_pgsize = sysconf(_SC_PAGE_SIZE);
+    m->pgsize = sysconf(_SC_PAGE_SIZE);     /* use host page size */
     return;
 }
 
