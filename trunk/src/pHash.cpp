@@ -1981,6 +1981,7 @@ int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints){
     memcpy(&leaf_pgsize, &m->buf[m->file_pos], sizeof(int));
     m->file_pos += sizeof(int);
 
+    off_t nb_pos = m->file_pos;
     memcpy(&m->nbdbfiles, &m->buf[m->file_pos++], 1);
 
     memcpy(&m->branchfactor, &m->buf[m->file_pos++], 1);
@@ -2009,6 +2010,9 @@ int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints){
 	}
 	nbsaved++;
     }
+
+    /* save new nbdbfiles if new files added */
+    memcpy(&m->nbdbfiles, &m->buf[m->file_pos++], 1);
 
     if (msync(m->buf, m->pgsize, MS_SYNC) < 0){
 	perror("msync");
