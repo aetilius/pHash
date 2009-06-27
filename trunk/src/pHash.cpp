@@ -2054,8 +2054,9 @@ int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints){
     int nbsaved = 0;
     for (int i=0;i<nbpoints;i++){
         m->file_pos = HeaderSize;
-	if (ph_add_mvptree(m, points[i], 0) != 0){
+	if (ph_add_mvptree(m, points[i], 0) != PH_SUCCESS){
 	    fprintf(stderr, "unable to save point: %s\n", points[i]->id);
+	    continue;
 	}
 	nbsaved++;
     }
