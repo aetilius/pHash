@@ -1061,21 +1061,6 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
 MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, 
                                                DP **results, int *count){
 
-    if (m->internal_pgsize == 0)
-	m->internal_pgsize = sysconf(_SC_PAGE_SIZE);
-    if (m->leaf_pgsize == 0)
-	m->leaf_pgsize = sysconf(_SC_PAGE_SIZE);
-
-    
-    if ((m->internal_pgsize < sysconf(_SC_PAGE_SIZE))||(m->leaf_pgsize < sysconf(_SC_PAGE_SIZE)))
-	return PH_ERRPGSIZE;
-
-    /* pg size must be power of 2 */
-    if (m->internal_pgsize & (m->internal_pgsize - 1))
-	return PH_ERRPGSIZE;
-    if (m->leaf_pgsize & (m->leaf_pgsize - 1))
-	return PH_ERRPGSIZE;
-
     char mainfile[256];
     sprintf(mainfile, "%s.mvp", m->filename);
     m->fd = open(mainfile, O_RDWR);
@@ -1096,7 +1081,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
 
     char tag[17];
     int version;
-    int fileintpgsize, fileleafpgsize;
+    int int_pgsize, leaf_pgsize;
     uint8_t nbdbfiles, bf, p, k, type;
 
     memcpy((char*)tag, (char*)&(m->buf[m->file_pos]), 16);
@@ -1106,10 +1091,10 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
     memcpy(&version, &m->buf[m->file_pos], sizeof(int));
     m->file_pos += sizeof(int);
 
-    memcpy(&fileintpgsize, &m->buf[m->file_pos], sizeof(int));
+    memcpy(&int_pgsize, &m->buf[m->file_pos], sizeof(int));
     m->file_pos += sizeof(int);
 
-    memcpy(&fileleafpgsize, &m->buf[m->file_pos], sizeof(int));
+    memcpy(&leaf_pgsize, &m->buf[m->file_pos], sizeof(int));
     m->file_pos += sizeof(int);
 
     memcpy(&nbdbfiles, &m->buf[m->file_pos++], 1);
@@ -1122,9 +1107,8 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
     
     memcpy(&type, &m->buf[m->file_pos++], 1);
 
-    if ((fileintpgsize != m->internal_pgsize) || (fileleafpgsize != m->leaf_pgsize))
-	return PH_ERRPGSIZE;
-
+    m->internal_pgsize = int_pgsize;
+    m->leaf_pgsize = leaf_pgsize;
 
     m->file_pos = HeaderSize;
 
@@ -1980,25 +1964,6 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 
 int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints){
 
-    if (m->internal_pgsize == 0)
-	m->internal_pgsize = sysconf(_SC_PAGE_SIZE);
-
-    if (m->leaf_pgsize == 0)
-	m->leaf_pgsize = sysconf(_SC_PAGE_SIZE);
-
-    /* check to see that the pg sizes are at least the size of host page size */
-    off_t host_pgsize = sysconf(_SC_PAGE_SIZE);
-    if ((m->internal_pgsize < host_pgsize) || (m->leaf_pgsize < host_pgsize)){
-	return -1;
-    }
-
-    /* pg sizes must be a power of zero */
-    if ((m->internal_pgsize) & (m->internal_pgsize - 1))
-	return -1;
-    if ((m->leaf_pgsize) & (m->leaf_pgsize - 1))
-	return -1;
-    
-
     /* open main file */
     char mainfile[256];
     sprintf(mainfile, "%s.mvp", m->filename);
@@ -2050,6 +2015,10 @@ int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints){
 
     m->isleaf = 0;/* first file is never a leaf */
     m->file_pos = HeaderSize;
+
+
+    m->internal_pgsize = int_pgsize;
+    m->leaf_pgsize = leaf_pgsize;
 
     int nbsaved = 0;
     for (int i=0;i<nbpoints;i++){
