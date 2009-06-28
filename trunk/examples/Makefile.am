@@ -12,10 +12,19 @@ query_mvptree_SOURCES = query_mvptree.cpp
 query_mvptree_LDADD = ../src/libpHash.la
 
 if HAVE_AUDIO_HASH
-bin_PROGRAMS += test_audio
+bin_PROGRAMS += test_audio build_mvptree_audio add_mvptree_audio query_mvptree_audio
 
 test_audio_SOURCES = test_audiophash.cpp
 test_audio_LDADD = ../src/libpHash.la
+
+build_mvptree_audio_SOURCES = build_mvptree_audio.cpp
+build_mvptree_audio_LDADD = ../src/libpHash.la
+
+add_mvptree_audio_SOURCES = add_mvptree_audio.cpp
+add_mvptree_audio_LDADD = ../src/libpHash.la
+
+query_mvptree_audio_SOURCES = query_mvptree_audio.cpp
+query_mvptree_audio_LDADD = ../src/libpHash.la
 endif
 
 if HAVE_IMAGE_HASH
