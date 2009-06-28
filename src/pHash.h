@@ -353,7 +353,7 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level);
 
 int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints);
 
-TxtHashPoint* texthash(const char *filename, int *nbpoints);
+TxtHashPoint* ph_texthash(const char *filename, int *nbpoints);
 
 TxtMatch* ph_compare_text_hashes(TxtHashPoint *hash1, int N1, TxtHashPoint *hash2, int N2, int *nbmatches);
 
