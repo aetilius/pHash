@@ -329,6 +329,8 @@ char** ph_readfilenames(const char *dirname,int &count);
 
 DP* ph_read_datapoint(MVPFile *m);
 
+int ph_sizeof_dp(DP *dp,MVPFile *m);
+
 off_t ph_save_datapoint(DP *new_dp, MVPFile *m);
 
 MVPFile* _ph_map_mvpfile(uint8_t filenumber, off_t offset, MVPFile *m);
