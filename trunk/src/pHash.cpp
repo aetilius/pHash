@@ -2071,7 +2071,7 @@ int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints){
 }
 
 
-TxtHashPoint* texthash(const char *filename,int *nbpoints){
+TxtHashPoint* ph_texthash(const char *filename,int *nbpoints){
     int count;
     TxtHashPoint *TxtHash = NULL;
     TxtHashPoint WinHash[WindowLength];
@@ -2085,9 +2085,7 @@ TxtHashPoint* texthash(const char *filename,int *nbpoints){
     struct stat fileinfo;
     fstat(fileno(pfile),&fileinfo);
     count = fileinfo.st_size - WindowLength + 1;
-    printf("number kgrams = %d\n", count);
     count = (int)(0.01*count);
-    printf("estimate number = %d\n", count);
     int d;
     ulong64 hashword = 0ULL;
     
@@ -2205,6 +2203,7 @@ TxtMatch* ph_compare_text_hashes(TxtHashPoint *hash1, int N1, TxtHashPoint *hash
     }
     return found_matches;
 }
+
 
 
 
