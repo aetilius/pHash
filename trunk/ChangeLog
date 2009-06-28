@@ -1,6 +1,9 @@
 0.5
 ---
-06.27.2009 added mvptree examples for audio hash 
+06.27.2009 added check in mvptree save and add function to check that
+	   the page size limit has not been exceeded each time a data
+	   point is written.
+	   added mvptree examples for audio hash 
 	   (build_mvptree2.cpp, add_mvptree2.cpp,query_mvptree2.cpp)
 	   only one pg size member of mvpfile struct, pgsize
 06.22.2009 added text hash functions

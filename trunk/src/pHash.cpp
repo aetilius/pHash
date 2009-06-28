@@ -649,7 +649,9 @@ DP* ph_read_datapoint(MVPFile *m){
     return dp;
 }
 
-
+int ph_sizeof_dp(DP *dp,MVPFile *m){
+    return (strlen(dp->id) + 4 + (dp->hash_length)*(m->hash_type) + (m->pathlength)*sizeof(float));
+}
 
 off_t ph_save_datapoint(DP *dp, MVPFile *m){
     uint8_t active = 1;
@@ -1227,7 +1229,14 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 	    sv2 = points[max_pos]; /* sv2 is furthest point from sv1 */
 	}
 
+	if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,&m2) > m->pgsize)
+	    return NULL;
+
 	ph_save_datapoint(sv1, &m2);
+
+	if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,&m2) > m->pgsize)
+	    return NULL;
+
 	ph_save_datapoint(sv2, &m2);
 
 	m2.buf[m2.file_pos & offset_mask] = (uint8_t)Np;
@@ -1252,6 +1261,10 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 	    /* write the point[i] at the end and return to write what the offset is*/
 	    curr_pos = m2.file_pos;
 	    m2.file_pos = last_pos;
+
+	    
+	    if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,&m2) > m->pgsize)
+		return NULL;
 	    
 	    dp_pos = ph_save_datapoint(points[i], &m2);
 	    last_pos = m2.file_pos;
@@ -1336,7 +1349,16 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 	sv2 = points[max_pos]; /* sv2 is furthest away from sv1 */
 
 	/* save sv1, sv2 */
+	
+	if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,m) > m->pgsize)
+	    return NULL;
+
 	ph_save_datapoint(sv1, m);
+
+	
+	if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,m) > m->pgsize)
+	    return NULL;
+
 	ph_save_datapoint(sv2, m);
 
 	/* 1st tier pivots, M1, derived from the distance of each point from sv1*/
@@ -1728,6 +1750,11 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 		    curr_pos = m->file_pos;
 
 		    m->file_pos = offset_start+(m->leafcapacity)*(2*sizeof(float)+sizeof(off_t));
+
+		    
+		    if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,m) > m->pgsize)
+			return PH_ERRPGSIZE;
+
 		    new_pos = ph_save_datapoint(new_dp, m);
 		    
 		    m->file_pos = curr_pos;
@@ -1751,6 +1778,10 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 		    memcpy(&byte_len,&m->buf[m->file_pos & offset_mask], sizeof(uint16_t));
 		    m->file_pos += sizeof(uint16_t);
 		    m->file_pos += byte_len;
+
+		    
+		    if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,m) > m->pgsize)
+			return PH_ERRPGSIZE;
 
 		    new_pos = ph_save_datapoint(new_dp, m);
 		    memcpy(&m->buf[curr_pos & offset_mask],&d1, sizeof(float));
@@ -1790,8 +1821,16 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 		memcpy(&m->buf[m->file_pos & offset_mask], &ntype, sizeof(uint8_t));
 		m->file_pos++;
 
+		
+		if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,m) > m->pgsize)
+		    return PH_ERRPGSIZE;
 		ph_save_datapoint(sv1, m);
+
+		
+		if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,m) > m->pgsize)
+		    return PH_ERRPGSIZE;
 		ph_save_datapoint(new_dp,m);
+
 		Np = 0;
 		memcpy(&m->buf[m->file_pos & offset_mask], &Np, sizeof(uint8_t));
 		m->file_pos++;
