@@ -63,18 +63,24 @@ typedef signed long long long64;
 const int MaxFileSize = (1<<30); /* 1GB file size limit (for mvp files) */
 const off_t HeaderSize = 64;     /* header size for mvp file */
 
+
+const char *mvptag = "pHashMVPfile2009";
+
 typedef enum ph_mvp_retcode {
     PH_SUCCESS = 0,   /* success */
     PH_ERRPGSIZE,     /* page size error */
     PH_ERRFILE,       /* file operations */
-    PH_ERRMAP,        /* mmap'ing error */
-    PH_NOSAVEMVP,      /* could not save mvp file */
-    PH_ERR_ARGLIST,   /* null arg */
-    PH_ERR_NODISTFUNC, /* no dist function in mvpfile structure */
-    PH_MEMALLOC,       /* mem alloc error - not enough available memory */
-    PH_ERR_NTYPE,      /* unrecognized node type */
-    PH_RESULTSFULL,     /* more results found than can be supported in ret array */
+    PH_ERRMMAP,        /* mmap'ing error */
+    PH_ERRMSYNC,       /* msync error */
+    PH_ERRTRUNC,       /* error truncating file */
+    PH_ERRSAVEMVP,      /* could not save mvp file */
+    PH_ERRARG,   /* null arg */
+    PH_ERRMEM,       /* mem alloc error - not enough available memory */
+    PH_ERRNTYPE,      /* unrecognized node type */
+    PH_ERRCAP,     /* more results found than can be supported in ret array */
+    PH_ERRFILETYPE,  /*unrecognized file type  */
 }MVPRetCode;
+
 
 typedef enum ph_hashtype {
     BYTEARRAY   = 1,          /* refers to bitwidth of the hash value */
