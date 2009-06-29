@@ -326,35 +326,120 @@ DP** ph_read_imagehashes(const char *dirname,int capacity, int &count);
  **/
 char** ph_readfilenames(const char *dirname,int &count);
 
-
+/** /brief read a datapoint (aux function)
+ *   /param m current MVPFile struct containing state information
+ *   /return DP* the read datapoint struct
+ **/
 DP* ph_read_datapoint(MVPFile *m);
 
+/** /brief get size of a datapoint in bytes (aux. function)
+ *  /param m MVPFile struct 
+ *  /param dp DP struct
+ *  /return int number of bytes the datapoint will use in the file.
+ **/
 int ph_sizeof_dp(DP *dp,MVPFile *m);
 
+/**  /brief save datapoint to file (aux. function)
+ *   /param new_dp - DP struct of dp to be saved.
+ *   /param m - MVPFil
+ *   /return off_t file offset of newly written dp.
+ **/
 off_t ph_save_datapoint(DP *new_dp, MVPFile *m);
 
+/** /brief mmap memory to filenumber/offset
+ *  /param filenumber - uint8_t number of file to map
+ *  /param offset - off_t offset into new file
+ *  /param m - MVPFile
+ *  /return MVPFile - ptr to new struct containing the mmap info
+ **/
 MVPFile* _ph_map_mvpfile(uint8_t filenumber, off_t offset, MVPFile *m);
 
+/** /brief unmap/map from m2 to m
+ *  /param filenumber - uint8_t filenumber of m2
+ *  /param orig_pos   = off_t offset into original file in m.
+ *  /return void
+ **/
 void _ph_unmap_mvpfile(uint8_t filenumber, off_t orig_pos, MVPFile *m, MVPFile *m2);
 
+/**
+ * callback function for dct image hash use in mvptree structure.
+ */
 float hammingdistance(DP *pntA, DP *pntB);
 
+/** /brief aux function to query
+ *  /param m - MVPFile state information
+ *  /param query - DP of datapoint to query
+ *  /param knearest - int capacity of results array.
+ *  /param radius - float value of radius of values to consider
+ *  /param results - DP array of points of result
+ *  /param count - int* number of results found (out)
+ *  /param level - int value to track recursion depth.
+ *  /return MVPRetCode
+**/
 MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
 			    DP **results, int *count, int level);
 
+/**  /brief query mvptree function
+ *   /param m - MVPFile file state info
+ *   /param query - DP* item to query for
+ *   /param knearest - int capacity of results array
+ *   /param radius  - float radius to consider in query
+ *   /param results - DP** list of pointers to results found
+ *   /param count -  int number of results found (out)
+ **/
 MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
 			    DP **results, int *count);
 
+/** /brief save dp points to a file (aux func)
+ *  /param m - MVPFile state information of file
+ *  /param points - DP** list of points to add
+ *  /param nbpoints - int length of points array
+ *  /param saveall_flag - int  1 indicates used by save, 0 indicates used by add function
+ *  /param level - int track recursion level
+ *  /return FileIndex* - fileno and offset into file.
+**/
 FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_flag, int level);
+
+/** /brief save points to mvp file 
+ *  /param m - MVPFile state info of file
+ *  /param points - DP** list of points to add
+ *  /param nbpoints - int number of points
+ *  /return MVPRetCode - ret code 
+**/
 
 MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints);
 
+/**  /brief add points to mvp file (aux function)
+ *   /param m - MVPFile state information of file
+ *   /param new_dp - datapoint to add
+ *   /param level - int track recursion level
+ *   /return MVPRetCode
+ **/
 MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level);
 
+/** /brief add a list of points to mvp file
+    /param m - MVPFile state information of file.
+    /param points - DP** list of points to add
+    /param nbpoints - int number of points
+    /return int - number of points added, neg for error
+**/
 int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints);
 
+/** /brief textual hash for file
+ *  /param filename - char* name of file
+ *  /param nbpoints - int length of array of return value (out)
+ *  /return TxtHashPoint* array of hash points with respective index into file.
+ **/
 TxtHashPoint* ph_texthash(const char *filename, int *nbpoints);
 
+/** /brief compare 2 text hashes
+ *  /param hash1 -TxtHashPoint
+ *  /param N1 - int length of hash1
+ *  /param hash2 - TxtHashPoint
+ *  /param N2 - int length of hash2
+ *  /param nbmatches - int number of matches found (out)
+ *  /return TxtMatch* - list of all matches
+ **/
 TxtMatch* ph_compare_text_hashes(TxtHashPoint *hash1, int N1, TxtHashPoint *hash2, int N2, int *nbmatches);
 
 #endif
