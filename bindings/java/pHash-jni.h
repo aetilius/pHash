@@ -10,46 +10,75 @@ extern "C" {
 /*
  * Class:     pHash
  * Method:    videoHash
- * Signature: (Ljava/lang/String;)J
+ * Signature: (Ljava/lang/String;)LpHash/VideoHash;
  */
-#ifdef HAVE_VIDEO_HASH
-JNIEXPORT jlong JNICALL Java_pHash_videoHash
+JNIEXPORT jobject JNICALL Java_pHash_videoHash
   (JNIEnv *, jclass, jstring);
-#endif
+
 /*
  * Class:     pHash
  * Method:    audioHash
- * Signature: (Ljava/lang/String;)[I
+ * Signature: (Ljava/lang/String;)LpHash/AudioHash;
  */
-#ifdef HAVE_AUDIO_HASH
-JNIEXPORT jintArray JNICALL Java_pHash_audioHash
+JNIEXPORT jobject JNICALL Java_pHash_audioHash
   (JNIEnv *, jclass, jstring);
-#endif
+
 /*
  * Class:     pHash
  * Method:    imageHash
- * Signature: (Ljava/lang/String;)J
+ * Signature: (Ljava/lang/String;)LpHash/ImageHash;
  */
-JNIEXPORT jlong JNICALL Java_pHash_imageHash
+JNIEXPORT jobject JNICALL Java_pHash_imageHash
+  (JNIEnv *, jclass, jstring);
+
+/*
+ * Class:     pHash
+ * Method:    textHash
+ * Signature: (Ljava/lang/String;)LpHash/TextHash;
+ */
+JNIEXPORT jobject JNICALL Java_pHash_textHash
   (JNIEnv *, jclass, jstring);
 
 /*
  * Class:     pHash
  * Method:    imageDistance
- * Signature: (JJ)I
+ * Signature: (LpHash/ImageHash;LpHash/ImageHash;)I
  */
 JNIEXPORT jint JNICALL Java_pHash_imageDistance
-  (JNIEnv *, jclass, jlong, jlong);
+  (JNIEnv *, jclass, jobject, jobject);
 
 /*
  * Class:     pHash
  * Method:    audioDistance
- * Signature: ([I[I)D
+ * Signature: (LpHash/AudioHash;LpHash/AudioHash;)D
  */
-#ifdef HAVE_AUDIO_HASH
 JNIEXPORT jdouble JNICALL Java_pHash_audioDistance
-  (JNIEnv *, jclass, jintArray, jintArray);
-#endif
+  (JNIEnv *, jclass, jobject, jobject);
+
+/*
+ * Class:     pHash
+ * Method:    videoDistance
+ * Signature: (LpHash/VideoHash;LpHash/VideoHash;)I
+ */
+JNIEXPORT jint JNICALL Java_pHash_videoDistance
+  (JNIEnv *, jclass, jobject, jobject);
+
+/*
+ * Class:     pHash
+ * Method:    textDistance
+ * Signature: (LpHash/TextHash;LpHash/TextHash;)I
+ */
+JNIEXPORT jint JNICALL Java_pHash_textDistance
+  (JNIEnv *, jclass, jobject, jobject);
+
+/*
+ * Class:     pHash
+ * Method:    pHashInit
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_pHash_pHashInit
+  (JNIEnv *, jclass);
+
 #ifdef __cplusplus
 }
 #endif
