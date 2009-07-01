@@ -16,7 +16,7 @@ public class pHash
 	}
 	class VideoHash extends Hash 
 	{
-		long[] hash;
+		long hash;
 	}
 	class ImageHash extends Hash 
 	{

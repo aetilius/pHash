@@ -1,3 +1,4 @@
+INCLUDES = -I$(top_srcdir)/src
 lib_LTLIBRARIES = libpHash-jni.la
 libpHash_jni_la_SOURCES = pHash-jni.cpp
 include_HEADERS = pHash-jni.h
@@ -11,4 +12,4 @@ pHash.java: libpHash-jni.la
 pHash.class: pHash.java
 	$(GCJ) -C pHash.java 
 
-libpHash_jni_la_LIBADD = ../../libpHash.la
+libpHash_jni_la_LIBADD = $(top_srcdir)/src/libpHash.la
