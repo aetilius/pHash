@@ -227,7 +227,6 @@ JNIEXPORT jobjectArray JNICALL Java_pHash_00024MVPTree_query
 	jstring mvp = (jstring)e->GetObjectField(ob, e->GetFieldID(e->FindClass("pHash/MVPTree"), "mvpFile",
 										"Ljava/lang/String;"));
 	
-	
 	mvpfile.filename = e->GetStringUTFChars(mvp, 0);
 	int i;
 	for(i = 0; i < sizeof(hashes)/sizeof(hashes[0]); i++)
@@ -242,9 +241,9 @@ JNIEXPORT jobjectArray JNICALL Java_pHash_00024MVPTree_query
 	}
 	
 	DP *query = ph_malloc_datapoint(mvpfile.hash_type, mvpfile.pathlength);
-	DP **results = (DP **)malloc(max*sizeof(DP **));
+	DP **results = (DP **)malloc(max*sizeof(DP *));
 	const char *hash_file = NULL;
-	jstring hashStr= (jstring)e->GetObjectField(hashObj, hash_filename);
+	jstring hashStr = (jstring)e->GetObjectField(hashObj, hash_filename);
 
 	hash_file = e->GetStringUTFChars(hashStr, 0);
 
@@ -256,9 +255,13 @@ JNIEXPORT jobjectArray JNICALL Java_pHash_00024MVPTree_query
 	{
 		case IMAGE_HASH:
 			query->hash_length = 1;
+			ulong64 hash = (ulong64)e->GetLongField(hashObj, imageHash_hash);
+			query->hash = &hash;
 			break;
 		case VIDEO_HASH:
 			query->hash_length = 1;
+			ulong64 hash = (ulong64)e->GetLongField(hashObj, videoHash_hash);
+                        query->hash = &hash;
 			break;
 		case AUDIO_HASH:
 			hashList = (jintArray)e->GetObjectField(hashObj, audioHash_hash);
@@ -313,8 +316,88 @@ JNIEXPORT jobjectArray JNICALL Java_pHash_00024MVPTree_query
 }
 
 JNIEXPORT jboolean JNICALL Java_pHash_00024MVPTree_add
-  (JNIEnv *, jobject, jobjectArray)
+  (JNIEnv *e, jobject ob, jobjectArray hashArray)
 {
+	MVPFile mvpfile;
+	jniHashType type;	
+	ph_mvp_init(&mvpfile);
+
+	if(hashArray == NULL)
+		return JNI_FALSE;
+	
+	jstring mvp = (jstring)e->GetObjectField(ob, e->GetFieldID(e->FindClass("pHash/MVPTree"), "mvpFile",
+										"Ljava/lang/String;"));
+	
+	mvpfile.filename = e->GetStringUTFChars(mvp, 0);
+	int i;
+	jobject hashObj = e->GetObjectArrayElement(hashArray, 0);
+	for(i = 0; i < sizeof(hashes)/sizeof(hashes[0]); i++)
+	{
+		if(e->IsInstanceOf(hashObj, hashes[i].cl))
+		{
+			mvpfile.hashdist = hashes[i].callback;
+			mvpfile.hash_type = hashes[i].hashType;
+			type = hashes[i].kind;
+			break;
+		}
+	}
+	
+	const char *hash_file = NULL;
+
+	jsize len = e->GetArrayLength(hashArray);
+
+	DP **newHashes = (DP **)malloc(len*sizeof(DP *));
+	for(int j = 0; j < len; j++)
+	{
+		newHashes[j] = ph_malloc_datapoint(mvpfile.hash_type, mvpfile.pathlength);
+		hashObj = e->GetObjectArrayElement(hashArray, j);
+		jstring hashStr = (jstring)e->GetObjectField(hashObj, hash_filename);
+
+		hash_file = e->GetStringUTFChars(hashStr, 0);
+		newHashes[j]->id = strdup(hash_file);
+		e->ReleaseStringUTFChars(hashStr, hash_file);
+
+	jint *hash_list = NULL;
+	jintArray hashList = NULL;
+	switch(type)
+	{
+		case IMAGE_HASH:
+			newHashes[j]->hash_length = 1;
+			ulong64 hash = (ulong64)e->GetLongField(hashObj, imageHash_hash);
+			newHashes[j]->hash = &hash;
+			break;
+		case VIDEO_HASH:
+			newHashes[j]->hash_length = 1;
+			ulong64 hash = (ulong64)e->GetLongField(hashObj, videoHash_hash);
+                        newHashes[j]->hash = &hash;
+			break;
+		case AUDIO_HASH:
+			hashList = (jintArray)e->GetObjectField(hashObj, audioHash_hash);
+			newHashes[j]->hash_length = e->GetArrayLength(hashList);
+			hash_list = e->GetIntArrayElements(hashList, NULL);
+			newHashes[j]->hash = hash_list;
+			break;
+	}
+
+
+	}
+
+	int res = ph_add_mvptree(&mvpfile, newHashes, len);
+
+	for(int j = 0; j < len; j++)
+	{
+		if(type == AUDIO_HASH)
+		{
+			hashObj = e->GetObjectArrayElement(hashArray, j);
+			hashList = (jintArray)e->GetObjectField(hashObj, audioHash_hash);
+			e->ReleaseIntArrayElements(hashList, (jint *)newHashes[j]->hash, JNI_ABORT);
+		}
+		ph_free_datapoint(newHashes[j]);
+	}
+
+	e->ReleaseStringUTFChars(mvp, mvpfile.filename);
+	free(newHashes);
+	return JNI_TRUE;
 
 }
 
