@@ -1,10 +1,6 @@
-import java.util.*;
-
-public class pHash
-{
 	abstract class Hash
 	{
-		String name;
+		String filename;
 	}
 	class AudioHash extends Hash 
 	{
@@ -22,13 +18,16 @@ public class pHash
 	{
 		long hash;
 	}
+
+class pHash
+{
 	class MVPTree
 	{
 		String mvpFile;
 
-		private MVPTree() {}
-		public native boolean create(String filename, Hash[] hashes);
-		public native Hash[] query(String file, float radius, int maxResults);
+		public MVPTree(String filename) { mvpFile = filename; }
+		public native boolean create(Hash[] hashes);
+		public native Hash[] query(Hash hash, float radius, int maxResults);
 		public native boolean add(Hash[] hashes);
 	}
 
@@ -40,7 +39,8 @@ public class pHash
 	native static double audioDistance(AudioHash hash1, AudioHash hash2);
 	native static int videoDistance(VideoHash hash1, VideoHash hash2);
 	native static int textDistance(TextHash txtHash1, TextHash txtHash2);
-	native static void pHashInit();
+	private native static void pHashInit();
+	protected native void finalize();
 	static {
 		System.loadLibrary("pHash-jni");
 		pHashInit();
@@ -49,6 +49,7 @@ public class pHash
 
 	public static void main(String args[])
 	{
+			pHash p = new pHash();
 			int i = 0;
 			if(args[i].equals("-a"))
 			{
@@ -60,6 +61,9 @@ public class pHash
 			{
 				ImageHash imHash = imageHash(args[1]);
 				ImageHash imHash2 = imageHash(args[2]);
+				System.out.println("File 1: " + imHash.filename);
+				System.out.println("File 2: " + imHash2.filename);
+
 				System.out.println(imageDistance(imHash,imHash2));
 			}
 			else if(args[i].equals("-v"))

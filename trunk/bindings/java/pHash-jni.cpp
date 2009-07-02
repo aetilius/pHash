@@ -7,25 +7,20 @@
 #ifdef HAVE_AUDIO_HASH
 #include "audiophash.h"
 #endif
-static jfieldID txtHash_hash = NULL; 
-static jfieldID imHash_hash = NULL; 
-static jfieldID vidHash_hash = NULL; 
-static jfieldID audioHash_hash = NULL; 
+ 
+jfieldID imHash_hash = NULL; 
+jfieldID vidHash_hash = NULL; 
+jfieldID audioHash_hash = NULL; 
 
-static jfieldID txtHash_filename = NULL; 
-static jfieldID imHash_filename = NULL; 
-static jfieldID vidHash_filename = NULL; 
-static jfieldID audioHash_filename = NULL; 
-static jfieldID hash_filename = NULL; 
+jfieldID hash_filename = NULL; 
 
-static jclass imClass = NULL;
-static jclass vidClass = NULL;
-static jclass audioClass = NULL;
-static jclass txtClass = NULL;
+jclass imClass = NULL;
+jclass vidClass = NULL;
+jclass audioClass = NULL;
 
-static jmethodID imCtor = NULL;
-static jmethodID vidCtor = NULL;
-static jmethodID audioCtor = NULL;
+jmethodID imCtor = NULL;
+jmethodID vidCtor = NULL;
+jmethodID audioCtor = NULL;
 
 typedef enum ph_jni_hash_types
 {
@@ -41,6 +36,8 @@ typedef struct ph_jni_hash_classes
 	HashType hashType;
 	hash_compareCB callback;
 	jniHashType kind;
+	jmethodID ctor;
+	jfieldID hashID;
 } jniHashes;
 
 
@@ -84,9 +81,9 @@ float audio_distance(DP *dpA, DP *dpB)
 
 static jniHashes hashes[] = 
 			{ 	
-				{imClass, UINT64ARRAY, image_distance, IMAGE_HASH}, 
-				{vidClass, UINT64ARRAY, image_distance, VIDEO_HASH}, 
-				{audioClass, UINT32ARRAY, audio_distance, AUDIO_HASH},
+				{imClass, UINT64ARRAY, image_distance, IMAGE_HASH, imCtor, imHash_hash}, 
+				{vidClass, UINT64ARRAY, image_distance, VIDEO_HASH, vidCtor, vidHash_hash}, 
+				{audioClass, UINT32ARRAY, audio_distance, AUDIO_HASH, audioCtor, audioHash_hash},
 			};
 
 JNIEXPORT jboolean JNICALL Java_pHash_00024MVPTree_create
@@ -219,28 +216,134 @@ JNIEXPORT jboolean JNICALL Java_pHash_00024MVPTree_create
 
 }
 
+JNIEXPORT jobjectArray JNICALL Java_pHash_00024MVPTree_query
+  (JNIEnv *e, jobject ob, jobject hashObj, jfloat radius, jint max)
+{
+
+	MVPFile mvpfile;
+	jniHashType type;	
+	ph_mvp_init(&mvpfile);
+	
+	jstring mvp = (jstring)e->GetObjectField(ob, e->GetFieldID(e->FindClass("pHash/MVPTree"), "mvpFile",
+										"Ljava/lang/String;"));
+	
+	
+	mvpfile.filename = e->GetStringUTFChars(mvp, 0);
+	int i;
+	for(i = 0; i < sizeof(hashes)/sizeof(hashes[0]); i++)
+	{
+		if(e->IsInstanceOf(hashObj, hashes[i].cl))
+		{
+			mvpfile.hashdist = hashes[i].callback;
+			mvpfile.hash_type = hashes[i].hashType;
+			type = hashes[i].kind;
+			break;
+		}
+	}
+	
+	DP *query = ph_malloc_datapoint(mvpfile.hash_type, mvpfile.pathlength);
+	DP **results = (DP **)malloc(max*sizeof(DP **));
+	const char *hash_file = NULL;
+	jstring hashStr= (jstring)e->GetObjectField(hashObj, hash_filename);
+
+	hash_file = e->GetStringUTFChars(hashStr, 0);
+
+	query->id = strdup(hash_file);
+	int count = 0;
+	jint *hash_list = NULL;
+	jintArray hashList = NULL;
+	switch(type)
+	{
+		case IMAGE_HASH:
+			query->hash_length = 1;
+			break;
+		case VIDEO_HASH:
+			query->hash_length = 1;
+			break;
+		case AUDIO_HASH:
+			hashList = (jintArray)e->GetObjectField(hashObj, audioHash_hash);
+			query->hash_length = e->GetArrayLength(hashList);
+			hash_list = e->GetIntArrayElements(hashList, NULL);
+			query->hash = hash_list;
+			break;
+	}
+	int res = ph_query_mvptree(&mvpfile, query, max, radius, results, &count);
+	if(type == AUDIO_HASH)
+		e->ReleaseIntArrayElements(hashList, hash_list, JNI_ABORT);
+	jobjectArray ret;
+	if(res != 0)
+	{
+		ret = NULL;
+	}
+	else
+	{
+		jobject obj = e->NewObject(hashes[i].cl, hashes[i].ctor);
+		ret = e->NewObjectArray(count, hashes[i].cl, obj);
+		for(int j = 0; j < count; j++)
+		{
+			obj = e->GetObjectArrayElement(ret, j);
+			jstring id = e->NewStringUTF(results[j]->id);
+			e->SetObjectField(obj, hash_filename, id);
+			switch(type)
+			{
+				case IMAGE_HASH:
+					e->SetLongField(obj, hashes[i].hashID, *(jlong *)results[j]->hash);
+					break;
+				case VIDEO_HASH:
+					e->SetLongField(obj, hashes[i].hashID, *(jlong *)results[j]->hash);
+					break;
+				case AUDIO_HASH:
+					jintArray hashArray;
+					e->SetIntArrayRegion(hashArray, 0, results[j]->hash_length, (jint *)results[j]->hash); 
+					e->SetObjectField(obj, hashes[i].hashID, hashArray);
+					break;
+			}
+		}
+	}
+	e->ReleaseStringUTFChars(mvp, mvpfile.filename);
+	e->ReleaseStringUTFChars(hashStr, hash_file);
+	ph_free_datapoint(query);
+	for(int i = 0; i < max; i++)
+	{
+		if(results[i])
+			ph_free_datapoint(results[i]);
+	}
+	free(results);
+	return ret;
+}
+
+JNIEXPORT jboolean JNICALL Java_pHash_00024MVPTree_add
+  (JNIEnv *, jobject, jobjectArray)
+{
+
+}
+
 JNIEXPORT void JNICALL Java_pHash_pHashInit
   (JNIEnv *e, jclass cl)
 {
 	
-	imClass = e->FindClass("pHash/ImageHash");
-	txtClass = e->FindClass("pHash/TextHash");
-	audioClass = e->FindClass("pHash/AudioHash");
-	vidClass = e->FindClass("pHash/VideoHash");
-
+	imClass = (jclass)e->NewGlobalRef(e->FindClass("ImageHash"));
+	audioClass = (jclass)e->NewGlobalRef(e->FindClass("AudioHash"));
+	vidClass = (jclass)e->NewGlobalRef(e->FindClass("VideoHash"));
         imHash_hash = e->GetFieldID(imClass, "hash", "J");
         audioHash_hash = e->GetFieldID(audioClass, "hash", "[I");
-        txtHash_hash = e->GetFieldID(txtClass, "hash", "[I");
-        vidHash_hash = e->GetFieldID(vidClass, "hash", "[J");
+        vidHash_hash = e->GetFieldID(vidClass, "hash", "J");
 	
-	hash_filename = e->GetFieldID(e->FindClass("pHash/Hash"), "filename", "Ljava/lang/String;");
+	hash_filename = e->GetFieldID(e->FindClass("Hash"), "filename", "Ljava/lang/String;");
 
 	imCtor = e->GetMethodID(imClass, "<init>", "()V");
 	vidCtor = e->GetMethodID(vidClass, "<init>", "()V");
 	audioCtor = e->GetMethodID(audioClass, "<init>", "()V");
 
 }
+JNIEXPORT void JNICALL Java_pHash_finalize
+  (JNIEnv *e, jclass cl)
+{
+	e->DeleteGlobalRef(imClass);
+	e->DeleteGlobalRef(vidClass);
+	e->DeleteGlobalRef(audioClass);
 
+}
 JNIEXPORT jint JNICALL Java_pHash_imageDistance
   (JNIEnv *e, jclass cl, jobject hash1, jobject hash2)
 {
@@ -303,7 +406,6 @@ JNIEXPORT jobject JNICALL Java_pHash_imageHash
     
     	ulong64 hash;
     	ph_dct_imagehash(file, hash);
-
 	jobject imageHash = e->NewObject(imClass, imCtor);
 	e->SetObjectField(imageHash, hash_filename, f);
 
@@ -337,22 +439,21 @@ JNIEXPORT jobject JNICALL Java_pHash_videoHash
 JNIEXPORT jobject JNICALL Java_pHash_audioHash
   (JNIEnv *e, jclass cl, jstring f)
 {
-    
 	jintArray ret = NULL;
-    const int sr = 8000;
-    const int channels = 1;
-    int N;
-    int nbframes;
-    float *buf = NULL;
-    unsigned int *hash = NULL;
+	const int sr = 8000;
+	const int channels = 1;
+	int N;
+	int nbframes;
+	float *buf = NULL;
+	unsigned int *hash = NULL;
 	const char *file = e->GetStringUTFChars(f,0);
-    buf = ph_readaudio(file,sr,channels,N); 
+	buf = ph_readaudio(file,sr,channels,N); 
 	if(!buf) 
 	{
     		e->ReleaseStringUTFChars(f,file);
 		return NULL;
 	}
-    hash = ph_audiohash(buf,N,sr,nbframes);
+	hash = ph_audiohash(buf,N,sr,nbframes);
 	if(!hash || nbframes <= 0) 
 	{
     		free(buf);
