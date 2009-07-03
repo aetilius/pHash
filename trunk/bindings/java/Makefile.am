@@ -1,7 +1,7 @@
 INCLUDES = -I$(top_srcdir)/src
 lib_LTLIBRARIES = libpHash-jni.la
 libpHash_jni_la_SOURCES = pHash-jni.cpp
-include_HEADERS = pHash-jni.h
+include_HEADERS = pHash-jni.h pHash_MVPTree.h
 
 clean:
 	rm -f *.class *.so *.la *.lo *.o
