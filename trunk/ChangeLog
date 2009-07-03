@@ -1,5 +1,6 @@
 0.5
 ---
+07.02.2009 include java bindings so pHash can be used from Java programs
 06.27.2009 added check in mvptree save and add function to check that
 	   the page size limit has not been exceeded each time a data
 	   point is written.
