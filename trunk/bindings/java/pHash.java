@@ -49,7 +49,6 @@ class pHash
 
 	public static void main(String args[])
 	{
-			pHash p = new pHash();
 			int i = 0;
 			if(args[i].equals("-a"))
 			{
