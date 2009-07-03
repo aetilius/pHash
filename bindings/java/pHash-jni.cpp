@@ -254,21 +254,27 @@ JNIEXPORT jobjectArray JNICALL Java_pHash_00024MVPTree_query
 	switch(type)
 	{
 		case IMAGE_HASH:
+		{	
 			query->hash_length = 1;
-			ulong64 hash = (ulong64)e->GetLongField(hashObj, imageHash_hash);
+			ulong64 hash = (ulong64)e->GetLongField(hashObj, imHash_hash);
 			query->hash = &hash;
 			break;
+		}
 		case VIDEO_HASH:
+		{
 			query->hash_length = 1;
-			ulong64 hash = (ulong64)e->GetLongField(hashObj, videoHash_hash);
+			ulong64 hash = (ulong64)e->GetLongField(hashObj, vidHash_hash);
                         query->hash = &hash;
 			break;
+		}
 		case AUDIO_HASH:
+		{
 			hashList = (jintArray)e->GetObjectField(hashObj, audioHash_hash);
 			query->hash_length = e->GetArrayLength(hashList);
 			hash_list = e->GetIntArrayElements(hashList, NULL);
 			query->hash = hash_list;
 			break;
+		}
 	}
 	int res = ph_query_mvptree(&mvpfile, query, max, radius, results, &count);
 	if(type == AUDIO_HASH)
@@ -347,6 +353,8 @@ JNIEXPORT jboolean JNICALL Java_pHash_00024MVPTree_add
 	jsize len = e->GetArrayLength(hashArray);
 
 	DP **newHashes = (DP **)malloc(len*sizeof(DP *));
+	jintArray hashList = NULL;
+
 	for(int j = 0; j < len; j++)
 	{
 		newHashes[j] = ph_malloc_datapoint(mvpfile.hash_type, mvpfile.pathlength);
@@ -358,25 +366,32 @@ JNIEXPORT jboolean JNICALL Java_pHash_00024MVPTree_add
 		e->ReleaseStringUTFChars(hashStr, hash_file);
 
 	jint *hash_list = NULL;
-	jintArray hashList = NULL;
 	switch(type)
 	{
 		case IMAGE_HASH:
+		{
 			newHashes[j]->hash_length = 1;
-			ulong64 hash = (ulong64)e->GetLongField(hashObj, imageHash_hash);
-			newHashes[j]->hash = &hash;
+			ulong64 hash = (ulong64)e->GetLongField(hashObj, imHash_hash);
+			newHashes[j]->hash = (ulong64 *)malloc(sizeof(ulong64));
+			*(ulong64 *)newHashes[j]->hash = hash;
 			break;
+		}
 		case VIDEO_HASH:
+		{
 			newHashes[j]->hash_length = 1;
-			ulong64 hash = (ulong64)e->GetLongField(hashObj, videoHash_hash);
-                        newHashes[j]->hash = &hash;
+			ulong64 hash = (ulong64)e->GetLongField(hashObj, vidHash_hash);
+                        newHashes[j]->hash = (ulong64 *)malloc(sizeof(ulong64));
+			*(ulong64 *)newHashes[j]->hash = hash;
 			break;
+		}
 		case AUDIO_HASH:
+		{
 			hashList = (jintArray)e->GetObjectField(hashObj, audioHash_hash);
 			newHashes[j]->hash_length = e->GetArrayLength(hashList);
 			hash_list = e->GetIntArrayElements(hashList, NULL);
 			newHashes[j]->hash = hash_list;
 			break;
+		}
 	}
 
 
