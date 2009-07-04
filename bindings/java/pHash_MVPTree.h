@@ -10,15 +10,15 @@ extern "C" {
 /*
  * Class:     pHash_MVPTree
  * Method:    create
- * Signature: (Ljava/lang/String;[LpHash/Hash;)Z
+ * Signature: ([LHash;)Z
  */
 JNIEXPORT jboolean JNICALL Java_pHash_00024MVPTree_create
-  (JNIEnv *, jobject, jstring, jobjectArray);
+  (JNIEnv *, jobject, jobjectArray);
 
 /*
  * Class:     pHash_MVPTree
  * Method:    query
- * Signature: (Ljava/lang/String;FI)[LpHash/Hash;
+ * Signature: (LHash;FI)[LHash;
  */
 JNIEXPORT jobjectArray JNICALL Java_pHash_00024MVPTree_query
   (JNIEnv *, jobject, jobject, jfloat, jint);
@@ -26,7 +26,7 @@ JNIEXPORT jobjectArray JNICALL Java_pHash_00024MVPTree_query
 /*
  * Class:     pHash_MVPTree
  * Method:    add
- * Signature: ([LpHash/Hash;)Z
+ * Signature: ([LHash;)Z
  */
 JNIEXPORT jboolean JNICALL Java_pHash_00024MVPTree_add
   (JNIEnv *, jobject, jobjectArray);
