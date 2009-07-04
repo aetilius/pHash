@@ -43,39 +43,41 @@ typedef struct ph_jni_hash_classes
 
 float image_distance(DP *pntA, DP *pntB)
 {
-    uint8_t htypeA = pntA->hash_type;
-    uint8_t htypeB = pntB->hash_type;
-    if (htypeA != htypeB)
-        return -1.0;
-    if (htypeA != UINT64ARRAY)
-        return -1.0;
-    if ((pntA->hash_length > 1) || (pntB->hash_length > 1))
-        return -1.0;
-    ulong64 *hashA = (ulong64*)pntA->hash;
-    ulong64 *hashB = (ulong64*)pntB->hash;
-    int res = ph_hamming_distance(*hashA, *hashB);
-    return (float)res;
+	uint8_t htypeA = pntA->hash_type;
+	uint8_t htypeB = pntB->hash_type;
+	if (htypeA != htypeB)
+        	return -1.0;
+	if (htypeA != UINT64ARRAY)
+        	return -1.0;
+    	if ((pntA->hash_length > 1) || (pntB->hash_length > 1))
+        	return -1.0;
+    	ulong64 *hashA = (ulong64*)pntA->hash;
+    	ulong64 *hashB = (ulong64*)pntB->hash;
+    	int res = ph_hamming_distance(*hashA, *hashB);
+    	return (float)res;
 }
 
 float audio_distance(DP *dpA, DP *dpB)
 {
-    uint32_t *hash1 = (uint32_t*)dpA->hash;
-    int N1 = dpA->hash_length;
-    uint32_t *hash2 = (uint32_t*)dpB->hash;
-    int N2 = dpB->hash_length;
+	uint32_t *hash1 = (uint32_t*)dpA->hash;
+	int N1 = dpA->hash_length;
+	uint32_t *hash2 = (uint32_t*)dpB->hash;
+	int N2 = dpB->hash_length;
 
-    float threshold = 0.30;
-    int blocksize = 256;
-    int Nc=0;
-   double *ptrC = ph_audio_distance_ber(hash1, N1, hash2, N2, threshold, blocksize, Nc);
+	float threshold = 0.30;
+	int blocksize = 256;
+	int Nc=0;
+   	double *ptrC = ph_audio_distance_ber(hash1, N1, hash2, N2, threshold, blocksize, Nc);
 
-    double maxC = 0;
-    for (int i=0;i<Nc;i++){
-        if (ptrC[i] > maxC)
-            maxC = ptrC[i];
-    }
-    double res = 1000*(1-maxC);
-    return (float)res;
+    	double maxC = 0;
+    	for (int i=0;i<Nc;i++)
+	{
+        	if (ptrC[i] > maxC)
+            		maxC = ptrC[i];
+    	}
+	free(ptrC);
+    	double res = 1000*(1-maxC);
+    	return (float)res;
 }
 
 
@@ -87,19 +89,19 @@ static jniHashes hashes[] =
 			};
 
 JNIEXPORT jboolean JNICALL Java_pHash_00024MVPTree_create
-  (JNIEnv *e, jobject ob, jstring filename, jobjectArray hashArray)
+  (JNIEnv *e, jobject ob, jobjectArray hashArray)
 {
 	jint hashLen;
-	if(filename == NULL || hashArray == NULL || (hashLen = e->GetArrayLength(hashArray)) == 0)
+	if(hashArray == NULL || (hashLen = e->GetArrayLength(hashArray)) == 0)
 		return JNI_FALSE;
 
-	const char *file = e->GetStringUTFChars(filename, 0);
-	if(!file)
-		return JNI_FALSE;
+	jstring mvp = (jstring)e->GetObjectField(ob, e->GetFieldID(e->FindClass("pHash/MVPTree"), "mvpFile",
+										"Ljava/lang/String;"));
+	
 
 	MVPFile mvpfile;
 	ph_mvp_init(&mvpfile);
-	mvpfile.filename = file;
+	mvpfile.filename = e->GetStringUTFChars(mvp, 0);
 	jniHashType type;
 	for(int i = 0; i < sizeof(hashes)/sizeof(hashes[0]); i++)
 	{
@@ -123,7 +125,7 @@ JNIEXPORT jboolean JNICALL Java_pHash_00024MVPTree_create
 		if(!hashlist[i])
 		{
 			free(hashlist);
-			e->ReleaseStringUTFChars(filename, file);
+			e->ReleaseStringUTFChars(mvp, mvpfile.filename);
 			return JNI_FALSE;
 		}			
 		jstring fname = (jstring)e->GetObjectField(hashObj, hash_filename);
@@ -147,7 +149,7 @@ JNIEXPORT jboolean JNICALL Java_pHash_00024MVPTree_create
 					}
 
 					free(hashlist);
-					e->ReleaseStringUTFChars(filename, file);
+					e->ReleaseStringUTFChars(mvp, mvpfile.filename);
 					return JNI_FALSE;
 				}
 				*(ulong64 *)hashlist[i]->hash = tmphash;
@@ -166,7 +168,7 @@ JNIEXPORT jboolean JNICALL Java_pHash_00024MVPTree_create
 					}
 
 					free(hashlist);
-					e->ReleaseStringUTFChars(filename, file);
+					e->ReleaseStringUTFChars(mvp, mvpfile.filename);
 					return JNI_FALSE;
 				}
                                 *(ulong64 *)hashlist[i]->hash = videoHash;
@@ -195,7 +197,7 @@ JNIEXPORT jboolean JNICALL Java_pHash_00024MVPTree_create
 					}
 
 					free(hashlist);
-					e->ReleaseStringUTFChars(filename, file);
+					e->ReleaseStringUTFChars(mvp, mvpfile.filename);
 					return JNI_FALSE;
 				}
 				break;
@@ -211,7 +213,7 @@ JNIEXPORT jboolean JNICALL Java_pHash_00024MVPTree_create
 	}
 
 	free(hashlist);
-	e->ReleaseStringUTFChars(filename, file);
+	e->ReleaseStringUTFChars(mvp, mvpfile.filename);
 	return JNI_TRUE;
 
 }
@@ -434,7 +436,7 @@ JNIEXPORT void JNICALL Java_pHash_pHashInit
 	audioCtor = e->GetMethodID(audioClass, "<init>", "()V");
 
 }
-JNIEXPORT void JNICALL Java_pHash_finalize
+JNIEXPORT void JNICALL Java_pHash_cleanup
   (JNIEnv *e, jclass cl)
 {
 	e->DeleteGlobalRef(imClass);

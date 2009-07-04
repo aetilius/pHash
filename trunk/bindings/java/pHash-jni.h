@@ -79,6 +79,9 @@ JNIEXPORT jint JNICALL Java_pHash_textDistance
 JNIEXPORT void JNICALL Java_pHash_pHashInit
   (JNIEnv *, jclass);
 
+JNIEXPORT void JNICALL Java_pHash_cleanup
+  (JNIEnv *, jclass);
+
 #ifdef __cplusplus
 }
 #endif

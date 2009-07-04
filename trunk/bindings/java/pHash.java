@@ -40,7 +40,7 @@ class pHash
 	native static int videoDistance(VideoHash hash1, VideoHash hash2);
 	native static int textDistance(TextHash txtHash1, TextHash txtHash2);
 	private native static void pHashInit();
-	protected native void finalize();
+	private native static void cleanup();
 	static {
 		System.loadLibrary("pHash-jni");
 		pHashInit();
@@ -78,7 +78,7 @@ class pHash
                                 System.out.println(textDistance(txtHash,txtHash2));
 			}
 
-
+			pHash.cleanup();
 
 	}
 
