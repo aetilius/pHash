@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.63)
-AC_INIT([pHash],[0.5.0],[support@phash.org])
+AC_INIT([pHash],[0.5.1],[support@phash.org])
 AM_INIT_AUTOMAKE($PACKAGE_NAME,$PACKAGE_VERSION)
 AC_CONFIG_SRCDIR([src/pHash.cpp])
 AC_CONFIG_HEADERS([config.h])
@@ -26,6 +26,7 @@ AC_ARG_ENABLE(java, [AS_HELP_STRING([--enable-java],
 java=yes, java=no)
 AM_CONDITIONAL([WITH_JAVA], test x$java != xno)
 AC_PROG_INSTALL
+AC_LANG([C++])
 AC_PROG_LN_S
 m4_defun([_LT_AC_LANG_F77_CONFIG], [:])
 
@@ -35,11 +36,9 @@ AC_SUBST([LIBTOOLS_DEPS])
 LDFLAGS="$LDFLAGS -L/usr/local/lib"
 CPPFLAGS="$CPPFLAGS -I/usr/local/include"
 AC_DEFUN([AC_CHECK_CIMG], [
-AC_MSG_CHECKING([whether CImg.h is present in system directories.])
-AC_MSG_RESULT([])
 AC_CHECK_HEADER([CImg.h], [found_cimg="y"], [found_cimg="n"])
 
-if test "$found_cimg" = "n"; then
+if test x"$found_cimg" = x"n"; then
 	AC_MSG_CHECKING([whether CImg.h is in the src directory.])
 	
 	if [test `ls src | grep "CImg.h"` >/dev/null 2>&1]; then
@@ -50,6 +49,7 @@ if test "$found_cimg" = "n"; then
 	fi
 	
 fi])
+
 AC_DEFUN([AC_CHECK_FFTW3],
 [
 
