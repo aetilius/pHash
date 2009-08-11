@@ -21,9 +21,18 @@ AS_IF([test x"$debug" != x"no"],
 	[CXXFLAGS="`echo $CXXFLAGS' -ffast-math' | sed 's/-g//g' | sed 's/-O[0-9]//g'`"
 	CXXFLAGS="$CXXFLAGS -O3"])
 
+AC_ARG_ENABLE(openmp, [AS_HELP_STRING([--enable-openmp],
+[enable OpenMP support in pHash to use multiple cores/CPUs @<:@default=no@:>@])], 
+openmp=yes, openmp=no)
+
+AS_IF([test "$openmp" = "yes"],
+[
+	CPPFLAGS += "-Dcimg_use_openmp"])
+
 AC_ARG_ENABLE(java, [AS_HELP_STRING([--enable-java],
 [compile java (JNI) binding for pHash @<:@default=no@:>@])], 
 java=yes, java=no)
+
 AM_CONDITIONAL([WITH_JAVA], test x$java != xno)
 AC_PROG_INSTALL
 AC_LANG([C++])
@@ -120,6 +129,8 @@ AS_IF([test x"$audio_hash" != x"no"],
 		AC_CHECK_FFTW3() 
 	fi
 	CPPFLAGS="$CPPFLAGS -DHAVE_AUDIO_HASH=1"])
+
+
 AM_CONDITIONAL(HAVE_AUDIO_HASH, test x$audio_hash != xno)
 
 # Checks for libraries.
@@ -130,10 +141,15 @@ AC_CHECK_LIB([m], [sqrt])
 AC_CHECK_LIB([png], [png_create_read_struct], [use_png="y"])
 AC_CHECK_LIB([pthread], [pthread_create])
 
+AS_IF([test "$found_fftw" = "y"],
+[
+	CPPFLAGS += "-Dcimg_use_fftw3"])
+
 AS_IF([test "$use_jpeg" = "y"],
 [
 	CPPFLAGS="$CPPFLAGS -Dcimg_use_jpeg"
 	LDFLAGS="$LDFLAGS -ljpeg"])
+
 AS_IF([test "$use_png" = "y"],
 [
 	CPPFLAGS="$CPPFLAGS -Dcimg_use_png"
