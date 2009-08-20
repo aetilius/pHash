@@ -313,7 +313,7 @@ CImg<float>* ph_dct_matrix(const int N){
     CImg<float> *ptr_matrix = new CImg<float>(N,N,1,1,1/sqrt((float)N));
     for (int x=0;x<N;x++){
 	for (int y=1;y<N;y++){
-	    ptr_matrix->at(x,y) = SQRT_TWO*cos((cimg::valuePI/2/N)*y*(2*(x+1)));
+	    ptr_matrix->at(x,y) = sqrt(2.0/N)*cos((cimg::valuePI/2/N)*y*(2*x+1));
 	}
     }
     return ptr_matrix;
