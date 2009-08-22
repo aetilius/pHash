@@ -27,7 +27,11 @@ openmp=yes, openmp=no)
 
 AS_IF([test "$openmp" = "yes"],
 [
-	CPPFLAGS += "-Dcimg_use_openmp"])
+	CPPFLAGS="$CPPFLAGS -Dcimg_use_openmp"
+	if test $GCC = "yes"; then
+		CXXFLAGS="$CXXFLAGS -fopenmp"
+	fi
+])
 
 AC_ARG_ENABLE(java, [AS_HELP_STRING([--enable-java],
 [compile java (JNI) binding for pHash @<:@default=no@:>@])], 
