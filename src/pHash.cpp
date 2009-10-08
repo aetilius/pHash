@@ -1482,7 +1482,6 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 	float *M1 = (float*)malloc(LengthM1*sizeof(float));
 	float *M2 = (float*)malloc(LengthM2*sizeof(float));
 	if (!M1 || !M2){
-	    printf("unable to allocate M1[] or M2[]\n");
 	    free(pOffset);
 	    free(dist);
 	    return NULL;
@@ -1500,7 +1499,6 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
           move pointers, not the actual datapoints */
 	DP ***bins = (DP***)malloc(BranchFactor*sizeof(DP***));
 	if (!bins){
-	    fprintf(stderr, "mem alloc error\n");
 	    free(pOffset);
 	    free(dist);
 	    free(M1);
@@ -1966,12 +1964,10 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 
 	float *M1 = (float*)malloc(LengthM1*sizeof(float));
 	if (!M1){
-	    fprintf(stderr,"mem alloc of M1[]\n");
 	    return PH_ERRMEM;
 	}
 	float *M2 = (float*)malloc(LengthM2*sizeof(float));
 	if (!M2){
-	    fprintf(stderr,"mem alloc of M2[]\n");
 	    return PH_ERRMEM;
 	}
 
@@ -2191,7 +2187,6 @@ TxtHashPoint* ph_texthash(const char *filename,int *nbpoints){
 
     FILE *pfile = fopen(filename,"r");
     if (!pfile){
-        printf("unable to open files\n");
 	return NULL;
     }
     struct stat fileinfo;
@@ -2203,7 +2198,6 @@ TxtHashPoint* ph_texthash(const char *filename,int *nbpoints){
     
     TxtHash = (TxtHashPoint*)malloc(count*sizeof(struct ph_hash_point));
     if (!TxtHash){
-	printf("unable to allocat hash array\n");
 	return NULL;
     }
     *nbpoints=0;
