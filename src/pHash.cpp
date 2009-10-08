@@ -851,7 +851,7 @@ MVPFile* _ph_map_mvpfile(uint8_t filenumber, off_t offset, MVPFile *m){
         if (!ret_file)
 	    return NULL;
         char extfile[256];
-	sprintf(extfile, "%s%d.mvp", m->filename, filenumber);
+	snprintf(extfile, sizeof(extfile),"%s%d.mvp", m->filename, filenumber);
         ret_file->filename = strdup(m->filename);
 	ret_file->fd = open(extfile, O_RDWR);
 	ret_file->pathlength = m->pathlength;
@@ -1175,7 +1175,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
     m->pgsize = sysconf(_SC_PAGESIZE);
 
     char mainfile[256];
-    sprintf(mainfile, "%s.mvp", m->filename);
+    snprintf(mainfile, sizeof(mainfile),"%s.mvp", m->filename);
     m->fd = open(mainfile, O_RDWR);
     if (m->fd < 0){
 	return PH_ERRFILE;
@@ -1270,7 +1270,7 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 
 	/* open new file */
 	char extfile[256];
-	sprintf(extfile, "%s%d.mvp", m->filename, m->nbdbfiles);
+	snprintf(extfile, sizeof(extfile),"%s%d.mvp", m->filename, m->nbdbfiles);
 	
 	m2.fd = open(extfile, O_CREAT|O_RDWR|O_APPEND, 00777);
 	if (m2.fd < 0){
@@ -1286,7 +1286,7 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 	while (fileinfo.st_size >= MaxFileSize){
 	    close(m2.fd);
 	    m->nbdbfiles++;
-	    sprintf(extfile, "%s%d.mvp", m->filename, m->nbdbfiles);
+	    snprintf(extfile, sizeof(extfile),"%s%d.mvp", m->filename, m->nbdbfiles);
 	    
 	    m2.fd = open(extfile,O_CREAT|O_RDWR|O_APPEND, 00777);
 	    if (m2.fd < 0){
@@ -1748,7 +1748,7 @@ MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints){
 
     /* open main file */
     char mainfile[256];
-    sprintf(mainfile, "%s.mvp", m->filename);
+    snprintf(mainfile, sizeof(mainfile),"%s.mvp", m->filename);
     m->fd = open(mainfile, O_CREAT|O_RDWR|O_TRUNC, 00777);
     if (m->fd < 0){
 	return PH_ERRFILE;
@@ -2098,7 +2098,7 @@ int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints){
 
     /* open main file */
     char mainfile[256];
-    sprintf(mainfile, "%s.mvp", m->filename);
+    snprintf(mainfile, sizeof(mainfile),"%s.mvp", m->filename);
 
     m->fd = open(mainfile, O_RDWR);
     if (m->fd < 0){
