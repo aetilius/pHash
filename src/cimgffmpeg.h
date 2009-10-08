@@ -201,7 +201,7 @@ int ReadFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList, unsigned int low_
           if (result < 0)
 	      break;
     	  if(packet.stream_index==st_info->videoStream) {
-	      avcodec_decode_video2(st_info->pCodecCtx, pFrame, &frameFinished,&packet);
+	      avcodec_decode_video(st_info->pCodecCtx, pFrame, &frameFinished,packet.data, packet.size);
 	      if(frameFinished) {
 		  if (st_info->current_index == st_info->next_index){
 		      st_info->next_index += st_info->step;
@@ -361,8 +361,8 @@ int NextFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList)
 			break;
 		if(packet.stream_index == st_info->videoStream) {
 			
-		    avcodec_decode_video2(st_info->pCodecCtx, pFrame, &frameFinished,
-		                         &packet);
+		    avcodec_decode_video(st_info->pCodecCtx, pFrame, &frameFinished,
+		                         packet.data,packet.size);
  
 		    if(frameFinished) {
 		    	if (st_info->current_index == st_info->next_index)
