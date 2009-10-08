@@ -362,122 +362,252 @@ int ph_dct_imagehash(const char* file,ulong64 &hash){
     return 0;
 }
 #endif
+
 #if defined(HAVE_VIDEO_HASH) && defined(HAVE_IMAGE_HASH)
-int ph_dct_videohash(const char* file,ulong64 &hash){
 
 
-    long nb_frames = GetNumberVideoFrames(file);
+CImgList<uint8_t>* GetKeyFramesFromVideo(const char *filename){
 
-    if (nb_frames <= 0)
-	return -1;
-
-    CImgList<uint8_t> *pframeList = new CImgList<uint8_t>();
-
-    int frames_read = ReadFrames(file,pframeList,0,nb_frames,1,nb_frames);
-    if (frames_read < 0){
-	delete pframeList;
-	return -1;
+    long N =  GetNumberVideoFrames(filename);
+    if (N < 0){
+	return NULL;
+    }
+    
+    float frames_per_sec = 0.5*fps(filename);
+    if (frames_per_sec < 0){
+	return NULL;
     }
 
-    CImg<float> video_cube = pframeList->get_append('z');
-    CImg<float> meanfilter(1,1,41,1,(float)(1.0/41.0));
+    int step = (int)(frames_per_sec + ROUNDING_FACTOR(frames_per_sec));
+    long nbframes = (long)(N/step);
 
-    video_cube.convolve(meanfilter).resize(32,32,64);
-
-    CImgList<float> *pDCTList = new CImgList<float>();
-
-    CImg<float> *C = ph_dct_matrix(32);
-    CImg<float> C_transp = C->get_transpose();
-    CImg<float> *C2 = ph_dct_matrix(64);
-
-    cimg_forZ(video_cube,Z){
-	CImg<float> current = video_cube.get_slice(Z);
-	CImg<float> dctcurrent = (*C)*current*(C_transp);
-	(*pDCTList) << dctcurrent;
+    float *dist = (float*)malloc((nbframes)*sizeof(float));
+    if (!dist){
+	return NULL;
     }
-    video_cube = pDCTList->get_append('z'); 
-    pDCTList->clear();
-    video_cube.permute_axes("xzyv");
-    cimg_forZ(video_cube,Z){
-	CImg<float> current = video_cube.get_slice(Z);
-	CImg<float> dctcurrent = (*C2)*current;
-	(*pDCTList) << dctcurrent;
+    CImg<float> prev(64,1,1,1,0);
+
+    VFInfo st_info;
+    st_info.filename = strdup(filename);
+    st_info.nb_retrieval = 100;
+    st_info.step = step;
+    st_info.pixelformat = 0;
+    st_info.pFormatCtx = NULL;
+    st_info.width = -1;
+    st_info.height = -1;
+
+    CImgList<uint8_t> *pframelist = new CImgList<uint8_t>();
+    if (!pframelist){
+	return NULL;
     }
-    video_cube.permute_axes("xzyv");
-
-    CImg<float> coeffs = video_cube.get_crop(1,1,1,4,4,4).unroll('x');
-    float median = coeffs.median();
-    hash        = 0x0000000000000000ULL;
-    ulong64 one = 0x0000000000000001ULL;
-    for (int i=0;i<64;i++){
-	if (coeffs(i) >= median)
-	    hash |= one;
-	one = one << 1;
-    }
-
-   
-    delete pframeList;
-    delete pDCTList;
-
-    return 0;
-}
-
-int ph_rash_videodigest(const char* file,CImg<uint8_t> *p_videodigest){
+    int nbread = 0;
+    int k=0;
+    do {
+	nbread = NextFrames(&st_info, pframelist);
+	if (nbread < 0){
+	    delete pframelist;
+	    free(dist);
+	    return NULL;
+	}
+	unsigned int i = 0;
+        while ((i < pframelist->size) && (k < nbframes)){
+	    CImg<uint8_t> current = pframelist->at(i++);
+	    CImg<float> hist = current.get_histogram(64,0,255);
+            float d = 0.0;
+	    dist[k] = 0.0;
+	    cimg_forX(hist,X){
+		d =  hist(X) - prev(X);
+		d = (d>=0) ? d : -d;
+		dist[k] += d;
+		prev(X) = hist(X);
+	    }
+            k++;
+	}
+        pframelist->clear();
+    } while ((nbread >= st_info.nb_retrieval)&&(k < nbframes));
+    vfinfo_close(&st_info);
 
     int S = 10;
     int L = 50;
     int alpha1 = 3;
     int alpha2 = 2;
-    
-    CImgList<uint8_t> *pframes = new CImgList<uint8_t>();
-    
-    long N = GetNumberVideoFrames(file);
-
-    int frames_read = ReadFrames(file,pframes,0,N,1,N);
-    if (frames_read < 0){
-	delete pframes;
-	return -1;
+    int s_begin, s_end;
+    int l_begin, l_end;
+    uint8_t *bnds = (uint8_t*)malloc(nbframes*sizeof(uint8_t));
+    if (!bnds){
+	delete pframelist;
+	free(dist);
+	return NULL;
     }
 
-#ifdef max
-#undef max
-
-    CImg<double> dist(N,1,1,1,0);
-    CImg<double> prev(64,1,1,1,0);
-    cimglist_for(*pframes,I){
-	CImg<int> hist = pframes->at(I).get_histogram(64);
-        CImg<double> hist_normd = hist/hist.max();
-	CImg<int> diff = hist_normd - prev;
-	dist(I) = abs(diff.norm(1));
-	prev = hist_normd;
-    }
-
-    uint8_t bnds[N];
+    int nbboundaries = 0;
+    k = 1;
     bnds[0] = 1;
-    bnds[N-1] = 1;
-    int lstart,lend,gstart,gend;
-    for (int k=1;k<N-1;k++){
-        lstart = (k-S < 0)?0:k-S;
-	lend   = (k+S > N-1)?N-1:k+S;
-	gstart = (k-L < 0)?0:k-L;
-	gend   = (k+L > N-1)?N-1:k+L;
-	CImg<double> local_win = dist.get_crop(lstart,0,lend,0);
-	CImg<double> global_win = dist.get_crop(gstart,0,gend,0);
-	double Tg = global_win.mean() + alpha1*global_win.variance();
-        int local_win_size = local_win.dimx();
-	double Tl = alpha2*local_win.kth_smallest(local_win_size-1);
-	double localmax = local_win.max();
-        double thresh = (Tg >= Tl) ? Tg : Tl;
-	if  ((dist(k) >=  thresh) && (dist(k) >= localmax))
-	    bnds[k] = 1;
-	else
-	    bnds[k] = 0;
-    }
-#endif
-    delete pframes;
+    do {
+	s_begin = (k-S >= 0) ? k-S : 0;
+	s_end   = (k+S < nbframes) ? k+S : nbframes-1;
+	l_begin = (k-L >= 0) ? k-L : 0;
+	l_end   = (k+L < nbframes) ? k+L : nbframes-1;
 
-    return 0;
+	/* get global average */
+	float ave_global, sum_global = 0.0, dev_global = 0.0;
+	for (int i=l_begin;i<=l_end;i++){
+	    sum_global += dist[i];
+	}
+	ave_global = sum_global/((float)(l_end-l_begin+1));
+
+	/*get global deviation */
+	for (int i=l_begin;i<=l_end;i++){
+	    float dev = ave_global - dist[i];
+	    dev = (dev >= 0) ? dev : -1*dev;
+	    dev_global += dev;
+	}
+	dev_global = dev_global/((float)(l_end-l_begin+1));
+
+	/* global threshold */
+	float T_global = ave_global + alpha1*dev_global;
+
+	/* get local maximum */
+	int localmaxpos = s_begin;
+	for (int i=s_begin;i<=s_end;i++){
+	    if (dist[i] > dist[localmaxpos])
+		localmaxpos = i;
+	}
+        /* get 2nd local maximum */
+	int localmaxpos2 = s_begin;
+	float localmax2 = 0;
+	for (int i=s_begin;i<=s_end;i++){
+	    if (i == localmaxpos)
+		continue;
+	    if (dist[i] > localmax2){
+		localmaxpos2 = i;
+		localmax2 = dist[i];
+	    }
+	}
+        float T_local = alpha2*dist[localmaxpos2];
+	float Thresh = (T_global >= T_local) ? T_global : T_local;
+
+	if ((dist[k] == dist[localmaxpos])&&(dist[k] > Thresh)){
+	    bnds[k] = 1;
+	    nbboundaries++;
+	}
+	else {
+	    bnds[k] = 0;
+	}
+	k++;
+    } while ( k < nbframes-1);
+    bnds[nbframes-1]=1;
+    nbboundaries += 2;
+
+    int start = 0;
+    int end = 0;
+    int nbselectedframes = 0;
+    do {
+	/* find next boundary */
+	do {end++;} while ((bnds[end]!=1)&&(end < nbframes));
+       
+	/* find min disparity within bounds */
+	int minpos = start+1;
+	for (int i=start+1; i < end;i++){
+	    if (dist[i] < dist[minpos])
+		minpos = i;
+	}
+	bnds[minpos] = 2;
+	nbselectedframes++;
+	start = end;
+    } while (start < nbframes-1);
+
+    st_info.nb_retrieval = 1;
+    st_info.width = 32;
+    st_info.height = 32;
+    k = 0;
+    do {
+	if (bnds[k]==2){
+	    if (ReadFrames(&st_info, pframelist, k*st_info.step,k*st_info.step + 1) < 0){
+		delete pframelist;
+		free(dist);
+		return NULL;
+	    }
+	}
+	k++;
+    } while (k < nbframes);
+    vfinfo_close(&st_info);
+
+    free(bnds);
+    bnds = NULL;
+    free(dist);
+    dist = NULL;
+
+    return pframelist;
 }
+
+
+ulong64* ph_dct_videohash(const char *filename, int &Length){
+
+    CImgList<uint8_t> *keyframes = GetKeyFramesFromVideo(filename);
+    if (keyframes == NULL)
+	return NULL;
+
+    Length = keyframes->size;
+
+    ulong64 *hash = (ulong64*)malloc(sizeof(ulong64)*Length);
+    CImg<float> *C = ph_dct_matrix(32);
+    CImg<float> Ctransp = C->get_transpose();
+    CImg<float> dctImage;
+    CImg<float> subsec;
+    CImg<uint8_t> currentframe;
+
+    for (unsigned int i=0;i < keyframes->size; i++){
+	currentframe = keyframes->at(i);
+	currentframe.blur(1.0);
+	dctImage = (*C)*(currentframe)*Ctransp;
+	subsec = dctImage.crop(1,1,8,8).unroll('x');
+	float med = subsec.median();
+	hash[i] =     0x0000000000000000;
+	ulong64 one = 0x0000000000000001;
+	for (int j=0;j<64;j++){
+	    if (subsec[j] > med)
+		hash[i] |= one;
+	    one = one << 1;
+	}
+    }
+
+    keyframes->clear();
+    delete keyframes;
+    keyframes = NULL;
+    delete C;
+    C = NULL;
+    return hash;
+}
+
+
+double ph_dct_videohash_dist(ulong64 *hashA, int N1, ulong64 *hashB, int N2, int threshold){
+
+    int den = (N1 <= N2) ? N1 : N2;
+    int C[N1+1][N2+1];
+
+    for (int i=0;i<N1+1;i++){
+	C[i][0] = 0;
+    }
+    for (int j=0;j<N2+1;j++){
+	C[0][j] = 0;
+    }
+    for (int i=1;i<N1+1;i++){
+	for (int j=1;j<N2+1;j++){
+	    int d = ph_hamming_distance(hashA[i],hashB[j]);
+	    if (d <= threshold){
+		C[i][j] = C[i-1][j-1] + 1;
+	    } else {
+		C[i][j] = ((C[i-1][j] >= C[i][j-1])) ? C[i-1][j] : C[i][j-1];
+	    }
+	}
+    }
+
+    double result = (double)(C[N1][N2])/(double)(den);
+
+    return result;
+}
+
 #endif
 
 int ph_hamming_distance(const ulong64 hash1,const ulong64 hash2){

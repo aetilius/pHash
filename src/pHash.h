@@ -296,24 +296,20 @@ CImg<float>* ph_dct_matrix(const int N);
  */
 int ph_dct_imagehash(const char* file,ulong64 &hash);
 
-/* ! /brief hamming distance
- *   Compute the hamming distance between two 64-bit data types
- *   /param hash1 of type ulong64 denoting an image hash
- *   /param hash2 of type ulong64 denoting an image hash
- *   /return int value for the hamming distance, -1 for error
- */
+
+CImgList<uint8_t>* ph_getKeyFramesFromVideo(const char *filename);
+
+ulong64* ph_dct_videohash(const char *filename, int &Lenght);
+
+double ph_dct_videohash_dist(ulong64 *hashA, int N1, ulong64 *hashB, int N2, int threshold=21);
+
 /* ! /brief dct video robust hash
  *   Compute video hash based on the dct of normalized video 32x32x64 cube
  *   /param file name of file
  *   /param hash ulong64 value for hash value
  *   /return int value - less than 0 for error
  */
-int ph_dct_videohash(const char* file,ulong64 &hash);
-
 int ph_hamming_distance(const ulong64 hash1,const ulong64 hash2);
-
-int ph_rash_videodigest(const char* file,CImg<uint8_t> *p_videodigest);
-
 
 /** /brief create a list of datapoint's directly from a directory of image files
  *  /param dirname - path and name of directory containg all image file names
