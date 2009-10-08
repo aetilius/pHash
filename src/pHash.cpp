@@ -594,7 +594,7 @@ double ph_dct_videohash_dist(ulong64 *hashA, int N1, ulong64 *hashB, int N2, int
     }
     for (int i=1;i<N1+1;i++){
 	for (int j=1;j<N2+1;j++){
-	    int d = ph_hamming_distance(hashA[i],hashB[j]);
+	    int d = ph_hamming_distance(hashA[i-1],hashB[j-1]);
 	    if (d <= threshold){
 		C[i][j] = C[i-1][j-1] + 1;
 	    } else {
