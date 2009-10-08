@@ -27,13 +27,13 @@ query_mvptree_audio_LDADD = $(top_srcdir)/src/libpHash.la
 endif
 
 if HAVE_IMAGE_HASH
-bin_PROGRAMS += test_imagephash
+bin_PROGRAMS += test_image
 test_image_SOURCES = test_imagephash.cpp
 test_image_LDADD = $(top_srcdir)/src/libpHash.la
 endif
 
 if HAVE_VIDEO_HASH
-bin_PROGRAMS += test_dctvideohash
+bin_PROGRAMS += test_video
 test_video_SOURCES = test_dctvideohash.cpp
 test_video_LDADD = $(top_srcdir)/src/libpHash.la
 
