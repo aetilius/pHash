@@ -690,7 +690,7 @@ DP** ph_read_imagehashes(const char *dirname,int pathlength, int &count){
     }
     if (errno)
 	exit(1);
-
+    closedir(dir);
     return hashlist;
 
 }
@@ -729,7 +729,7 @@ char** ph_readfilenames(const char *dirname,int &count){
     }
     if (errno)
 	return NULL;
-
+    closedir(dir);
     return files;
 }
 
