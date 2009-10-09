@@ -516,11 +516,9 @@ float fps(const char *filename)
         if(videoStream==-1)
 	    return -1; // Didn't find a video stream
 	
-	av_close_input_file(pFormatCtx);		
-	
 	int num = (pFormatCtx->streams[videoStream]->r_frame_rate).num;
 	int den = (pFormatCtx->streams[videoStream]->r_frame_rate).den;
-	
+	av_close_input_file(pFormatCtx);
 	
 	return (num/den);
 
