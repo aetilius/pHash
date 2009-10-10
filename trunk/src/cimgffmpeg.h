@@ -493,6 +493,7 @@ long GetNumberVideoFrames(const char *file)
 }
 float fps(const char *filename)
 {
+        float result = 0;
 	AVFormatContext *pFormatCtx;
 	
 	// Open video file
@@ -518,9 +519,11 @@ float fps(const char *filename)
 	
 	int num = (pFormatCtx->streams[videoStream]->r_frame_rate).num;
 	int den = (pFormatCtx->streams[videoStream]->r_frame_rate).den;
+	result = num/den;
+
 	av_close_input_file(pFormatCtx);
 	
-	return (num/den);
+	return result;
 
 }
 
