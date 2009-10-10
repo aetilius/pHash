@@ -1,0 +1,7 @@
+update design docs with new video algorithm and api
+add optimized dct
+create one pass hash
+workaround mremap on non GNU systems
+windows support
+pHash Pro (detailed comments, support, one-pass hash?, remove dependency on swscale and fftw, multi-threaded/process, tcp/ip service?)
+pHash Forensics (signature, iris, fingerprint) & gui app
