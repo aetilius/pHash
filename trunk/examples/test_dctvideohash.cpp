@@ -28,7 +28,8 @@ int main(int argc, char **argv){
 	exit(2);
     }
     printf("length %d\n", L1);
-
+   for (int i=0;i<L1;i++)
+       printf("hash1[%d]=%llx\n", i, hash1[i]);
 
     do {
 

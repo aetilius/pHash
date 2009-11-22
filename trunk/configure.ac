@@ -148,7 +148,7 @@ AC_CHECK_LIB([pthread], [pthread_create])
 
 AS_IF([test "$found_fftw" = "y"],
 [
-	CPPFLAGS += "-Dcimg_use_fftw3"])
+	CPPFLAGS="$CPPFLAGS -Dcimg_use_fftw3"])
 
 AS_IF([test "$use_jpeg" = "y"],
 [
