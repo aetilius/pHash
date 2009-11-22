@@ -388,7 +388,7 @@ CImgList<uint8_t>* GetKeyFramesFromVideo(const char *filename){
     CImg<float> prev(64,1,1,1,0);
 
     VFInfo st_info;
-    st_info.filename = strdup(filename);
+    st_info.filename = filename;
     st_info.nb_retrieval = 100;
     st_info.step = step;
     st_info.pixelformat = 0;
@@ -566,7 +566,7 @@ ulong64* ph_dct_videohash(const char *filename, int &Length){
 	hash[i] =     0x0000000000000000;
 	ulong64 one = 0x0000000000000001;
 	for (int j=0;j<64;j++){
-	    if (subsec[j] > med)
+	    if (subsec(j) > med)
 		hash[i] |= one;
 	    one = one << 1;
 	}

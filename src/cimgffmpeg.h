@@ -77,7 +77,7 @@ typedef struct vf_info {
     AVFormatContext *pFormatCtx;
     AVCodecContext *pCodecCtx;
     AVCodec *pCodec;
-    char *filename;
+    const char *filename;
 } VFInfo;
 
 void vfinfo_close(VFInfo  *vfinfo){
@@ -208,7 +208,7 @@ int ReadFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList, unsigned int low_
 		      sws_scale(c, pFrame->data, pFrame->linesize, 0, st_info->pCodecCtx->height, pConvertedFrame->data, pConvertedFrame->linesize);
 			
                       if (ffmpeg_pixfmt == PIX_FMT_GRAY8) {
-			  next_image.assign(*pConvertedFrame->data,1,st_info->width,st_info->height,1,true);
+			  next_image.assign(pConvertedFrame->data[0],1,st_info->width,st_info->height,1,true);
 			  next_image.permute_axes("yzvx");
 			  pFrameList->push_back(next_image);
 			  size++;
@@ -372,7 +372,7 @@ int NextFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList)
 			    sws_scale(c, pFrame->data, pFrame->linesize, 0, st_info->pCodecCtx->height, pConvertedFrame->data, pConvertedFrame->linesize);
 				   	
 			    if (ffmpeg_pixfmt == PIX_FMT_RGB24){   
-				next_image.assign(pConvertedFrame->data[0],3,st_info->width,st_info->height,1,true);
+				next_image.assign(*pConvertedFrame->data,3,st_info->width,st_info->height,1,true);
 				next_image.permute_axes("yzvx");
 				pFrameList->push_back(next_image);
 				size++;
