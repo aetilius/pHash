@@ -120,7 +120,7 @@ int ReadFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList, unsigned int low_
 	if (st_info->pFormatCtx == NULL){
 	    st_info->current_index= 0;
 
-
+        av_log_set_level(AV_LOG_QUIET);
 	    av_register_all();
 	
 	    // Open video file
@@ -421,6 +421,7 @@ int NextFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList)
 int GetNumberStreams(const char *file)
 {
 	 AVFormatContext *pFormatCtx;
+     av_log_set_level(AV_LOG_QUIET);
 	 av_register_all();
 	// Open video file
 	if (av_open_input_file(&pFormatCtx, file, NULL, 0, NULL))
@@ -441,8 +442,9 @@ int GetNumberStreams(const char *file)
 */
 long GetNumberVideoFrames(const char *file)
 {
-        long nb_frames = 0L;
+    long nb_frames = 0L;
 	AVFormatContext *pFormatCtx;
+    av_log_set_level(AV_LOG_QUIET);
 	av_register_all();
 	// Open video file
 	if (av_open_input_file(&pFormatCtx, file, NULL, 0, NULL))
