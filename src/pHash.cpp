@@ -66,11 +66,11 @@ int ph_radon_projections(const CImg<uint8_t> &img,int N,Projections &projs){
 	    double y = alpha*(x-x_off);
             int yd = (int)std::floor(y + ROUNDING_FACTOR(y));
             if ((yd + y_off >= 0)&&(yd + y_off < height) && (x < width)){
-		ptr_radon_map->at(k,x) = img(x,yd + y_off);
+		ptr_radon_map->ptr(k,x) = img(x,yd + y_off);
                 nb_per_line[k] += 1;
 	    }
             if ((yd + x_off >= 0) && (yd + x_off < width) && (k != N/4) && (x < height)){
-		ptr_radon_map->at(N/2-k,x) = img(yd + x_off,x);
+		ptr_radon_map->ptr(N/2-k,x) = img(yd + x_off,x);
                 nb_per_line[N/2-k] += 1;
 	    }
 	}
@@ -83,11 +83,11 @@ int ph_radon_projections(const CImg<uint8_t> &img,int N,Projections &projs){
 	    double y = alpha*(x-x_off);
             int yd = (int)std::floor(y + ROUNDING_FACTOR(y));
             if ((yd + y_off >= 0)&&(yd + y_off < height) && (x < width)){
-		ptr_radon_map->at(k,x) = img(x,yd + y_off);
+		ptr_radon_map->ptr(k,x) = img(x,yd + y_off);
                 nb_per_line[k] += 1;
 	    }
             if ((y_off - yd >= 0)&&(y_off - yd<width)&&(2*y_off-x>=0)&&(2*y_off-x<height)&&(k!=3*N/4)){
-		ptr_radon_map->at(k-j,x) = img(-yd+y_off,-(x-y_off)+y_off);
+		ptr_radon_map->ptr(k-j,x) = img(-yd+y_off,-(x-y_off)+y_off);
                 nb_per_line[k-j] += 1;
 	    }
             
@@ -314,7 +314,7 @@ CImg<float>* ph_dct_matrix(const int N){
     const float c1 = sqrt(2.0/N); 
     for (int x=0;x<N;x++){
 	for (int y=1;y<N;y++){
-	    ptr_matrix->at(x,y) = c1*cos((cimg::valuePI/2/N)*y*(2*x+1));
+	    ptr_matrix->ptr(x,y) = c1*cos((cimg::valuePI/2/N)*y*(2*x+1));
 	}
     }
     return ptr_matrix;
@@ -653,7 +653,7 @@ DP** ph_read_imagehashes(const char *dirname,int pathlength, int &count){
     struct dirent *dir_entry;
     DIR *dir = opendir(dirname);
     if (!dir)
-	exit(1);
+        return NULL;
 
     while ((dir_entry = readdir(dir)) != 0){
 	if (strcmp(dir_entry->d_name,".")&& strcmp(dir_entry->d_name,"..")){
@@ -663,7 +663,10 @@ DP** ph_read_imagehashes(const char *dirname,int pathlength, int &count){
   
     DP **hashlist = (DP**)malloc(count*sizeof(DP**));
     if (!hashlist)
-	exit(1);
+    {
+        closedir(dir);
+        return NULL;
+    }
 
     DP *dp = NULL;
     int index = 0;
@@ -686,10 +689,9 @@ DP** ph_read_imagehashes(const char *dirname,int pathlength, int &count){
 	    hashlist[index++] = dp;
 	}
 	errno = 0;
-        path[0]='\0';
+    path[0]='\0';
     }
-    if (errno)
-	exit(1);
+        
     closedir(dir);
     return hashlist;
 
@@ -700,7 +702,7 @@ char** ph_readfilenames(const char *dirname,int &count){
     struct dirent *dir_entry;
     DIR *dir = opendir(dirname);
     if (!dir)
-	exit(1);
+        return NULL;
 
     /*count files */
     while ((dir_entry = readdir(dir)) != NULL){
