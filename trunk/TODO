@@ -1,3 +1,6 @@
+update API to use latest CImg (replace at() with ptr())
+remove last {f}printfs
+add av_log_set_level(AV_LOG_QUIET) to readaudio and count samples functions
 update design docs with new video algorithm and api
 add optimized dct
 create one pass hash
