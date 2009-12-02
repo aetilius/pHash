@@ -26,6 +26,7 @@
 int ph_count_samples(const char *filename, int sr,int channels){
 
 
+    av_log_set_level(AV_LOG_QUIET);
 	av_register_all();
 	avcodec_register_all();
 
@@ -56,7 +57,6 @@ int ph_count_samples(const char *filename, int sr,int channels){
 	     }
 	}
 	if(audioStream==-1){
-	    printf("no audio stream\n");
 	     return -1; //no video stream
 	}
 	
@@ -93,7 +93,6 @@ int ph_count_samples(const char *filename, int sr,int channels){
 	    in_buf_used = buf_size;
 	    numbytesread = avcodec_decode_audio2(pCodecCtx,(int16_t*)in_buf,&in_buf_used,packet.data,packet.size);  
 	    if (numbytesread <= 0){
-		fprintf(stderr,"error reading from audiostream\n");
 		continue;
 	    }
 	    count += (int)(audio_resample(rs_ctxt,(short*)out_buf ,(short*)in_buf,in_buf_used)/sizeof(int16_t));
@@ -113,7 +112,7 @@ float* ph_readaudio(const char *filename, int sr, int channels, int &N)
 	int cap = 0;
 	float *buf = (float*)malloc(N*sizeof(float));
 
-
+    av_log_set_level(AV_LOG_QUIET);
 	av_register_all();
 
 	AVFormatContext *pFormatCtx;
@@ -186,7 +185,6 @@ float* ph_readaudio(const char *filename, int sr, int channels, int &N)
 	    in_buf_used = buf_size;
 	    numbytesread = avcodec_decode_audio2(pCodecCtx,(int16_t*)in_buf,&in_buf_used,packet.data,packet.size);  
 	    if (numbytesread <= 0){
-		fprintf(stderr,"error reading from audiostream\n");
 		continue;
 	    }
 	    int cnt = audio_resample(rs_ctx,(short*)out_buf,(short*)in_buf,(int)(in_buf_used/sizeof(int16_t)));
