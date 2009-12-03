@@ -66,11 +66,11 @@ int ph_radon_projections(const CImg<uint8_t> &img,int N,Projections &projs){
 	    double y = alpha*(x-x_off);
             int yd = (int)std::floor(y + ROUNDING_FACTOR(y));
             if ((yd + y_off >= 0)&&(yd + y_off < height) && (x < width)){
-		ptr_radon_map->ptr(k,x) = img(x,yd + y_off);
+		*ptr_radon_map->ptr(k,x) = img(x,yd + y_off);
                 nb_per_line[k] += 1;
 	    }
             if ((yd + x_off >= 0) && (yd + x_off < width) && (k != N/4) && (x < height)){
-		ptr_radon_map->ptr(N/2-k,x) = img(yd + x_off,x);
+		*ptr_radon_map->ptr(N/2-k,x) = img(yd + x_off,x);
                 nb_per_line[N/2-k] += 1;
 	    }
 	}
@@ -83,11 +83,11 @@ int ph_radon_projections(const CImg<uint8_t> &img,int N,Projections &projs){
 	    double y = alpha*(x-x_off);
             int yd = (int)std::floor(y + ROUNDING_FACTOR(y));
             if ((yd + y_off >= 0)&&(yd + y_off < height) && (x < width)){
-		ptr_radon_map->ptr(k,x) = img(x,yd + y_off);
+		*ptr_radon_map->ptr(k,x) = img(x,yd + y_off);
                 nb_per_line[k] += 1;
 	    }
             if ((y_off - yd >= 0)&&(y_off - yd<width)&&(2*y_off-x>=0)&&(2*y_off-x<height)&&(k!=3*N/4)){
-		ptr_radon_map->ptr(k-j,x) = img(-yd+y_off,-(x-y_off)+y_off);
+		*ptr_radon_map->ptr(k-j,x) = img(-yd+y_off,-(x-y_off)+y_off);
                 nb_per_line[k-j] += 1;
 	    }
             
@@ -314,7 +314,7 @@ CImg<float>* ph_dct_matrix(const int N){
     const float c1 = sqrt(2.0/N); 
     for (int x=0;x<N;x++){
 	for (int y=1;y<N;y++){
-	    ptr_matrix->ptr(x,y) = c1*cos((cimg::valuePI/2/N)*y*(2*x+1));
+	    *ptr_matrix->ptr(x,y) = c1*cos((cimg::valuePI/2/N)*y*(2*x+1));
 	}
     }
     return ptr_matrix;
