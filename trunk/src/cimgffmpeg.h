@@ -209,13 +209,13 @@ int ReadFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList, unsigned int low_
 			
                       if (ffmpeg_pixfmt == PIX_FMT_GRAY8) {
 			  next_image.assign(pConvertedFrame->data[0],1,st_info->width,st_info->height,1,true);
-			  next_image.permute_axes("yzvx");
+			  next_image.permute_axes("yzcx");
 			  pFrameList->push_back(next_image);
 			  size++;
 		      }
 		      else if (ffmpeg_pixfmt == PIX_FMT_RGB24){
 			  next_image.assign(*pConvertedFrame->data,3,st_info->width,st_info->height,1,true);
-			  next_image.permute_axes("yzvx");
+			  next_image.permute_axes("yzcx");
 			  pFrameList->push_back(next_image);
 			  size++;
 		      }
@@ -373,13 +373,13 @@ int NextFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList)
 				   	
 			    if (ffmpeg_pixfmt == PIX_FMT_RGB24){   
 				next_image.assign(*pConvertedFrame->data,3,st_info->width,st_info->height,1,true);
-				next_image.permute_axes("yzvx");
+				next_image.permute_axes("yzcx");
 				pFrameList->push_back(next_image);
 				size++;
 			    }
 			    else if (ffmpeg_pixfmt == PIX_FMT_GRAY8){
 				next_image.assign(pConvertedFrame->data[0],1,st_info->width,st_info->height,1,true);
-				next_image.permute_axes("yzvx");
+				next_image.permute_axes("yzcx");
 				pFrameList->push_back(next_image);
 				size++;
 			    }
@@ -549,9 +549,9 @@ void *PlayVideo(void *info)
 	clock_t interval = (time_t)((1/fps)*(CLOCKS_PER_SEC)); 
 			 
 	clock_t n = clock();
-	while (!videolist->is_empty() && !disp.is_closed)
+	while (!videolist->is_empty() && !disp.is_closed())
 	{
-		if (videolist->size > 1)
+		if (videolist->size() > 1)
 		{
 			videolist->pop_front();
 			current = videolist->front();
@@ -559,7 +559,7 @@ void *PlayVideo(void *info)
 			while ( n + interval > clock()){};
 			n = clock();
 		}
-		else if (videolist->size == 1){
+		else if (videolist->size() == 1){
 			videolist->pop_front();
 		}
 		else

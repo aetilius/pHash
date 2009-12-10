@@ -40,8 +40,8 @@ const char* ph_about(){
 #ifdef HAVE_IMAGE_HASH
 int ph_radon_projections(const CImg<uint8_t> &img,int N,Projections &projs){
 
-    int width = img.dimx();
-    int height = img.dimy();
+    int width = img.width();
+    int height = img.height();
     int D = (width > height)?width:height;
     float x_center = (float)width/2;
     float y_center = (float)height/2;
@@ -60,34 +60,34 @@ int ph_radon_projections(const CImg<uint8_t> &img,int N,Projections &projs){
     int *nb_per_line = projs.nb_pix_perline;
 
     for (int k=0;k<N/4+1;k++){
-        double theta = k*cimg::valuePI/N;
+        double theta = k*cimg::PI/N;
         double alpha = std::tan(theta);
         for (int x=0;x < D;x++){
 	    double y = alpha*(x-x_off);
             int yd = (int)std::floor(y + ROUNDING_FACTOR(y));
             if ((yd + y_off >= 0)&&(yd + y_off < height) && (x < width)){
-		*ptr_radon_map->ptr(k,x) = img(x,yd + y_off);
+		*ptr_radon_map->data(k,x) = img(x,yd + y_off);
                 nb_per_line[k] += 1;
 	    }
             if ((yd + x_off >= 0) && (yd + x_off < width) && (k != N/4) && (x < height)){
-		*ptr_radon_map->ptr(N/2-k,x) = img(yd + x_off,x);
+		*ptr_radon_map->data(N/2-k,x) = img(yd + x_off,x);
                 nb_per_line[N/2-k] += 1;
 	    }
 	}
     }
     int j= 0;
     for (int k=3*N/4;k<N;k++){
-	double theta = k*cimg::valuePI/N;
+	double theta = k*cimg::PI/N;
         double alpha = std::tan(theta);
         for (int x=0;x < D;x++){
 	    double y = alpha*(x-x_off);
             int yd = (int)std::floor(y + ROUNDING_FACTOR(y));
             if ((yd + y_off >= 0)&&(yd + y_off < height) && (x < width)){
-		*ptr_radon_map->ptr(k,x) = img(x,yd + y_off);
+		*ptr_radon_map->data(k,x) = img(x,yd + y_off);
                 nb_per_line[k] += 1;
 	    }
             if ((y_off - yd >= 0)&&(y_off - yd<width)&&(2*y_off-x>=0)&&(2*y_off-x<height)&&(k!=3*N/4)){
-		*ptr_radon_map->ptr(k-j,x) = img(-yd+y_off,-(x-y_off)+y_off);
+		*ptr_radon_map->data(k-j,x) = img(-yd+y_off,-(x-y_off)+y_off);
                 nb_per_line[k-j] += 1;
 	    }
             
@@ -105,7 +105,7 @@ int ph_feature_vector(const Projections &projs, Features &fv)
     CImg<uint8_t> projection_map = *ptr_map;
     int *nb_perline = projs.nb_pix_perline;
     int N = projs.size;
-    int D = projection_map.dimy();
+    int D = projection_map.height();
 
     fv.features = (double*)malloc(N*sizeof(double));
     fv.size = N;
@@ -157,7 +157,7 @@ int ph_dct(const Features &fv,Digest &digest)
     for (int k = 0;k<nb_coeffs;k++){
 	double sum = 0.0;
         for (int n=0;n<N;n++){
-	    double temp = R[n]*cos((cimg::valuePI*(2*n+1)*k)/(2*N));
+	    double temp = R[n]*cos((cimg::PI*(2*n+1)*k)/(2*N));
             sum += temp;
 	}
         if (k == 0)
@@ -226,10 +226,10 @@ int ph_image_digest(const CImg<uint8_t> &img,double sigma, double gamma,Digest &
     
     int result = EXIT_FAILURE;
     CImg<uint8_t> graysc;
-    if (img.dimv() >= 3){
+    if (img.spectrum() >= 3){
 	graysc = img.get_RGBtoYCbCr().channel(0);
     }
-    else if (img.dimv() == 1){
+    else if (img.spectrum() == 1){
 	graysc = img;
     }
     else {
@@ -314,7 +314,7 @@ CImg<float>* ph_dct_matrix(const int N){
     const float c1 = sqrt(2.0/N); 
     for (int x=0;x<N;x++){
 	for (int y=1;y<N;y++){
-	    *ptr_matrix->ptr(x,y) = c1*cos((cimg::valuePI/2/N)*y*(2*x+1));
+	    *ptr_matrix->data(x,y) = c1*cos((cimg::PI/2/N)*y*(2*x+1));
 	}
     }
     return ptr_matrix;
@@ -333,9 +333,9 @@ int ph_dct_imagehash(const char* file,ulong64 &hash){
     }
     CImg<float> meanfilter(7,7,1,1,1);
     CImg<float> img;
-    if (src.dimv() >= 3){
+    if (src.spectrum() >= 3){
         img = src.RGBtoYCbCr().channel(0).get_convolve(meanfilter);
-    } else if (img.dimv() ==1){
+    } else if (img.spectrum() ==1){
 	img = src.get_convolve(meanfilter);
     }
 
@@ -366,7 +366,7 @@ int ph_dct_imagehash(const char* file,ulong64 &hash){
 #if defined(HAVE_VIDEO_HASH) && defined(HAVE_IMAGE_HASH)
 
 
-CImgList<uint8_t>* GetKeyFramesFromVideo(const char *filename){
+CImgList<uint8_t>* ph_getKeyFramesFromVideo(const char *filename){
 
     long N =  GetNumberVideoFrames(filename);
     if (N < 0){
@@ -410,7 +410,7 @@ CImgList<uint8_t>* GetKeyFramesFromVideo(const char *filename){
 	    return NULL;
 	}
 	unsigned int i = 0;
-        while ((i < pframelist->size) && (k < nbframes)){
+        while ((i < pframelist->size()) && (k < nbframes)){
 	    CImg<uint8_t> current = pframelist->at(i++);
 	    CImg<float> hist = current.get_histogram(64,0,255);
             float d = 0.0;
@@ -544,11 +544,11 @@ CImgList<uint8_t>* GetKeyFramesFromVideo(const char *filename){
 
 ulong64* ph_dct_videohash(const char *filename, int &Length){
 
-    CImgList<uint8_t> *keyframes = GetKeyFramesFromVideo(filename);
+    CImgList<uint8_t> *keyframes = ph_getKeyFramesFromVideo(filename);
     if (keyframes == NULL)
 	return NULL;
 
-    Length = keyframes->size;
+    Length = keyframes->size();
 
     ulong64 *hash = (ulong64*)malloc(sizeof(ulong64)*Length);
     CImg<float> *C = ph_dct_matrix(32);
@@ -557,7 +557,7 @@ ulong64* ph_dct_videohash(const char *filename, int &Length){
     CImg<float> subsec;
     CImg<uint8_t> currentframe;
 
-    for (unsigned int i=0;i < keyframes->size; i++){
+    for (unsigned int i=0;i < keyframes->size(); i++){
 	currentframe = keyframes->at(i);
 	currentframe.blur(1.0);
 	dctImage = (*C)*(currentframe)*Ctransp;
@@ -1217,7 +1217,13 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
     
     memcpy(&type, &m->buf[m->file_pos++], 1);
 
+#ifdef HAVE_MREMAP
     m->buf = (char*)mremap(m->buf,m->pgsize,int_pgsize,MREMAP_MAYMOVE);
+#else
+    munmap(m->buf, m->pgsize);
+    m->buf = (char*)mmap(m->buf,m->int_pgsize, PROT_READ|PROT_WRITE, MAP_SHARED, m->fd, 0);
+#endif
+
     if (m->buf == MAP_FAILED){
 	return PH_ERRMMAP;
     }
@@ -2150,13 +2156,19 @@ int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints){
 
     m->file_pos = HeaderSize;
 
+    m->pgsize = int_pgsize;
+   
     /* remap to true pg size used in making file */
+#ifdef HAVE_REMAP
     m->buf = (char*)mremap(m->buf, m->pgsize, int_pgsize, MREMAP_MAYMOVE);
+#else
+    munmap(m->buf, m->pgsize);
+    m->buf = (char*)mmap(m->buf, int_pgsize, PROT_READ|PROT_WRITE, MAP_SHARED, m->fd, 0);
+#endif
     if (m->buf == MAP_FAILED){
 	return -1;
     }
 
-    m->pgsize = int_pgsize;
     int nbsaved = 0;
     for (int i=0;i<nbpoints;i++){
         m->file_pos = HeaderSize;
