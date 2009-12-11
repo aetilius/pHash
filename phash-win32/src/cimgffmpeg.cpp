@@ -118,13 +118,13 @@ int ReadFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList, unsigned int low_
 			
                       if (ffmpeg_pixfmt == PIX_FMT_GRAY8) {
 						  next_image.assign(*pConvertedFrame->data,1,st_info->width,st_info->height,1,true);
-						  next_image.permute_axes("yzvx");
+						  next_image.permute_axes("yzcx");
 						  pFrameList->push_back(next_image);
 						  size++;
 					  }
 					  else if (ffmpeg_pixfmt == PIX_FMT_RGB24){
 						  next_image.assign(*pConvertedFrame->data,3,st_info->width,st_info->height,1,true);
-						  next_image.permute_axes("yzvx");
+						  next_image.permute_axes("yzcx");
 						  pFrameList->push_back(next_image);
 						  size++;
 					  }
@@ -270,13 +270,13 @@ int NextFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList)
 				   	
 			    if (ffmpeg_pixfmt == PIX_FMT_RGB24){   
 					next_image.assign(pConvertedFrame->data[0],3,st_info->width,st_info->height,1,true);
-					next_image.permute_axes("yzvx");
+					next_image.permute_axes("yzcx");
 					pFrameList->push_back(next_image);
 					size++;
 			    }
 			    else if (ffmpeg_pixfmt == PIX_FMT_GRAY8){
 					next_image.assign(pConvertedFrame->data[0],1,st_info->width,st_info->height,1,true);
-					next_image.permute_axes("yzvx");
+					next_image.permute_axes("yzcx");
 					pFrameList->push_back(next_image);
 					size++;
 			    }
