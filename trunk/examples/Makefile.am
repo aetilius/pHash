@@ -1,5 +1,5 @@
 INCLUDES = -I$(top_srcdir)/src
-bin_PROGRAMS = build_mvptree add_mvptree query_mvptree
+bin_PROGRAMS = build_mvptree add_mvptree query_mvptree test_texthash test_texthash2
 
 build_mvptree_SOURCES = build_mvptree.cpp
 build_mvptree_LDADD = $(top_srcdir)/src/libpHash.la
@@ -9,6 +9,12 @@ add_mvptree_LDADD = $(top_srcdir)/src/libpHash.la
 
 query_mvptree_SOURCES = query_mvptree.cpp
 query_mvptree_LDADD = $(top_srcdir)/src/libpHash.la
+
+test_texthash_SOURCES = test_texthash.cpp
+test_texthash_LDADD = $(top_srcdir)/src/libpHash.la
+
+test_texthash2_SOURCES = test_texthash2.cpp
+test_texthash2_LDADD = $(top_srcdir)/src/libpHash.la
 
 if HAVE_AUDIO_HASH
 bin_PROGRAMS += test_audio build_mvptree_audio add_mvptree_audio query_mvptree_audio
