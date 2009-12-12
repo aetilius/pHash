@@ -2096,8 +2096,8 @@ TxtHashPoint* ph_texthash(const char *filename,int *nbpoints){
 	    d = d + 32;
 
 	kgram[i] = (char)d;
-        hashword = hashword << delta;
-        hashword = hashword^((ulong64)d);
+        hashword = ROTATELEFT(hashword, delta);
+        hashword = hashword^textkeys[d];
     }
 
     WinHash[win_index].hash = hashword;
