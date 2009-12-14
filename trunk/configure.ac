@@ -82,6 +82,11 @@ AC_CHECK_LIB([avcodec], [avcodec_alloc_frame], [], [AC_MSG_ERROR([
 *** libavcodec not found.
 You need FFmpeg. Get it at <http://ffmpeg.org/>])])
 
+AC_CHECK_LIB([avutil], [av_log_set_level], [], [AC_MSG_ERROR([
+
+*** libavutil not found.
+You need FFmpeg. Get it at <http://ffmpeg.org/>])])
+
 AC_CHECK_LIB([avformat], [av_read_frame], [], [AC_MSG_ERROR([
 
 *** libavformat not found.
