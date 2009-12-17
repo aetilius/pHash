@@ -302,7 +302,7 @@ uint32_t* ph_audiohash(float *buf, int N, int sr, int &nb_frames){
 	   frame[i] = window[i]*buf[start+i];
        }
        //fftw_execute(p);
-       if (ph_fft(frame, frame_length, pF) < 0){
+       if (fft(frame, frame_length, pF) < 0){
 	   return NULL;
        }
        for (int i=0; i < nfft_half;i++){
