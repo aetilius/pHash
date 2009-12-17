@@ -27,7 +27,7 @@
 
 #include <limits.h>
 #include <math.h>
-#include <fftw3.h>
+//#include <fftw3.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <algorithm>
@@ -36,6 +36,7 @@ extern "C" {
 	#include "libavformat/avformat.h"
 	#include "libavcodec/avcodec.h"
 	#include "libswscale/swscale.h"
+        #include "ph_fft.h"
 }
 
 /*  /brief count number of samples in file
