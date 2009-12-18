@@ -5,9 +5,7 @@
 
 #include <math.h>
 #include <complex.h>
-
-static int nbadds;
-static int nbmults;
+#include <stdlib.h>
 
 int fft(double *x, int N, complex double *X);
 

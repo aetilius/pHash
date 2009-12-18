@@ -19084,7 +19084,7 @@ if test "$use_png" = "y"; then
 fi
 
 
-
+CFLAGS="$CXXFLAGS"
 # Checks for header files.
 
 

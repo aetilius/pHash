@@ -162,7 +162,7 @@ AS_IF([test "$use_png" = "y"],
 	CPPFLAGS="$CPPFLAGS -Dcimg_use_png"
 	LDFLAGS="$LDFLAGS -lpng"])
 
-
+CFLAGS="$CXXFLAGS"
 # Checks for header files.
 AC_CHECK_HEADERS([limits.h stdlib.h string.h sys/time.h unistd.h])
 
