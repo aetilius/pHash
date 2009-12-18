@@ -2323,3 +2323,34 @@ TxtMatch* ph_compare_text_hashes(TxtHashPoint *hash1, int N1, TxtHashPoint *hash
     }
     return found_matches;
 }
+
+static bool keepStats = false;
+struct ph_stats
+{
+	ulong64 reads;
+	ulong64 avg_atime, height;
+	
+};
+enum ph_option
+{
+	PH_STATS
+};
+
+const ph_stats ph_get_stats(MVPFile *m)
+{
+	if(keepStats)
+	{
+	
+	}
+}
+void ph_set_option(ph_option opt, int val)
+{
+	switch(opt)
+	{
+		case PH_STATS:
+			keepStats = (bool)val;
+			break;
+		default:
+			break;
+	}
+}

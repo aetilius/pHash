@@ -135,9 +135,6 @@ AS_IF([test x"$audio_hash" != x"no"],
 	if test "$found_ffmpeg" != "y"; then
 		AC_CHECK_FFMPEG() 
 	fi
-	if test "$found_fftw" != "y"; then
-		AC_CHECK_FFTW3() 
-	fi
 	CPPFLAGS="$CPPFLAGS -DHAVE_AUDIO_HASH=1"])
 
 

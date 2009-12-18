@@ -21,9 +21,6 @@
 /* Define to 1 if you have the `avutil' library (-lavutil). */
 #undef HAVE_LIBAVUTIL
 
-/* Define to 1 if you have the `fftw3' library (-lfftw3). */
-#undef HAVE_LIBFFTW3
-
 /* Define to 1 if you have the `m' library (-lm). */
 #undef HAVE_LIBM
 

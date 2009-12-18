@@ -1,6 +1,6 @@
 SUBDIRS = src bindings examples
 
-EXTRA_DIST = $(subdirs)
+EXTRA_DIST = $(subdirs) libpHash.spec
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = pHash.pc
