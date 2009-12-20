@@ -3,16 +3,13 @@
 
 #include "CImg.h"
 
-/*
-   struct to hold video information to be passed to PlayVideo thread
-*/
-struct video_info_t {
-	int fps;
-	void *pList;
-};
+extern "C" {
+	#include "libavformat/avformat.h"
+	#include "libavcodec/avcodec.h"
+	#include "libswscale/swscale.h"
+}
 
 using namespace cimg_library;
-
 
 typedef struct vf_info {
     int step;
@@ -28,16 +25,7 @@ typedef struct vf_info {
     const char *filename;
 } VFInfo;
 
-void vfinfo_close(VFInfo  *vfinfo){
-    if (vfinfo->pFormatCtx != NULL){
-	avcodec_close(vfinfo->pCodecCtx);
-	vfinfo->pCodecCtx = NULL;
-	av_close_input_file(vfinfo->pFormatCtx);
-	vfinfo->pFormatCtx = NULL;
-	vfinfo->width = -1;
-	vfinfo->height = -1;
-    }
-}
+void vfinfo_close(VFInfo  *vfinfo);
 
 int ReadFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList, unsigned int low_index, unsigned int hi_index);
 
