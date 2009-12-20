@@ -180,7 +180,6 @@ pHash requires 64-bit integers for video and image hashes.])])
 
 # Checks for library functions.
 AC_FUNC_ERROR_AT_LINE
-AC_CHECK_FUNCS([malloc realloc floor gettimeofday memmove memset pow sqrt strcasecmp strdup strncasecmp])
-AC_CHECK_FUNCS([mremap])
+AC_CHECK_FUNCS([mremap malloc realloc floor gettimeofday memmove memset pow sqrt strcasecmp strdup strncasecmp])
 AC_CONFIG_FILES([Makefile src/Makefile examples/Makefile pHash.pc bindings/Makefile bindings/java/Makefile])
 AC_OUTPUT
