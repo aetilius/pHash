@@ -53,9 +53,9 @@ AC_DEFUN([AC_CHECK_CIMG], [
 AC_CHECK_HEADER([CImg.h], [found_cimg="y"], [found_cimg="n"])
 
 if test x"$found_cimg" = x"n"; then
-	AC_MSG_CHECKING([whether CImg.h is in the src directory.])
+	AC_MSG_CHECKING([whether CImg.h is in the current or src directory.])
 	
-	if [test `ls src | grep "CImg.h"` >/dev/null 2>&1]; then
+	if [test `ls . src | grep "CImg.h"` >/dev/null 2>&1]; then
 		AC_MSG_RESULT([yes])
 		found_cimg="y"
 	else
