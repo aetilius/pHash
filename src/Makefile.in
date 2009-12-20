@@ -37,7 +37,7 @@ build_triplet = @build@
 host_triplet = @host@
 @HAVE_AUDIO_HASH_TRUE@am__append_1 = audiophash.cpp
 @HAVE_AUDIO_HASH_TRUE@am__append_2 = audiophash.h
-@HAVE_VIDEO_HASH_TRUE@am__append_3 = cimgffmpeg.cpp
+@HAVE_VIDEO_HASH_TRUE@am__append_3 = cimgffmpeg.cpp cimgffmpeg.h
 subdir = src
 DIST_COMMON = $(am__include_HEADERS_DIST) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in
@@ -73,8 +73,8 @@ am__base_list = \
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libpHash_la_LIBADD =
-am__libpHash_la_SOURCES_DIST = pHash.cpp ph_fft.c audiophash.cpp \
-	cimgffmpeg.cpp
+am__libpHash_la_SOURCES_DIST = pHash.cpp ph_fft.c ph_fft.h \
+	audiophash.cpp cimgffmpeg.cpp cimgffmpeg.h
 @HAVE_AUDIO_HASH_TRUE@am__objects_1 = audiophash.lo
 @HAVE_VIDEO_HASH_TRUE@am__objects_2 = cimgffmpeg.lo
 am_libpHash_la_OBJECTS = pHash.lo ph_fft.lo $(am__objects_1) \
@@ -232,7 +232,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = libpHash.la
-libpHash_la_SOURCES = pHash.cpp ph_fft.c $(am__append_1) \
+libpHash_la_SOURCES = pHash.cpp ph_fft.c ph_fft.h $(am__append_1) \
 	$(am__append_3)
 libpHash_la_LDFLAGS = -no-undefined
 include_HEADERS = pHash.h $(am__append_2)
