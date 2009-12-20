@@ -22,67 +22,34 @@
 
 */
 
-#include <cstdio>
-#include <cstdlib>
-#include <dirent.h>
+#include <stdio.h>
 #include <errno.h>
-#include <algorithm>
-#include <vector>
-#include <string.h>
+#include "pHash.h"
 #include "audiophash.h"
 
 #define TRUE 1
 #define FALSE 0
 
-using namespace std;
 
-/**
- * struct to hold hash
- **/
-struct data_point {
-    int nbframes;    //number of frames, i.e. length of hash
-    char *name;      //name of file from which hash is computed
-    uint32_t *hash;  //pointer to start of hash
-};
 
-struct data_point* ph_malloc_dp(){
-    
-    return (struct data_point*)malloc(sizeof(struct data_point));
-    
+int sort_names(char **names, int L1){
+
+    for (int i=0;i<L1;i++){
+	int min = i;
+	for (int j=i+1;j<L1;j++){
+	    if (strcmp(names[j], names[min]) <= 0)
+		min = j;
+	}
+	if (i != min){
+	    char *swap = names[i];
+	    names[i] = names[min];
+	    names[min] = swap;
+	}
+
+    }
+    return 0;
 }
-/**
- * purpose: auxiliary function to compare data points by name for sorting
- **/
-bool cmp_lt_dp(struct data_point dpa, struct data_point dpb){
-    int result = strcmp(dpa.name, dpb.name);
-    if (result < 0)
-	return TRUE;
-    return FALSE;
-}
-/**
- *  TEST
- * 
- * purpose: test harness for audiohash functions; reads in files from two directories that are
- *          specified on the command line;  same number of files in each directory; each file name
- *          represented in each directory.  The program reads in the files, computes the hash 
- *          and sorts the hash into a vector. Each hash is then compared to the corresponding hash
- *          from the other directory in the sorted order.  These are the "inter" comparisons, where
- *          a confidence vector is computed, the max value being used as a confidence score to
- *          indicate the percentage confidence of a similar file.
- *
- *          The program then uses the first vector to compare hashes from different images.  Each
- *          hash is compared to each successive hash in the list in sorted order.  The max value
- *          of the confidence vector is used as a confidence score to indicate the confidence of 
- *          a match.  These are the "inter" comparisons.
- *
- *          params
- *                  ber threshold  - bit error rate threshold (0.25 to 0.35)
- *                  block_size     - size of block of frames to compare at a time (256)
- *      
- *          
- *         Confidence scores range from 0 to 1.0.  A good threshold for determining similarity
- *         is 0.50.
-**/
+
 int main(int argc, char **argv){
 
     if (argc < 3){
@@ -95,139 +62,99 @@ int main(int argc, char **argv){
     const int block_size = 256;          //number of frames to compare at a time
     const int sr = 8000;                 //sample rate to convert the stream
     const int channels = 1;              //number of channels to convert stream
-    int N;
-    int nbframes;
-    float *buf = NULL;
-    uint32_t *hash = NULL;
-    errno = 0;
-    struct dirent *dir_entry;
-    struct data_point *dp;
-    vector<struct data_point> hashlist;  //vector for first directory hashes
-    vector<struct data_point> hashlist2; //vector for second directory hashes
-    int nbfiles = 0;
-    unsigned int i=0;
 
+    int nbfiles1 = 0;
+    char **files1 = ph_readfilenames(dir_name, nbfiles1);
+    sort_names(files1, nbfiles1);
+    int nbfiles2 = 0;
+    char **files2 = ph_readfilenames(dir_name2, nbfiles2);
+    sort_names(files2, nbfiles2);
 
-    printf("reading files in %s ...\n",dir_name);
-    //open first directory
-    DIR *dir = opendir(dir_name);
-    if (!dir){
-	printf("could not open directory\n");
+    printf("dir: %s %d\n", dir_name, nbfiles1);
+    printf("dir: %s %d\n", dir_name2, nbfiles2);
+    if (nbfiles1 != nbfiles2){
+	printf("directories do not have same number of files\n");
 	exit(1);
     }
-    char path[100];
-    path[0]='\0';
-    while ((dir_entry = readdir(dir))!=0) {
-	if (strcmp(dir_entry->d_name,".") && strcmp(dir_entry->d_name,"..")){
-	    strcat(path,dir_name);
-	    strcat(path,"/");
-	    strcat(path,dir_entry->d_name);
-	    buf = ph_readaudio(path,sr,channels,N);
-	    if (!buf)
-		continue;
-	    hash = ph_audiohash(buf,N,sr,nbframes);
-            if (!hash)
-                continue;
-	    dp = ph_malloc_dp();
-	    dp->name = strdup(dir_entry->d_name);
-	    dp->hash = hash;
-	    dp->nbframes = nbframes;
-	    hashlist.push_back(*dp);
-	    i++;
-	    nbfiles++;
+
+    uint32_t **hashes = (uint32_t**)malloc(nbfiles1*sizeof(uint32_t*));
+    int *lens = (int*)malloc(nbfiles1*sizeof(int));
+    float *buf;
+    int buflen;
+    uint32_t *hash1, *hash2;
+    int hashlen1, hashlen2;
+    double *cs;
+    int Nc;
+    int index, i, j;
+    
+    printf("intra distances\n");
+    printf("***************\n");
+    for (index=0;index<nbfiles1;index++){
+	printf("file1: %s\n", files1[index]);
+	buf = ph_readaudio(files1[index], sr, channels, buflen);
+	if (!buf){
+	    printf("unable to read audio\n");
+	    continue;
 	}
-	path[0]='\0';
-	errno = 0;
-    }
-
-    printf("sorting list ...\n");
-    sort(hashlist.begin(),hashlist.end(),cmp_lt_dp);
-
-    printf("hit any key\n");
-    getchar();
-
-    printf("reading files in %s ... \n",dir_name2);
-    //open first directory
-    dir = opendir(dir_name2);
-    if (!dir){
-	printf("could not open directory\n");
-	exit(1);
-    }
-    i=0;
-    path[0]='\0';
-    while ((dir_entry = readdir(dir)) != 0) {
-	if (strcmp(dir_entry->d_name,".") && strcmp(dir_entry->d_name,"..")){
-	    strcat(path,dir_name2);
-	    strcat(path,"/");
-	    strcat(path,dir_entry->d_name);
-	    buf = ph_readaudio(path,sr,channels,N);
-	    if (!buf)
-		continue;
-	    hash = ph_audiohash(buf,N,sr,nbframes);
-            if (!hash)
-                continue;
-	    dp = ph_malloc_dp();
-	    dp->name = strdup(dir_entry->d_name);
-	    dp->hash = hash;
-	    dp->nbframes = nbframes;
-	    hashlist2.push_back(*dp);
-	    i++;
-	    nbfiles++;
+	hash1 = ph_audiohash(buf, buflen, sr, hashlen1);
+	if (!hash1){
+	    printf("unable to get hash\n");
+	    continue;
 	}
-	path[0]='\0';
-	errno = 0;
-    }
+	hashes[index] = hash1;
+	lens[index] = hashlen1;
+	free(buf);
 
-    if (errno){
-	printf("error reading files\n");
-	exit(1);
+	printf("file2: %s\n", files2[index]);
+	buf = ph_readaudio(files2[index], sr, channels, buflen);
+	if (!buf) {
+	    printf("unable to get audio\n");
+	    continue;
+	}
+        hash2 = ph_audiohash(buf, buflen, sr, hashlen2);
+	if (!hash2) {
+	    printf("unable to get hash\n");
+	    continue;
+	}
+
+	cs = ph_audio_distance_ber(hash1, hashlen1, hash2, hashlen2, threshold, block_size, Nc);
+	if (!cs){
+	    printf("unable to calc distance\n");
+	    continue;
+	}
+
+	double max_cs = 0.0;
+	for (i=0;i<Nc;i++){
+	    if (cs[i] > max_cs){
+		max_cs = cs[i];
+	    }
+	}
+	printf("max cs %f\n\n", max_cs);
+
+	free(hash2);
+	free(buf);
+	free(cs);
     }
     
-    printf("sorting list ...\n");
-    sort(hashlist2.begin(),hashlist2.end(),cmp_lt_dp);
-
-    printf("hit any key\n");
+    printf("pause - hit any key\n\n");
     getchar();
-
-    int Nc;
-    double maxC = 0.0;
-    double *pC = NULL;
-
-    printf("intra confidence values:\n");
-    printf("************************\n");
-    for (i=0;i<hashlist.size();i++){
-	printf("file1: %s    file2: %s ",hashlist[i].name,hashlist2[i].name);
-	pC = ph_audio_distance_ber(hashlist[i].hash, hashlist[i].nbframes, hashlist2[i].hash, hashlist2[i].nbframes, threshold, block_size, Nc);
-
-	maxC = 0.0;
-	for (int j=0;j<Nc;j++){
-	    if (pC[j] > maxC){
-		maxC = pC[j];
+    printf("inter dists\n");
+    printf("***********\n");
+    for (i=0;i<nbfiles1;i++){
+	printf("file1: %s\n", files1[i]);
+	for (j=i+1;j<nbfiles1;j++){
+	    printf("    file2: %s\n", files1[j]);
+	    cs=ph_audio_distance_ber(hashes[i],lens[i],hashes[j],lens[j],threshold,block_size,Nc);
+	    double max_f = 0.0;
+	    for (index=0;index<Nc;index++){
+		if (cs[index] > max_f)
+		    max_f = cs[index];
 	    }
-	}
-	printf("cs = %3.2f\n",maxC);
-    }
-
-    printf("***********************\n");
-    printf("hit any key\n");
-    getchar();
-
-
-    printf("inter confidence values\n");
-    printf("***********************\n");
-    for (i=0;i<hashlist.size();i++){
-	for (unsigned int j=i+1;j<hashlist.size();j++){
-	    printf("file1:%s file2: %s ",hashlist[i].name,hashlist[j].name);
-	    pC = ph_audio_distance_ber(hashlist[i].hash, hashlist[i].nbframes,hashlist[j].hash,hashlist[j].nbframes, threshold, block_size, Nc);
-	    maxC = 0.0;
-	    for (int k=0;k<Nc;k++){
-		if (pC[k]>maxC)
-		    maxC = pC[k];
-	    }
-	    printf("cs=%3.2f\n",maxC);
+	    printf("    cs = %f\n", max_f);
 	}
     }
-    printf("done\n");
+
+
 
     return 0;
 }
