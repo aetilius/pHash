@@ -1,5 +1,5 @@
 Name:           pHash
-Version:        0.7.0
+Version:        0.7.1
 Release:        1%{?dist}
 Summary:        pHash, the open source perceptual hashing library
 
@@ -9,11 +9,9 @@ URL:            http://www.phash.org/
 Source0:        http://www.phash.org/releases/%{name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-BuildRequires:  fftw-devel >= 3
 BuildRequires:  ffmpeg-devel >= 0.5
 BuildRequires:  libjpeg-devel
 BuildRequires:  libpng-devel
-Requires:	fftw >= 3
 Requires:	ffmpeg >= 0.5
 Requires:	libjpeg
 Requires:	libpng
