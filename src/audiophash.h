@@ -27,7 +27,6 @@
 
 #include <limits.h>
 #include <math.h>
-//#include <fftw3.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <algorithm>
