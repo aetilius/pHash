@@ -60,8 +60,8 @@ JNIEXPORT jdouble JNICALL Java_pHash_audioDistance
  * Method:    videoDistance
  * Signature: (LpHash/VideoHash;LpHash/VideoHash;)I
  */
-JNIEXPORT jint JNICALL Java_pHash_videoDistance
-  (JNIEnv *, jclass, jobject, jobject);
+JNIEXPORT jdouble JNICALL Java_pHash_videoDistance
+  (JNIEnv *, jclass, jobject, jobject, jint);
 
 /*
  * Class:     pHash
