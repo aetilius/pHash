@@ -20,6 +20,8 @@ void fft_calc(int N,double *x,complex double *X,complex double *P,int step,compl
     int k;
     for (k=0;k<N/2;k++){
 	P[k] = P[k]*twids[k*step];
+	X[k]     = S[k] + P[k];
+	X[k+N/2] = S[k] - P[k];
     }
     for (k=0;k<N/2;k++){
 	X[k] =     S[k] + P[k];
@@ -31,9 +33,7 @@ void fft_calc(int N,double *x,complex double *X,complex double *P,int step,compl
 
 
 int fft(double *x, int N, complex double *X){
-    if (sizeof(X) != N*sizeof(complex double)){
-	return -1;
-    }
+
     complex double *twiddle_factors = (complex double*)malloc(sizeof(complex double)*(N/2));
     complex double *Xt = (complex double*)malloc(sizeof(complex double)*N);
     int k;

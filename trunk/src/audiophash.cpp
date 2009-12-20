@@ -306,10 +306,11 @@ uint32_t* ph_audiohash(float *buf, int N, int sr, int &nb_frames){
 	   return NULL;
        }
        for (int i=0; i < nfft_half;i++){
-//	   magnF[i] = sqrt(pF[i][0]*pF[i][0] +  pF[i][1]*pF[i][1] );
-		magnF[i] = cabs(pF[i]);
-	   if (magnF[i] > maxF)
+	   //magnF[i] = sqrt(pF[i][0]*pF[i][0] +  pF[i][1]*pF[i][1] );
+           magnF[i] = cabs(pF[i]);
+	   if (magnF[i] > maxF){
 	       maxF = magnF[i];
+	   }
        }
 
        for (int i=0;i<nfilts;i++){
