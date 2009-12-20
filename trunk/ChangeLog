@@ -1,8 +1,16 @@
-0.6
+0.7.1
+---
+12.20.2009 update java bindings, remove dependency on fftw, include spec file for building rpm
+
+
+0.7
 ---
 12.12.2009 added improvements to textual hash and texthash.cpp, texthash2.cpp example files
 12.10.2009 updated phash.cpp and cimgffmpeg.h code for cimg 1.3.2
 	   added alternate to mremap (munmap/mmap) in the case mremap isnt present
+
+0.6
+---
 10.07.2009 added new variable length dct video hash
 
 
