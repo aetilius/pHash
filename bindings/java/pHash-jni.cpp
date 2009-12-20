@@ -40,6 +40,13 @@ typedef struct ph_jni_hash_classes
 	jfieldID hashID;
 } jniHashes;
 
+float video_distance(DP *a, DP *b)
+{
+ulong64 *hash1 = (ulong64 *)a->hash;
+ulong64 *hash2 = (ulong64 *)b->hash;
+double sim = ph_dct_videohash_dist(hash1, a->hash_length, hash2, b->hash_length, 21);
+return (float)sim;
+}
 
 float image_distance(DP *pntA, DP *pntB)
 {
@@ -84,7 +91,7 @@ float audio_distance(DP *dpA, DP *dpB)
 static jniHashes hashes[] = 
 			{ 	
 				{imClass, UINT64ARRAY, image_distance, IMAGE_HASH, imCtor, imHash_hash}, 
-				{vidClass, UINT64ARRAY, image_distance, VIDEO_HASH, vidCtor, vidHash_hash}, 
+				{vidClass, UINT64ARRAY, video_distance, VIDEO_HASH, vidCtor, vidHash_hash}, 
 				{audioClass, UINT32ARRAY, audio_distance, AUDIO_HASH, audioCtor, audioHash_hash},
 			};
 
@@ -156,11 +163,11 @@ JNIEXPORT jboolean JNICALL Java_pHash_00024MVPTree_create
 				hashlist[i]->hash_length = 1;
 				break;
 			case VIDEO_HASH:
-				ulong64 videoHash;
-				ph_dct_videohash(path, videoHash);
-                               	hashlist[i]->hash = (ulong64 *)malloc(sizeof(ulong64));
-				if(!hashlist[i]->hash)
 				{
+				int len;
+				ulong64 *vhash = ph_dct_videohash(path, len);
+				if(!vhash)
+				{					
 					for(int i = 0; i < hashLen; i++)
 					{
 						if(hashlist[i])
@@ -171,8 +178,9 @@ JNIEXPORT jboolean JNICALL Java_pHash_00024MVPTree_create
 					e->ReleaseStringUTFChars(mvp, mvpfile.filename);
 					return JNI_FALSE;
 				}
-                                *(ulong64 *)hashlist[i]->hash = videoHash;
-                                hashlist[i]->hash_length = 1;
+                                hashlist[i]->hash = vhash;
+                                hashlist[i]->hash_length = len;
+				}
 				break;
 			case AUDIO_HASH:
 				const float threshold = 0.30;
@@ -516,19 +524,50 @@ JNIEXPORT jobject JNICALL Java_pHash_imageHash
 	
 }
 #ifdef HAVE_VIDEO_HASH
+
+JNIEXPORT jdouble JNICALL Java_pHash_videoDistance
+  (JNIEnv *e, jclass cl, jobject vidHash1, jobject vidHash2, jint thresh)
+{
+
+	if(vidHash1 == NULL || vidHash2 == NULL)
+	{
+		return (jdouble)-1.0;
+	}
+
+	jint hash1_len, hash2_len;
+	jlongArray hash1, hash2;
+	hash1 = (jlongArray)e->GetObjectField(vidHash1, vidHash_hash);
+	hash2 = (jlongArray)e->GetObjectField(vidHash2, vidHash_hash);
+	hash1_len = e->GetArrayLength(hash1);
+	hash2_len = e->GetArrayLength(hash2);
+	if(hash1_len <= 0 || hash2_len <= 0)
+	{
+		return (jdouble)-1.0;
+	}
+	ulong64 *hash1_n, *hash2_n;
+	
+	hash1_n = (ulong64 *)e->GetLongArrayElements(hash1, 0);
+	hash2_n = (ulong64 *)e->GetLongArrayElements(hash2, 0);
+	jdouble sim = ph_dct_videohash_dist(hash1_n, hash1_len, hash2_n, hash2_len, thresh);
+	e->ReleaseLongArrayElements(hash1, (jlong*)hash1_n, 0);
+	e->ReleaseLongArrayElements(hash2, (jlong*)hash2_n, 0);
+	return sim;	
+}
 JNIEXPORT jobject JNICALL Java_pHash_videoHash
   (JNIEnv *e, jclass cl, jstring f)
 {
     
 	const char *file = e->GetStringUTFChars(f,0);
-    
-	ulong64 hash;
-	ph_dct_videohash(file, hash);
+    	int len;
+	ulong64 *hash =	ph_dct_videohash(file, len);
 
 	jobject videoHash = e->NewObject(vidClass, vidCtor);
 	e->SetObjectField(videoHash, hash_filename, f);
 
-	e->SetLongField(videoHash, vidHash_hash, (jlong)hash);
+	jlongArray hashVals = (jlongArray)e->GetObjectField(videoHash, vidHash_hash);
+	
+	e->SetLongArrayRegion(hashVals, 0, len, (jlong *)hash);
+	free(hash);
     	e->ReleaseStringUTFChars(f,file);
 
 	return videoHash;

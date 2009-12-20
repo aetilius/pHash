@@ -12,7 +12,7 @@
 	}
 	class VideoHash extends Hash 
 	{
-		long hash;
+		long[] hash;
 	}
 	class ImageHash extends Hash 
 	{
@@ -37,7 +37,7 @@ class pHash
 	native static TextHash textHash(String file);
 	native static int imageDistance(ImageHash hash1, ImageHash hash2);
 	native static double audioDistance(AudioHash hash1, AudioHash hash2);
-	native static int videoDistance(VideoHash hash1, VideoHash hash2);
+	native static double videoDistance(VideoHash hash1, VideoHash hash2, int threshold);
 	native static int textDistance(TextHash txtHash1, TextHash txtHash2);
 	private native static void pHashInit();
 	private native static void cleanup();
@@ -69,7 +69,7 @@ class pHash
 			{
 				VideoHash vHash = videoHash(args[1]);
 				VideoHash vHash2 = videoHash(args[2]);
-				System.out.println(videoDistance(vHash,vHash2));
+				System.out.println(videoDistance(vHash,vHash2, 21));
 			}
 			else if(args[i].equals("-t"))
 			{
