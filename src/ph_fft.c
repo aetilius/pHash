@@ -23,11 +23,6 @@ void fft_calc(int N,double *x,complex double *X,complex double *P,int step,compl
 	X[k]     = S[k] + P[k];
 	X[k+N/2] = S[k] - P[k];
     }
-    for (k=0;k<N/2;k++){
-	X[k] =     S[k] + P[k];
-	X[k+N/2] = S[k] - P[k];
-    }
-    
 
 }
 
