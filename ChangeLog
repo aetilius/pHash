@@ -1,5 +1,7 @@
 0.7.1
 ---
+12.22.2009 put code in cimgffmpeg.h header into own .cpp file
+           modify GetNumberVideoFrames() function in cimgffmpeg.cpp to make it faster
 12.20.2009 update java bindings, remove dependency on fftw, include spec file for building rpm
 
 
