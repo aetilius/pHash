@@ -333,7 +333,7 @@ int NextFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList)
 int GetNumberStreams(const char *file)
 {
 	 AVFormatContext *pFormatCtx;
-     av_log_set_level(AV_LOG_QUIET);
+	 av_log_set_level(AV_LOG_QUIET);
 	 av_register_all();
 	// Open video file
 	if (av_open_input_file(&pFormatCtx, file, NULL, 0, NULL))
@@ -373,9 +373,9 @@ long GetNumberVideoFrames(const char *file)
 	}
 	if(videoStream==-1)
 	   return -1; // Didn't find a video stream
-	
+	AVStream *str = pFormatCtx->streams[videoStream];
 		
-        nb_frames = pFormatCtx->streams[videoStream]->nb_frames;
+        nb_frames = str->nb_frames;
 	if (nb_frames > 0)
 	{   //the easy way if value is already contained in struct 
 	    av_close_input_file(pFormatCtx);
@@ -383,20 +383,9 @@ long GetNumberVideoFrames(const char *file)
 	}
 	else { // frames must be counted
 	        AVPacket packet;
-		
-		//read each frame - one frame per packet
-		while(av_read_frame(pFormatCtx, &packet)>=0) 
-		{
-		  if(packet.stream_index==videoStream) {
-                  //packet is from video stream
-		      nb_frames++;
-		  }
-		  av_free_packet(&packet);
-		}
-
+		nb_frames = (long)av_index_search_timestamp(str,str->duration, AVSEEK_FLAG_ANY|AVSEEK_FLAG_BACKWARD);
 		// Close the video file
 		av_close_input_file(pFormatCtx); 
-
 		return nb_frames;
 	}
 }
