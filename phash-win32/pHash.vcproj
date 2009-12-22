@@ -132,7 +132,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				UseUnicodeResponseFiles="false"
-				AdditionalIncludeDirectories="C:\msys\local\include;&quot;C:\Documents and Settings\dgs\My Documents\fftw-3.2.2.pl1-dll32&quot;;&quot;C:\Documents and Settings\dgs\My Documents\zlib123-msvc90\zlib123-msvc90\include&quot;;&quot;C:\Documents and Settings\dgs\My Documents\lpng1235-msvc90\lpng1235-msvc90\include&quot;;&quot;C:\Documents and Settings\dgs\My Documents\jpeg-6b-msvc90\jpeg-6b-msvc90\include&quot;;&quot;C:\Documents and Settings\dgs\My Documents\CImg-1.2.9&quot;"
+				AdditionalIncludeDirectories="C:\msys\local\include;&quot;C:\Documents and Settings\dgs\My Documents\zlib123-msvc90\zlib123-msvc90\include&quot;;&quot;C:\Documents and Settings\dgs\My Documents\lpng1235-msvc90\lpng1235-msvc90\include&quot;;&quot;C:\Documents and Settings\dgs\My Documents\jpeg-6b-msvc90\jpeg-6b-msvc90\include&quot;;&quot;C:\Documents and Settings\dgs\My Documents\CImg-1.3.2&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;PHASH_EXPORTS;HAVE_IMAGE_HASH;HAVE_VIDEO_HASH;cimg_use_jpeg;cimg_use_png"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
@@ -151,9 +151,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="avformat-52.lib avcodec-52.lib avutil-50.lib swscale-0.lib libfftw3-3.lib libpng-static-mt.lib libjpeg-static-mt.lib zlib-static-mt.lib shell32.lib"
+				AdditionalDependencies="avformat-52.lib avcodec-52.lib avutil-50.lib swscale-0.lib libpng-static-mt.lib libjpeg-static-mt.lib zlib-static-mt.lib shell32.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;C:\Documents and Settings\dgs\My Documents\zlib123-msvc90\zlib123-msvc90\lib&quot;;&quot;C:\Documents and Settings\dgs\My Documents\jpeg-6b-msvc90\jpeg-6b-msvc90\lib&quot;;&quot;C:\Documents and Settings\dgs\My Documents\lpng1235-msvc90\lpng1235-msvc90\lib&quot;;&quot;C:\Documents and Settings\dgs\My Documents\fftw-3.2.2.pl1-dll32&quot;;C:\msys\local\bin"
+				AdditionalLibraryDirectories="&quot;C:\Documents and Settings\dgs\My Documents\zlib123-msvc90\zlib123-msvc90\lib&quot;;&quot;C:\Documents and Settings\dgs\My Documents\jpeg-6b-msvc90\jpeg-6b-msvc90\lib&quot;;&quot;C:\Documents and Settings\dgs\My Documents\lpng1235-msvc90\lpng1235-msvc90\lib&quot;;C:\msys\local\bin"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -211,7 +211,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\ph_fft.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\pHash.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\phcomplex.h"
 				>
 			</File>
 		</Filter>
@@ -240,6 +248,10 @@
 			</File>
 			<File
 				RelativePath=".\src\mman.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ph_fft.c"
 				>
 			</File>
 			<File
