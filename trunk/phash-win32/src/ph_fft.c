@@ -24,7 +24,7 @@
 #include "ph_fft.h"
 
 
-void fft_calc(int N,double *x,Complexd *X,Complexd *P,int step,Complexd *twids){
+void fft_calc(const int N, const double *x, Complexd *X, Complexd *P, const int step, const Complexd *twids){
     int k;
     Complexd *S = P + N/2;
     if (N == 1){
@@ -45,7 +45,7 @@ void fft_calc(int N,double *x,Complexd *X,Complexd *P,int step,Complexd *twids){
 }
 
 
-int fft(double *x, int N, Complexd *X){
+int fft(const double *x, const int N, Complexd *X){
 
     Complexd *twiddle_factors = (Complexd*)malloc(sizeof(Complexd)*(N/2));
     Complexd *Xt = (Complexd*)malloc(sizeof(Complexd)*N);

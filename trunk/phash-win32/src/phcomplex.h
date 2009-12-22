@@ -6,12 +6,12 @@ typedef struct phcomplex {
      double im;
 } Complexd;
 
-Complexd polar_to_complex(double r, double theta);
+Complexd polar_to_complex(const double r, const double theta);
 
-Complexd add_complex(Complexd a, Complexd b);
+Complexd add_complex(const Complexd a, const Complexd b);
 
-Complexd sub_complex(Complexd a, Complexd b);
+Complexd sub_complex(const Complexd a, const Complexd b);
 
-Complexd mult_complex(Complexd a, Complexd b);
+Complexd mult_complex(const Complexd a, const Complexd b);
 
 #endif
