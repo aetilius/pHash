@@ -23,30 +23,6 @@
 */
 #include "ph_fft.h"
 
-Complexd polar_to_complex(double r, double theta){
-    Complexd result;
-    result.re = r*cos(theta);
-	result.im = r*sin(theta);
-    return result;
-}
-Complexd add_complex(Complexd a, Complexd b){
-    Complexd result;
-    result.re = a.re + b.re;
-    result.im = a.im + b.im;
-    return result;
-}
-Complexd sub_complex(Complexd a, Complexd b){
-	Complexd result;
-	result.re = a.re - b.re;
-	result.im = a.im - b.im;
-	return result;
-}
-Complexd mult_complex(Complexd a, Complexd b){
-	Complexd result;
-	result.re = (a.re*b.re) - (a.im*b.im);
-    result.im = (a.re*b.im) + (a.im*b.re);
-	return result;
-}
 
 void fft_calc(int N,double *x,Complexd *X,Complexd *P,int step,Complexd *twids){
     Complexd *S = P + N/2;
@@ -71,7 +47,7 @@ void fft_calc(int N,double *x,Complexd *X,Complexd *P,int step,Complexd *twids){
 
 int fft(double *x, int N, Complexd *X){
 
-    Complexd *twiddle_factors = (Complexd*)malloc(sizeof(Complexd*)*(N/2));
+    Complexd *twiddle_factors = (Complexd*)malloc(sizeof(Complexd)*(N/2));
     Complexd *Xt = (Complexd*)malloc(sizeof(Complexd)*N);
     int k;
     for (k=0;k<N/2;k++){
