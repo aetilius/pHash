@@ -30,7 +30,6 @@
 
 #include <math.h>
 #include "phcomplex.h"
-#include <stdlib.h>
 
 int fft(double *x, int N, Complexd *X);
 
