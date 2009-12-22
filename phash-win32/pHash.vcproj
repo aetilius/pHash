@@ -156,12 +156,15 @@
 				AdditionalDependencies="avformat-52.lib avcodec-52.lib avutil-50.lib swscale-0.lib libpng-static-mt.lib libjpeg-static-mt.lib zlib-static-mt.lib shell32.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;C:\Documents and Settings\dgs\My Documents\zlib123-msvc90\zlib123-msvc90\lib&quot;;&quot;C:\Documents and Settings\dgs\My Documents\jpeg-6b-msvc90\jpeg-6b-msvc90\lib&quot;;&quot;C:\Documents and Settings\dgs\My Documents\lpng1235-msvc90\lpng1235-msvc90\lib&quot;;C:\msys\local\bin"
-				IgnoreAllDefaultLibraries="true"
-				GenerateDebugInformation="true"
+				IgnoreAllDefaultLibraries="false"
+				IgnoreDefaultLibraryNames="LIBCMT"
+				GenerateMapFile="true"
 				SubSystem="2"
+				SwapRunFromCD="true"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				TargetMachine="1"
+				AllowIsolation="true"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -259,6 +262,10 @@
 			</File>
 			<File
 				RelativePath=".\src\pHash.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\phcomplex.c"
 				>
 			</File>
 		</Filter>
