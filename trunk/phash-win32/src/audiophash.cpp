@@ -25,7 +25,7 @@
 #include <limits.h>
 #include <cmath>
 #include "audiophash.h"
-#include "fftw3.h"
+#include "ph_fft.h"
 
 extern "C" {
 	#include "libavformat/avformat.h"
@@ -256,10 +256,11 @@ uint32_t* ph_audiohash(float *buf, int nbbuf, uint32_t *hashbuf, int nbcap, int 
    }
    
    double frame[frame_length];
-   fftw_complex *pF;
-   fftw_plan p;
+   //fftw_complex *pF;
+   //fftw_plan p;
+   //pF = (fftw_complex*)fftw_malloc(sizeof(fftw_complex)*nfft);
+   Complexd *pF = (Complexd*)malloc(sizeof(Complexd)*nfft);
 
-   pF = (fftw_complex*)fftw_malloc(sizeof(fftw_complex)*nfft);
    double magnF[nfft_half];
    double maxF = 0.0;
    double maxB = 0.0;
@@ -320,7 +321,7 @@ uint32_t* ph_audiohash(float *buf, int nbbuf, uint32_t *hashbuf, int nbcap, int 
        }
    }
 
-   p = fftw_plan_dft_r2c_1d(frame_length,frame,pF,FFTW_ESTIMATE);
+   //p = fftw_plan_dft_r2c_1d(frame_length,frame,pF,FFTW_ESTIMATE);
 
    while (end <= nbbuf){
        maxF = 0.0;
@@ -328,7 +329,9 @@ uint32_t* ph_audiohash(float *buf, int nbbuf, uint32_t *hashbuf, int nbcap, int 
        for (int i = 0;i<frame_length;i++){
 	   frame[i] = window[i]*buf[start+i];
        }
-       fftw_execute(p);
+       //fftw_execute(p);
+       fft(frame, frame_length, pF);
+
        for (int i=0; i < nfft_half;i++){
 	   magnF[i] = sqrt(pF[i][0]*pF[i][0] +  pF[i][1]*pF[i][1] );
 	   if (magnF[i] > maxF)

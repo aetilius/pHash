@@ -21,45 +21,61 @@
     David Starkweather - dstarkweather@phash.org
 
 */
-
-
-
 #include "ph_fft.h"
 
-complex double polar_to_complex(double r, double theta){
-    complex double result;
-    result = r*cos(theta) + r*sin(theta)*I;
-
+Complexd polar_to_complex(double r, double theta){
+    Complexd result;
+    result.re = r*cos(theta);
+	result.im = r*sin(theta);
     return result;
 }
+Complexd add_complex(Complexd a, Complexd b){
+    Complexd result;
+    result.re = a.re + b.re;
+    result.im = a.im + b.im;
+    return result;
+}
+Complexd sub_complex(Complexd a, Complexd b){
+	Complexd result;
+	result.re = a.re - b.re;
+	result.im = a.im - b.im;
+	return result;
+}
+Complexd mult_complex(Complexd a, Complexd b){
+	Complexd result;
+	result.re = (a.re*b.re) - (a.im*b.im);
+    result.im = (a.re*b.im) + (a.im*b.re);
+	return result;
+}
 
-void fft_calc(int N,double *x,complex double *X,complex double *P,int step,complex double *twids){
-    complex double *S = P + N/2;
+void fft_calc(int N,double *x,Complexd *X,Complexd *P,int step,Complexd *twids){
+    Complexd *S = P + N/2;
     if (N == 1){
-	X[0] = x[0];
-	return;
+		X[0].re = x[0];
+        X[0].im = 0.0;
+		return;
     }
     
     fft_calc(N/2, x,      S,   X,2*step, twids);
-    fft_calc(N/2, x+step, P,   X,2*step, twids);	    
+    fft_calc(N/2, x+step, P,   X,2*step, twids);
 
     int k;
     for (k=0;k<N/2;k++){
-	P[k] = P[k]*twids[k*step];
-	X[k]     = S[k] + P[k];
-	X[k+N/2] = S[k] - P[k];
+		P[k] = mult_complex(P[k],twids[k*step]);
+		X[k]     = add_complex(S[k],P[k]);
+		X[k+N/2] = sub_complex(S[k],P[k]);
     }
 
 }
 
 
-int fft(double *x, int N, complex double *X){
+int fft(double *x, int N, Complexd *X){
 
-    complex double *twiddle_factors = (complex double*)malloc(sizeof(complex double)*(N/2));
-    complex double *Xt = (complex double*)malloc(sizeof(complex double)*N);
+    Complexd *twiddle_factors = (Complexd*)malloc(sizeof(Complexd*)*(N/2));
+    Complexd *Xt = (Complexd*)malloc(sizeof(Complexd)*N);
     int k;
     for (k=0;k<N/2;k++){
-	twiddle_factors[k] = polar_to_complex(1.0, 2.0*PI*k/N);
+		twiddle_factors[k] = polar_to_complex(1.0, 2.0*PI*k/N);
     }
     fft_calc(N, x, X, Xt, 1, twiddle_factors);
 
