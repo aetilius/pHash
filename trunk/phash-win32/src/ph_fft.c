@@ -25,17 +25,17 @@
 
 
 void fft_calc(int N,double *x,Complexd *X,Complexd *P,int step,Complexd *twids){
+    int k;
     Complexd *S = P + N/2;
     if (N == 1){
 		X[0].re = x[0];
-        X[0].im = 0.0;
+        X[0].im = 0;
 		return;
     }
     
     fft_calc(N/2, x,      S,   X,2*step, twids);
     fft_calc(N/2, x+step, P,   X,2*step, twids);
-
-    int k;
+ 
     for (k=0;k<N/2;k++){
 		P[k] = mult_complex(P[k],twids[k*step]);
 		X[k]     = add_complex(S[k],P[k]);
