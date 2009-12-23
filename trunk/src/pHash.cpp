@@ -1221,7 +1221,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
     m->buf = (char*)mremap(m->buf,m->pgsize,int_pgsize,MREMAP_MAYMOVE);
 #else
     munmap(m->buf, m->pgsize);
-    m->buf = (char*)mmap(m->buf,m->int_pgsize, PROT_READ|PROT_WRITE, MAP_SHARED, m->fd, 0);
+    m->buf = (char*)mmap(m->buf,m->pgsize, PROT_READ|PROT_WRITE, MAP_SHARED, m->fd, 0);
 #endif
 
     if (m->buf == MAP_FAILED){
