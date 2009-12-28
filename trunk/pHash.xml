@@ -1,0 +1,222 @@
+<?xml version="1.0"?>
+
+<extension name="pHash" version="1.1.2">
+<summary>pHash</summary>
+ <logo src='pHash.png' mimetype='image/png'/>
+  <license>GPL3</license>
+
+ <maintainers>
+  <maintainer>        
+   <name>Evan Klinger</name>
+   <email>eklinger@phash.org</email>
+   <role>lead</role>
+  </maintainer>
+ </maintainers>
+
+ <release>
+  <version>0.7.2</version>
+  <date>2009-12-26</date>
+<state>stable</state>
+ </release>
+
+<deps language="cpp" platform="all">
+<with defaults='/usr:/usr/local' testfile='include/pHash.h'>
+	<header name="pHash.h"/>
+	<header name="audiophash.h"/>
+	<header name="CImg.h"/>
+
+</with>
+
+ </deps>
+
+<code role="code" position="top">
+struct ph_text_hash
+{
+	TxtHashPoint *p;
+	int count;
+};
+</code>
+
+<resource name="ph_video_hash" payload="ulong64" alloc="no">
+ <description>
+  A ulong64 resource
+ </description>
+ <destruct>
+	if(resource)
+		free(resource);
+ </destruct>
+</resource>
+<resource name="ph_image_hash" payload="ulong64" alloc="no">
+ <description>
+  A ulong64 resource
+ </description>
+ <destruct>
+	if(resource)
+		free(resource);
+ </destruct>
+</resource>
+<resource name="ph_audio_hash" payload="uint32_t" alloc="no">
+ <description>
+  A uint32_t resource
+ </description>
+ <destruct>
+	if(resource)
+		free(resource);
+ </destruct>
+</resource>
+
+<resource name="ph_txt_hash" payload="ph_text_hash" alloc="no">
+ <description>
+  A TxtHashPoint resource
+ </description>
+ <destruct>
+	if(resource)
+	{
+		free(resource->p);
+		free(resource);
+	}
+ </destruct>
+</resource>
+
+<function name="ph_dct_videohash">
+   <proto>resource ph_video_hash ph_dct_videohash(string file)</proto>
+   <summary>pHash DCT video hash</summary>
+   <description>
+	Perceptual video hash based on DCT.
+   </description>
+   <code>
+<![CDATA[
+	int len;
+	ulong64 *video_hash = ph_dct_videohash(file, len);
+	return_res = video_hash;
+	if(!return_res)
+		RETURN_FALSE;
+]]>   
+</code>
+  </function>
+
+
+<function name="ph_dct_imagehash">
+   <proto>resource ph_image_hash ph_dct_imagehash(string file)</proto>
+   <summary>pHash DCT image hash</summary>
+   <description>
+	Perceptual image hash based on DCT.
+   </description>
+   <code>
+<![CDATA[
+	ulong64 *hash = (ulong64 *)malloc(sizeof(ulong64));
+	int ret = ph_dct_imagehash(file, *hash);
+	if(ret != 0)
+	{
+		free(hash);
+		RETURN_FALSE;
+	}
+	return_res = hash;
+]]>   
+</code>
+  </function>
+
+<function name="ph_texthash">
+   <proto>resource ph_txt_hash ph_texthash(string file)</proto>
+   <summary>pHash cyclic text hash</summary>
+   <description>
+	Perceptual text hash based on cyclic polynomials.
+   </description>
+   <code>
+<![CDATA[
+	int num;
+	TxtHashPoint *txtHash = ph_texthash(file, &num);
+	if(txtHash)
+	{
+		ph_text_hash *h = (ph_text_hash *)malloc(sizeof(ph_text_hash));
+		h->p = txtHash;
+		h->count = num;
+		return_res = h;
+	}
+	else
+		RETURN_FALSE;
+]]>   
+</code>
+  </function>
+
+<function name="ph_audiohash">
+   <proto>resource ph_audio_hash ph_audiohash(string file)</proto>
+   <summary>pHash audio hash</summary>
+   <description>
+	Perceptual audio hash based on bark scale.
+   </description>
+   <code>
+<![CDATA[
+	int n;
+	float *audiobuf = ph_readaudio(file, 8000, 1, n);
+	if(audiobuf)
+	{
+		int nb_frames;
+		uint32_t *hash = ph_audiohash(audiobuf, n, 8000, nb_frames);
+		free(audiobuf);
+
+		if(hash)
+		{
+			return_res = hash;
+		}
+		else
+			RETURN_FALSE;
+	}
+	else
+		RETURN_FALSE;
+]]>   
+</code>
+</function>
+
+<function name="ph_image_dist">
+   <proto>float ph_image_dist(resource ph_image_hash h1,resource ph_image_hash h2)</proto>
+   <summary>pHash image distance.</summary>
+   <description>
+	Calculate distance between two images.
+   </description>
+   <code>
+<![CDATA[
+	if(h1 && h2)
+	{
+		int dist = ph_hamming_distance(*h1, *h2);
+		RETURN_DOUBLE(dist);
+	}
+	RETURN_DOUBLE(-1);
+]]>   
+</code>
+  </function>
+
+<function name="ph_compare_text_hashes">
+   <proto>array ph_compare_text_hashes(resource ph_txt_hash h1,resource ph_txt_hash h2)</proto>
+   <summary>pHash text distance.</summary>
+   <description>
+	Calculate distance between two text hashes.
+   </description>
+   <code>
+<![CDATA[
+	if(h1 && h2)
+	{
+		int count;
+		TxtMatch *m = ph_compare_text_hashes(h1->p, h1->count, h2->p, h2->count, &count);
+		if(m)
+		{
+			for(int i = 0; i < count; ++i)
+			{
+				zval *array;
+				MAKE_STD_ZVAL(array);
+				array_init(array);
+				add_assoc_long(array, "begin_index", m[i].first_index);
+				add_assoc_long(array, "end_index", m[i].second_index);
+				add_assoc_long(array, "length", m[i].length);
+				add_next_index_zval(return_value, array);
+			}
+			free(m);
+		}
+
+	}
+]]>   
+</code>
+  </function>
+
+
+</extension>
