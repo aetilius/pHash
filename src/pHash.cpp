@@ -1280,7 +1280,7 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 	char extfile[256];
 	snprintf(extfile, sizeof(extfile),"%s%d.mvp", m->filename, m->nbdbfiles);
 	
-	m2.fd = open(extfile, O_CREAT|O_RDWR|O_APPEND, 00777);
+	m2.fd = open(extfile, O_CREAT|O_RDWR|O_APPEND, 00755);
 	if (m2.fd < 0){
 	    free(pOffset);
 	    return NULL;
@@ -1296,7 +1296,7 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 	    m->nbdbfiles++;
 	    snprintf(extfile, sizeof(extfile),"%s%d.mvp", m->filename, m->nbdbfiles);
 	    
-	    m2.fd = open(extfile,O_CREAT|O_RDWR|O_APPEND, 00777);
+	    m2.fd = open(extfile,O_CREAT|O_RDWR|O_APPEND, 00755);
 	    if (m2.fd < 0){
 		free(pOffset);
 		return NULL;
@@ -1757,7 +1757,7 @@ MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints){
     /* open main file */
     char mainfile[256];
     snprintf(mainfile, sizeof(mainfile),"%s.mvp", m->filename);
-    m->fd = open(mainfile, O_CREAT|O_RDWR|O_TRUNC, 00777);
+    m->fd = open(mainfile, O_CREAT|O_RDWR|O_TRUNC, 00755);
     if (m->fd < 0){
 	return PH_ERRFILE;
     }
