@@ -2257,10 +2257,11 @@ TxtHashPoint* ph_texthash(const char *filename,int *nbpoints){
 	    continue;
 	if ((d >= 65)&&(d<=90))       /*convert upper to lower case */
 	    d = d + 32;
-	hashword = ROTATELEFT(hashword, delta);
-	hashword = hashword^textkeys[d];
-	ulong64 oldsym = (ulong64)kgram[first%KgramLength];
-	oldsym = ROTATELEFT(oldsym, delta*KgramLength);
+
+	hashword = hashword << delta;
+	hashword = hashword^texthash[d];
+	ulong64 oldsym = texthash[kgram[first%KgramLength]];
+	oldsym = oldsym << delta*KgramLength;
 	hashword = hashword^oldsym;
 	kgram[first%KgramLength] = (char)d;
 	first++;
