@@ -2232,8 +2232,8 @@ TxtHashPoint* ph_texthash(const char *filename,int *nbpoints){
 	    d = d + 32;
       
 	kgram[i] = (char)d;
-        hashword = hashword << delta;
-        hashword = hashword^textkeys[d];
+        hashword = hashword << delta;   /* rotate left or shift left ??? */
+        hashword = hashword^textkeys[d];/* right now, rotate breaks it */
     }
 
     WinHash[win_index].hash = hashword;
@@ -2259,8 +2259,10 @@ TxtHashPoint* ph_texthash(const char *filename,int *nbpoints){
 	    d = d + 32;
 
 	ulong64 oldsym = textkeys[kgram[first%KgramLength]];
-	oldsym = oldsym << delta*KgramLength;
 
+	/* rotate or left shift ??? */
+	/* right now, rotate breaks it */
+	oldsym = oldsym << delta*KgramLength;
 	hashword = hashword << delta;
 	hashword = hashword^textkeys[d];
 	hashword = hashword^oldsym;
