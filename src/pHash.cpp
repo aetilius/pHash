@@ -2215,7 +2215,7 @@ TxtHashPoint* ph_texthash(const char *filename,int *nbpoints){
 	return NULL;
     }
     *nbpoints=0;
-    int i, first=0;
+    int i, first=0, last=KgramLength-1;
     int text_index = 0;
     int win_index = 0;
     for (i=0;i < KgramLength;i++){    /* calc first kgram */
@@ -2232,7 +2232,7 @@ TxtHashPoint* ph_texthash(const char *filename,int *nbpoints){
 	    d = d + 32;
       
 	kgram[i] = (char)d;
-        hashword = ROTATELEFT(hashword, delta);
+        hashword = hashword << delta;
         hashword = hashword^textkeys[d];
     }
 
@@ -2258,13 +2258,15 @@ TxtHashPoint* ph_texthash(const char *filename,int *nbpoints){
 	if ((d >= 65)&&(d<=90))       /*convert upper to lower case */
 	    d = d + 32;
 
-	hashword = hashword << delta;
-	hashword = hashword^texthash[d];
-	ulong64 oldsym = texthash[kgram[first%KgramLength]];
+	ulong64 oldsym = textkeys[kgram[first%KgramLength]];
 	oldsym = oldsym << delta*KgramLength;
+
+	hashword = hashword << delta;
+	hashword = hashword^textkeys[d];
 	hashword = hashword^oldsym;
-	kgram[first%KgramLength] = (char)d;
+	kgram[last%KgramLength] = (char)d;
 	first++;
+	last++;
 
         WinHash[win_index%WindowLength].hash = hashword;
 	WinHash[win_index%WindowLength].index = text_index;
