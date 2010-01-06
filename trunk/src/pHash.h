@@ -236,7 +236,7 @@ int ph_dct(const Features &fv, Digest &digest);
  *  /return - int value - 1 (true) for same, 0 (false) for different, < 0 for error
  */
 
-static int ph_crosscorr(const Digest &x,const Digest &y,double &pcc, double threshold = 0.90);
+extern "C" int ph_crosscorr(const Digest &x,const Digest &y,double &pcc, double threshold = 0.90);
 
 /*! /brief image digest
  *  Compute the image digest for an image given the input image
