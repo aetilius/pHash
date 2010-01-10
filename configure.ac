@@ -37,6 +37,34 @@ AC_ARG_ENABLE(java, [AS_HELP_STRING([--enable-java],
 [compile java (JNI) binding for pHash @<:@default=no@:>@])], 
 java=yes, java=no)
 
+AS_IF([test "$java" = "yes"],
+[
+	AC_CHECK_HEADER([jni.h], [found_jni="y"], [found_jni="n"])
+
+if test x"$found_jni" = x"n"; then
+	AC_MSG_CHECKING([whether jni.h is in the current or src directory.])
+	
+	if [test `ls . src | grep "jni.h"` >/dev/null 2>&1]; then
+		AC_MSG_RESULT([yes])
+		found_java="y"
+	else
+		AC_MSG_RESULT([no])
+		AC_MSG_CHECKING([if jni.h is in other system directories.])
+		jni_header=`locate jni.h|grep include/jni.h|head -n1`
+		
+		if test x"$jni_header" != "x"; then
+			AC_MSG_RESULT([yes])
+			jni_header=`dirname $jni_header`
+			CPPFLAGS="$CPPFLAGS -I $jni_header"
+		else
+			AC_MSG_RESULT([no])
+		fi
+	fi
+	
+fi
+
+])
+
 AM_CONDITIONAL([WITH_JAVA], test x$java != xno)
 AC_PROG_INSTALL
 AC_LANG([C++])
