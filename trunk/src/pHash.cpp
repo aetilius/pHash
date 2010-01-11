@@ -267,10 +267,14 @@ cleanup:
 int ph_image_digest(const char *file, double sigma, double gamma, Digest &digest, int N){
     
     CImg<uint8_t> *src = new CImg<uint8_t>(file);
-    int result = ph_image_digest(*src,sigma,gamma,digest,N);
-    delete src;
-    return result;
-
+	int res = -1;
+	if(src)
+	{
+    		int result = ph_image_digest(*src,sigma,gamma,digest,N);
+		delete src;
+    		res = result;
+	}
+	return res;
 }
 
 int ph_compare_images(const CImg<uint8_t> &imA,const CImg<uint8_t> &imB,double &pcc, double sigma, double gamma,int N,double threshold){
