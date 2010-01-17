@@ -58,11 +58,11 @@ int main(int argc, char **argv){
     printf("***************\n");
     for (int i=0;i<nbfiles1;i++){
 	printf("file1: %s\n", files1[i]);
-	hash1[i] = ph_mhimagehash(files1[i], hashlen1, alpha, level);
+	hash1[i] = ph_mh_imagehash(files1[i], hashlen1, alpha, level);
 	if (hash1 == NULL)
 	    continue;
 	printf("file2: %s\n", files2[i]);
-	hash2 = ph_mhimagehash(files2[i], hashlen2, alpha, level);
+	hash2 = ph_mh_imagehash(files2[i], hashlen2, alpha, level);
 	if (hash2 == NULL)
 	    continue;
 
