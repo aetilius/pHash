@@ -39,7 +39,7 @@ bin_PROGRAMS = build_mvptree$(EXEEXT) add_mvptree$(EXEEXT) \
 	test_texthash2$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2) \
 	$(am__EXEEXT_3)
 @HAVE_AUDIO_HASH_TRUE@am__append_1 = test_audio build_mvptree_audio add_mvptree_audio query_mvptree_audio
-@HAVE_IMAGE_HASH_TRUE@am__append_2 = test_image
+@HAVE_IMAGE_HASH_TRUE@am__append_2 = test_image test_mhimagehash
 @HAVE_VIDEO_HASH_TRUE@am__append_3 = test_video
 subdir = examples
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
@@ -55,7 +55,8 @@ CONFIG_CLEAN_VPATH_FILES =
 @HAVE_AUDIO_HASH_TRUE@	build_mvptree_audio$(EXEEXT) \
 @HAVE_AUDIO_HASH_TRUE@	add_mvptree_audio$(EXEEXT) \
 @HAVE_AUDIO_HASH_TRUE@	query_mvptree_audio$(EXEEXT)
-@HAVE_IMAGE_HASH_TRUE@am__EXEEXT_2 = test_image$(EXEEXT)
+@HAVE_IMAGE_HASH_TRUE@am__EXEEXT_2 = test_image$(EXEEXT) \
+@HAVE_IMAGE_HASH_TRUE@	test_mhimagehash$(EXEEXT)
 @HAVE_VIDEO_HASH_TRUE@am__EXEEXT_3 = test_video$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
@@ -98,6 +99,12 @@ am__test_image_SOURCES_DIST = test_imagephash.cpp
 test_image_OBJECTS = $(am_test_image_OBJECTS)
 @HAVE_IMAGE_HASH_TRUE@test_image_DEPENDENCIES =  \
 @HAVE_IMAGE_HASH_TRUE@	$(top_srcdir)/src/libpHash.la
+am__test_mhimagehash_SOURCES_DIST = test_mhimagehash.cpp
+@HAVE_IMAGE_HASH_TRUE@am_test_mhimagehash_OBJECTS =  \
+@HAVE_IMAGE_HASH_TRUE@	test_mhimagehash.$(OBJEXT)
+test_mhimagehash_OBJECTS = $(am_test_mhimagehash_OBJECTS)
+@HAVE_IMAGE_HASH_TRUE@test_mhimagehash_DEPENDENCIES =  \
+@HAVE_IMAGE_HASH_TRUE@	$(top_srcdir)/src/libpHash.la
 am_test_texthash_OBJECTS = test_texthash.$(OBJEXT)
 test_texthash_OBJECTS = $(am_test_texthash_OBJECTS)
 test_texthash_DEPENDENCIES = $(top_srcdir)/src/libpHash.la
@@ -127,16 +134,16 @@ SOURCES = $(add_mvptree_SOURCES) $(add_mvptree_audio_SOURCES) \
 	$(build_mvptree_SOURCES) $(build_mvptree_audio_SOURCES) \
 	$(query_mvptree_SOURCES) $(query_mvptree_audio_SOURCES) \
 	$(test_audio_SOURCES) $(test_image_SOURCES) \
-	$(test_texthash_SOURCES) $(test_texthash2_SOURCES) \
-	$(test_video_SOURCES)
+	$(test_mhimagehash_SOURCES) $(test_texthash_SOURCES) \
+	$(test_texthash2_SOURCES) $(test_video_SOURCES)
 DIST_SOURCES = $(add_mvptree_SOURCES) \
 	$(am__add_mvptree_audio_SOURCES_DIST) $(build_mvptree_SOURCES) \
 	$(am__build_mvptree_audio_SOURCES_DIST) \
 	$(query_mvptree_SOURCES) \
 	$(am__query_mvptree_audio_SOURCES_DIST) \
 	$(am__test_audio_SOURCES_DIST) $(am__test_image_SOURCES_DIST) \
-	$(test_texthash_SOURCES) $(test_texthash2_SOURCES) \
-	$(am__test_video_SOURCES_DIST)
+	$(am__test_mhimagehash_SOURCES_DIST) $(test_texthash_SOURCES) \
+	$(test_texthash2_SOURCES) $(am__test_video_SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -281,6 +288,8 @@ test_texthash2_LDADD = $(top_srcdir)/src/libpHash.la
 @HAVE_AUDIO_HASH_TRUE@query_mvptree_audio_LDADD = $(top_srcdir)/src/libpHash.la
 @HAVE_IMAGE_HASH_TRUE@test_image_SOURCES = test_imagephash.cpp
 @HAVE_IMAGE_HASH_TRUE@test_image_LDADD = $(top_srcdir)/src/libpHash.la
+@HAVE_IMAGE_HASH_TRUE@test_mhimagehash_SOURCES = test_mhimagehash.cpp
+@HAVE_IMAGE_HASH_TRUE@test_mhimagehash_LDADD = $(top_srcdir)/src/libpHash.la
 @HAVE_VIDEO_HASH_TRUE@test_video_SOURCES = test_dctvideohash.cpp
 @HAVE_VIDEO_HASH_TRUE@test_video_LDADD = $(top_srcdir)/src/libpHash.la
 all: all-am
@@ -384,6 +393,9 @@ test_audio$(EXEEXT): $(test_audio_OBJECTS) $(test_audio_DEPENDENCIES)
 test_image$(EXEEXT): $(test_image_OBJECTS) $(test_image_DEPENDENCIES) 
 	@rm -f test_image$(EXEEXT)
 	$(CXXLINK) $(test_image_OBJECTS) $(test_image_LDADD) $(LIBS)
+test_mhimagehash$(EXEEXT): $(test_mhimagehash_OBJECTS) $(test_mhimagehash_DEPENDENCIES) 
+	@rm -f test_mhimagehash$(EXEEXT)
+	$(CXXLINK) $(test_mhimagehash_OBJECTS) $(test_mhimagehash_LDADD) $(LIBS)
 test_texthash$(EXEEXT): $(test_texthash_OBJECTS) $(test_texthash_DEPENDENCIES) 
 	@rm -f test_texthash$(EXEEXT)
 	$(CXXLINK) $(test_texthash_OBJECTS) $(test_texthash_LDADD) $(LIBS)
@@ -409,6 +421,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_audiophash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_dctvideohash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_imagephash.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_mhimagehash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_texthash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_texthash2.Po@am__quote@
 

@@ -60,11 +60,15 @@ typedef unsigned long long ulong64;
 typedef signed long long long64;
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 const int MaxFileSize = (1<<30); /* 1GB file size limit (for mvp files) */
 const off_t HeaderSize = 64;     /* header size for mvp file */
 
 
-const char *mvptag = "pHashMVPfile2009";
+const char mvptag[] = "pHashMVPfile2009";
 
 typedef enum ph_mvp_retcode {
     PH_SUCCESS = 0,   /* success */
@@ -189,16 +193,16 @@ typedef struct ph_match{
 /* /brief alloc a single data point
  *  allocates path array, does nto set id or path
  */
-extern "C" DP* ph_malloc_datapoint(int hashtype, int pathlength);
+ DP* ph_malloc_datapoint(int hashtype, int pathlength);
 
 /** /brief free a datapoint and its path
  *
  */
-static void ph_free_datapoint(DP *dp);
+void ph_free_datapoint(DP *dp);
 
 /*! /brief copyright information
  */
-extern "C" const char* ph_about();
+const char* ph_about();
 
 /*! /brief radon function
  *  Find radon projections of N lines running through the image center for lines angled 0
@@ -236,7 +240,7 @@ int ph_dct(const Features &fv, Digest &digest);
  *  /return - int value - 1 (true) for same, 0 (false) for different, < 0 for error
  */
 
-static int ph_crosscorr(const Digest &x,const Digest &y,double &pcc, double threshold = 0.90);
+int ph_crosscorr(const Digest &x,const Digest &y,double &pcc, double threshold = 0.90);
 
 /*! /brief image digest
  *  Compute the image digest for an image given the input image
@@ -247,7 +251,7 @@ static int ph_crosscorr(const Digest &x,const Digest &y,double &pcc, double thre
  *  /param N      - int value for the number of angles to consider. 
  *  /return       - less than 0 for error
  */
-int ph_image_digest(const CImg<uint8_t> &img,double sigma, double gamma,Digest &digest,int N=180);
+int _ph_image_digest(const CImg<uint8_t> &img,double sigma, double gamma,Digest &digest,int N=180);
 
 /*! /brief image digest
  *  Compute the image digest given the file name.
@@ -257,7 +261,7 @@ int ph_image_digest(const CImg<uint8_t> &img,double sigma, double gamma,Digest &
  *  /param digest - Digest struct
  *  /param N      - int value for number of angles to consider
  */
-extern "C" int ph_image_digest(const char *file, double sigma, double gamma, Digest &digest,int N=180);
+int ph_image_digest(const char *file, double sigma, double gamma, Digest &digest,int N=180);
 
 
 /*! /brief compare 2 images
@@ -270,7 +274,7 @@ extern "C" int ph_image_digest(const char *file, double sigma, double gamma, Dig
  *  /param theshold - double value for the threshold
  *  /return int 0 (false) for different images, 1 (true) for same image, less than 0 for error
  */
-int ph_compare_images(const CImg<uint8_t> &imA,const CImg<uint8_t> &imB,double &pcc, double sigma = 3.5, double gamma = 1.0,int N=180,double threshold=0.90);
+int _ph_compare_images(const CImg<uint8_t> &imA,const CImg<uint8_t> &imB,double &pcc, double sigma = 3.5, double gamma = 1.0,int N=180,double threshold=0.90);
 
 /*! /brief compare 2 images
  *  Compare 2 images given the file names
@@ -282,7 +286,7 @@ int ph_compare_images(const CImg<uint8_t> &imA,const CImg<uint8_t> &imB,double &
  *  /param N     - int number for number of angles
  *  /return int 0 (false) for different image, 1 (true) for same images, less than 0 for error
  */
-extern "C" int ph_compare_images(const char *file1, const char *file2,double &pcc, double sigma = 3.5, double gamma=1.0, int N=180,double threshold=0.90);
+int ph_compare_images(const char *file1, const char *file2,double &pcc, double sigma = 3.5, double gamma=1.0, int N=180,double threshold=0.90);
 
 /*! /brief return dct matrix, C
  *  Return DCT matrix of sqare size, N
@@ -296,14 +300,14 @@ static CImg<float>* ph_dct_matrix(const int N);
  *  /param hash of type ulong64 (must be 64-bit variable)
  *  /return int value - -1 for failure, 1 for success
  */
-extern "C" int ph_dct_imagehash(const char* file,ulong64 &hash);
+int ph_dct_imagehash(const char* file,ulong64 &hash);
 
 
 static CImgList<uint8_t>* ph_getKeyFramesFromVideo(const char *filename);
 
-extern "C" ulong64* ph_dct_videohash(const char *filename, int &Lenght);
+ulong64* ph_dct_videohash(const char *filename, int &Lenght);
 
-extern "C" double ph_dct_videohash_dist(ulong64 *hashA, int N1, ulong64 *hashB, int N2, int threshold=21);
+double ph_dct_videohash_dist(ulong64 *hashA, int N1, ulong64 *hashB, int N2, int threshold=21);
 
 /* ! /brief dct video robust hash
  *   Compute video hash based on the dct of normalized video 32x32x64 cube
@@ -311,7 +315,7 @@ extern "C" double ph_dct_videohash_dist(ulong64 *hashA, int N1, ulong64 *hashB, 
  *   /param hash ulong64 value for hash value
  *   /return int value - less than 0 for error
  */
-extern "C" int ph_hamming_distance(const ulong64 hash1,const ulong64 hash2);
+int ph_hamming_distance(const ulong64 hash1,const ulong64 hash2);
 
 /** /brief create a list of datapoint's directly from a directory of image files
  *  /param dirname - path and name of directory containg all image file names
@@ -320,11 +324,11 @@ extern "C" int ph_hamming_distance(const ulong64 hash1,const ulong64 hash2);
  *  /return pointer to a list of DP pointers (NULL for error)
  */
 
-extern "C" DP** ph_read_imagehashes(const char *dirname,int capacity, int &count);
+DP** ph_read_imagehashes(const char *dirname,int capacity, int &count);
 
-extern "C" uint8_t* ph_mhimagehash(const char *filename, int &N, int alpha=2, int lvl = 1);
-extern "C" int ph_bitcount8(uint8_t val);
-extern "C" double ph_hammingdistance2(uint8_t *hashA, int lenA, uint8_t *hashB, int lenB);
+uint8_t* ph_mh_imagehash(const char *filename, int &N, int alpha=2, int lvl = 1);
+int ph_bitcount8(uint8_t val);
+double ph_hammingdistance2(uint8_t *hashA, int lenA, uint8_t *hashB, int lenB);
 
 /** /brief get all the filenames in specified directory
  *  /param dirname - string value for path and filename
@@ -333,13 +337,13 @@ extern "C" double ph_hammingdistance2(uint8_t *hashA, int lenA, uint8_t *hashB, 
  *  /return array of pointers to string file names (NULL for error)
  **/
 
-extern "C" char** ph_readfilenames(const char *dirname,int &count);
+char** ph_readfilenames(const char *dirname,int &count);
 
 /** /brief read a datapoint (aux function)
  *   /param m current MVPFile struct containing state information
  *   /return DP* the read datapoint struct
  **/
-static DP* ph_read_datapoint(MVPFile *m);
+DP* ph_read_datapoint(MVPFile *m);
 
 /** /brief get size of a datapoint in bytes (aux. function)
  *  /param m MVPFile struct 
@@ -385,7 +389,7 @@ float hammingdistance(DP *pntA, DP *pntB);
  *  /param level - int value to track recursion depth.
  *  /return MVPRetCode
 **/
-static MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
+static MVPRetCode _ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
 			    DP **results, int *count, int level);
 
 /**  /brief query mvptree function
@@ -396,7 +400,7 @@ static MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float ra
  *   /param results - DP** list of pointers to results found
  *   /param count -  int number of results found (out)
  **/
-extern "C" MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
+MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
 			    DP **results, int *count);
 
 /** /brief save dp points to a file (aux func)
@@ -407,7 +411,7 @@ extern "C" MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, floa
  *  /param level - int track recursion level
  *  /return FileIndex* - fileno and offset into file.
 **/
-static FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_flag, int level);
+static FileIndex* _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_flag, int level);
 
 /** /brief save points to mvp file 
  *  /param m - MVPFile state info of file
@@ -416,7 +420,7 @@ static FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int sav
  *  /return MVPRetCode - ret code 
 **/
 
-extern "C" MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints);
+MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints);
 
 /**  /brief add points to mvp file (aux function)
  *   /param m - MVPFile state information of file
@@ -424,7 +428,7 @@ extern "C" MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints);
  *   /param level - int track recursion level
  *   /return MVPRetCode
  **/
-static MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level);
+static MVPRetCode _ph_add_mvptree(MVPFile *m, DP *new_dp, int level);
 
 /** /brief add a list of points to mvp file
     /param m - MVPFile state information of file.
@@ -432,14 +436,14 @@ static MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level);
     /param nbpoints - int number of points
     /return int - number of points added, neg for error
 **/
-extern "C" int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints);
+int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints);
 
 /** /brief textual hash for file
  *  /param filename - char* name of file
  *  /param nbpoints - int length of array of return value (out)
  *  /return TxtHashPoint* array of hash points with respective index into file.
  **/
-extern "C" TxtHashPoint* ph_texthash(const char *filename, int *nbpoints);
+TxtHashPoint* ph_texthash(const char *filename, int *nbpoints);
 
 /** /brief compare 2 text hashes
  *  /param hash1 -TxtHashPoint
@@ -449,7 +453,7 @@ extern "C" TxtHashPoint* ph_texthash(const char *filename, int *nbpoints);
  *  /param nbmatches - int number of matches found (out)
  *  /return TxtMatch* - list of all matches
  **/
-extern "C" TxtMatch* ph_compare_text_hashes(TxtHashPoint *hash1, int N1, TxtHashPoint *hash2, int N2, int *nbmatches);
+TxtMatch* ph_compare_text_hashes(TxtHashPoint *hash1, int N1, TxtHashPoint *hash2, int N2, int *nbmatches);
 
 /* random char mapping for textual hash */
 
@@ -712,5 +716,7 @@ static const ulong64 textkeys[256] = {
     11569021017716162560LLU
 };
 
-
+#ifdef __cplusplus
+}
+#endif
 #endif

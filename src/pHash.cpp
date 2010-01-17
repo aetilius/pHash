@@ -277,7 +277,7 @@ int ph_image_digest(const char *file, double sigma, double gamma, Digest &digest
 	return res;
 }
 
-int ph_compare_images(const CImg<uint8_t> &imA,const CImg<uint8_t> &imB,double &pcc, double sigma, double gamma,int N,double threshold){
+int _ph_compare_images(const CImg<uint8_t> &imA,const CImg<uint8_t> &imB,double &pcc, double sigma, double gamma,int N,double threshold){
 
     int result = 0;
     Digest digestA;
@@ -308,7 +308,7 @@ int ph_compare_images(const char *file1, const char *file2,double &pcc, double s
     CImg<uint8_t> *imA = new CImg<uint8_t>(file1);
     CImg<uint8_t> *imB = new CImg<uint8_t>(file2);
     
-    int res = ph_compare_images(*imA,*imB,pcc,sigma,gamma,N,threshold);
+    int res = _ph_compare_images(*imA,*imB,pcc,sigma,gamma,N,threshold);
 
     return res;
 }
@@ -740,7 +740,7 @@ char** ph_readfilenames(const char *dirname,int &count){
 }
 
 
-uint8_t* ph_mhimagehash(const char *filename, int &N,int alpha, int lvl){
+uint8_t* ph_mh_imagehash(const char *filename, int &N,int alpha, int lvl){
     if (filename == NULL){
 	return NULL;
     }
@@ -750,11 +750,11 @@ uint8_t* ph_mhimagehash(const char *filename, int &N,int alpha, int lvl){
     CImg<uint8_t> src(filename);
     CImg<uint8_t> img;
     if (img.width() == 3){
-	img = src.get_RGBtoYCbCr().get_channel(0).blur(1.5,1.5,1.5).resize(512,512,1,1,5).get_equalize(256);
+	img = src.get_RGBtoYCbCr().channel(0).blur(1.5,1.5,1.5).resize(512,512,1,1,5).get_equalize(256);
     } else{
-	img = src.blur(1.5,1.5,1.5).resize(512,512,1,1,5);
+	img = src.get_blur(1.5,1.5,1.5).resize(512,512,1,1,5);
     }
-
+    src.clear();
     int sigma = (int)(4*pow((float)alpha,(float)lvl));
     float xpos, ypos, A;
     CImg<float> MHKernel(2*sigma+1,2*sigma+1,1,1,0);
@@ -766,6 +766,7 @@ uint8_t* ph_mhimagehash(const char *filename, int &N,int alpha, int lvl){
     }
     
     CImg<float> fresp =  img.get_correlate(MHKernel);
+    img.clear();
     fresp.normalize(0,1.0);
     CImg<float> blocks(31,31,1,1,0);
     for (int rindex=0;rindex < 31;rindex++){
@@ -1015,7 +1016,7 @@ float hammingdistance(DP *pntA, DP *pntB){
 }
 
 
-MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, 
+MVPRetCode _ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, 
                                               DP **results, int *count, int level){
     int BranchFactor = m->branchfactor;
     int LengthM1 = BranchFactor-1;
@@ -1185,7 +1186,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
 			orig_pos = m->file_pos;
 			MVPFile *m2 = _ph_map_mvpfile(filenumber,child_pos, m);
 			if (m2){
-			   ret = ph_query_mvptree(m2,query,knearest,radius,results,count,level+2);
+			   ret = _ph_query_mvptree(m2,query,knearest,radius,results,count,level+2);
 			}
 
 			/* unmap and remap to the origional file/posion */
@@ -1209,7 +1210,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
 
 		    MVPFile *m2 = _ph_map_mvpfile(filenumber, child_pos,m); 
 		    if (m2){
-			ret = ph_query_mvptree(m2,query,knearest,radius,results,count,level+2);
+			ret = _ph_query_mvptree(m2,query,knearest,radius,results,count,level+2);
 		    }
 		    /*unmap and remap to original file/position  */
 		    _ph_unmap_mvpfile(filenumber, orig_pos, m, m2);
@@ -1235,7 +1236,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
 		    orig_pos = m->file_pos;
 		    MVPFile *m2 = _ph_map_mvpfile(filenumber, child_pos, m);
 		    if (m2){
-			ret = ph_query_mvptree(m2,query,knearest,radius,results,count,level+2);
+			ret = _ph_query_mvptree(m2,query,knearest,radius,results,count,level+2);
 		    }
 		    /* unmap/remap to original filenumber/position */
 		    _ph_unmap_mvpfile(filenumber, orig_pos, m, m2);
@@ -1257,7 +1258,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
 		orig_pos = m->file_pos;
 		MVPFile *m2 = _ph_map_mvpfile(filenumber, child_pos, m);
 		if (m2){
-		    ret = ph_query_mvptree(m2,query,knearest,radius,results,count,level+2);
+		    ret = _ph_query_mvptree(m2,query,knearest,radius,results,count,level+2);
 		}
 		/* return to original and remap to original filenumber/position */
 		_ph_unmap_mvpfile(filenumber, orig_pos, m, m2);
@@ -1332,7 +1333,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
 
     /* finish the query by calling the recursive auxiliary function */
     *count = 0;
-    MVPRetCode res = ph_query_mvptree(m,query,knearest,radius,results,count,0);
+    MVPRetCode res = _ph_query_mvptree(m,query,knearest,radius,results,count,0);
 
     munmap(m->buf, m->pgsize);
     m->buf = NULL;
@@ -1344,7 +1345,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
     return res;
 }
 
-FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_flag, int level){
+FileIndex* _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_flag, int level){
     int Np = (nbpoints >= 2) ? nbpoints - 2 : 0; 
     int BranchFactor = m->branchfactor;
     int PathLength = m->pathlength;
@@ -1783,7 +1784,7 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 	    FileIndex *pChild = NULL;
 	    for (int j=0;j<BranchFactor;j++){
 		m->file_pos = last_pos;
-		pChild = ph_save_mvptree(m, bins2[j], mlens2[j], saveall_flag, level+2);
+		pChild = _ph_save_mvptree(m, bins2[j], mlens2[j], saveall_flag, level+2);
 		if (pChild){ /* write filenumber and offset of child node */
 		    last_pos = m->file_pos;
 		    m->file_pos = child_pos;
@@ -1905,7 +1906,7 @@ MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints){
 
     m->file_pos = HeaderSize;
 
-    if (ph_save_mvptree(m, points, nbpoints, 1, 0) == NULL){
+    if (_ph_save_mvptree(m, points, nbpoints, 1, 0) == NULL){
 	return PH_ERRSAVEMVP;
     }
 
@@ -1924,7 +1925,7 @@ MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints){
 }
 
 
-MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
+MVPRetCode _ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 
     uint8_t ntype;
     off_t offset_mask, page_mask;
@@ -2028,7 +2029,7 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 		    }
 		    points[Np+2] = new_dp;
 		    m->file_pos = start_pos;
-		    if (!ph_save_mvptree(m, points, Np+3, 0, level+2)){
+		    if (!_ph_save_mvptree(m, points, Np+3, 0, level+2)){
 			free(points);
 			free(sv1);
 			free(sv2);
@@ -2116,7 +2117,7 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 			orig_pos = m->file_pos;
 			MVPFile *m2 = _ph_map_mvpfile(filenumber,child_pos,m);
 			if (m2){
-			    retcode = ph_add_mvptree(m2, new_dp, level+2);
+			    retcode = _ph_add_mvptree(m2, new_dp, level+2);
 			    if (retcode != PH_SUCCESS){
 				return retcode;
 			    }
@@ -2137,7 +2138,7 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 		    orig_pos = m->file_pos;
 		    MVPFile *m2 = _ph_map_mvpfile(filenumber, child_pos, m);
 		    if (m2){
-			retcode = ph_add_mvptree(m2, new_dp, level+2);
+			retcode = _ph_add_mvptree(m2, new_dp, level+2);
 			if (retcode != PH_SUCCESS){
 			    return retcode;
 			}
@@ -2162,7 +2163,7 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 		    orig_pos = m->file_pos;
 		    MVPFile *m2 = _ph_map_mvpfile(filenumber,child_pos,m);
 		    if (m2){
-			retcode = ph_add_mvptree(m2,new_dp,level+2);
+			retcode = _ph_add_mvptree(m2,new_dp,level+2);
 			if (retcode != PH_SUCCESS){
 			    return retcode;
 			}
@@ -2183,7 +2184,7 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 		orig_pos = m->file_pos;
 		MVPFile *m2 = _ph_map_mvpfile(filenumber, child_pos, m);
 		if (m2){
-		    retcode = ph_add_mvptree(m2, new_dp, level+2);
+		    retcode = _ph_add_mvptree(m2, new_dp, level+2);
 		    if (retcode != PH_SUCCESS){
 			return retcode;
 		    }
@@ -2271,7 +2272,7 @@ int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints){
     int nbsaved = 0;
     for (int i=0;i<nbpoints;i++){
         m->file_pos = HeaderSize;
-	if (ph_add_mvptree(m, points[i], 0) != PH_SUCCESS){
+	if (_ph_add_mvptree(m, points[i], 0) != PH_SUCCESS){
 	    continue;
 	}
 	nbsaved++;
