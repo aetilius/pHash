@@ -824,7 +824,7 @@ double ph_hammingdistance2(uint8_t *hashA, int lenA, uint8_t *hashB, int lenB){
     if ((hashA == NULL) || (hashB == NULL) || (lenA == 0)){
 	return -1.0;
     }
-    double dist = -1.0;
+    double dist = 0;
     uint8_t D = 0;
     for (int i=0;i<lenA;i++){
 	D = hashA[i]^hashB[i];
