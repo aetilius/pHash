@@ -470,13 +470,9 @@ JNIEXPORT void JNICALL Java_pHash_pHashInit
 	mhImClass = (jclass)e->NewGlobalRef(e->FindClass("MHImageHash"));
 	audioClass = (jclass)e->NewGlobalRef(e->FindClass("AudioHash"));
 	vidClass = (jclass)e->NewGlobalRef(e->FindClass("VideoHash"));
-	if(dctImClass)
 	        dctImHash_hash = e->GetFieldID(dctImClass, "hash", "J");
-	if(mhImClass)
 		mhImHash_hash = e->GetFieldID(mhImClass, "hash", "[B");
-        if(audioClass)
 		audioHash_hash = e->GetFieldID(audioClass, "hash", "[I");
- 	if(vidClass)
 		vidHash_hash = e->GetFieldID(vidClass, "hash", "[J");
 
 	hash_filename = e->GetFieldID(e->FindClass("Hash"), "filename", "Ljava/lang/String;");
@@ -590,15 +586,17 @@ JNIEXPORT jobject JNICALL Java_pHash_mhImageHash
     
 	int N;
     	uint8_t *hash = ph_mh_imagehash(file, N);
-	jobject imageHash = e->NewObject(mhImClass, mhImCtor);
-	e->SetObjectField(imageHash, hash_filename, f);
+	jobject imageHash = NULL;
+	if(hash && N > 0)
+	{
+		imageHash = e->NewObject(mhImClass, mhImCtor);
+		e->SetObjectField(imageHash, hash_filename, f);
 
-	jbyteArray hashVals = (jbyteArray)e->GetObjectField(imageHash, mhImHash_hash);
-	
-	e->SetByteArrayRegion(hashVals, 0, N, (jbyte *)hash);
-
-	free(hash);
-
+		jbyteArray hashVals = e->NewByteArray(N);
+		e->SetByteArrayRegion(hashVals, 0, N, (jbyte *)hash);
+		e->SetObjectField(imageHash, mhImHash_hash, hashVals);
+		free(hash);
+	}
     	e->ReleaseStringUTFChars(f,file);
 	
 	return imageHash;
@@ -645,9 +643,11 @@ JNIEXPORT jobject JNICALL Java_pHash_videoHash
 	jobject videoHash = e->NewObject(vidClass, vidCtor);
 	e->SetObjectField(videoHash, hash_filename, f);
 
-	jlongArray hashVals = (jlongArray)e->GetObjectField(videoHash, vidHash_hash);
-	
+	jlongArray hashVals = e->NewLongArray(len);
+
 	e->SetLongArrayRegion(hashVals, 0, len, (jlong *)hash);
+
+	e->SetObjectField(videoHash, vidHash_hash, hashVals);
 	free(hash);
     	e->ReleaseStringUTFChars(f,file);
 
@@ -685,9 +685,10 @@ JNIEXPORT jobject JNICALL Java_pHash_audioHash
 	e->SetObjectField(audioHash, hash_filename, f);
 	e->ReleaseStringUTFChars(f,file);
 
-	jintArray hashVals = (jintArray)e->GetObjectField(audioHash, audioHash_hash);
-	
+	jintArray hashVals = e->NewIntArray(nbframes);
+
 	e->SetIntArrayRegion(hashVals, 0, nbframes, (jint *)hash);
+	e->SetObjectField(audioHash, audioHash_hash, hashVals);
 	free(hash);
 
 	return audioHash;
