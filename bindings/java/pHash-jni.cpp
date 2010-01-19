@@ -288,9 +288,10 @@ JNIEXPORT jobjectArray JNICALL Java_pHash_00024MVPTree_query
 		}
 		case VIDEO_HASH:
 		{
-			query->hash_length = 1;
-			ulong64 hash = (ulong64)e->GetLongField(hashObj, vidHash_hash);
-                        query->hash = &hash;
+			jlongArray l = (jlongArray)e->GetObjectField(hashObj, vidHash_hash);
+			query->hash_length = e->GetArrayLength(l);
+			jlong *h = e->GetLongArrayElements(l, NULL);
+                        query->hash = h;
 			break;
 		}
 		case AUDIO_HASH:
@@ -423,10 +424,10 @@ JNIEXPORT jboolean JNICALL Java_pHash_00024MVPTree_add
 		}
 		case VIDEO_HASH:
 		{
-			newHashes[j]->hash_length = 1;
-			ulong64 hash = (ulong64)e->GetLongField(hashObj, vidHash_hash);
-                        newHashes[j]->hash = (ulong64 *)malloc(sizeof(ulong64));
-			*(ulong64 *)newHashes[j]->hash = hash;
+			jlongArray l = (jlongArray)e->GetObjectField(hashObj, vidHash_hash);
+			newHashes[j]->hash_length = e->GetArrayLength(l);
+			jlong *h = e->GetLongArrayElements(l, NULL);
+                        newHashes[j]->hash = h;
 			break;
 		}
 		case AUDIO_HASH:
@@ -469,11 +470,15 @@ JNIEXPORT void JNICALL Java_pHash_pHashInit
 	mhImClass = (jclass)e->NewGlobalRef(e->FindClass("MHImageHash"));
 	audioClass = (jclass)e->NewGlobalRef(e->FindClass("AudioHash"));
 	vidClass = (jclass)e->NewGlobalRef(e->FindClass("VideoHash"));
-        dctImHash_hash = e->GetFieldID(dctImClass, "hash", "J");
-        mhImHash_hash = e->GetFieldID(mhImClass, "hash", "[B");
-        audioHash_hash = e->GetFieldID(audioClass, "hash", "[I");
-        vidHash_hash = e->GetFieldID(vidClass, "hash", "J");
-	
+	if(dctImClass)
+	        dctImHash_hash = e->GetFieldID(dctImClass, "hash", "J");
+	if(mhImClass)
+		mhImHash_hash = e->GetFieldID(mhImClass, "hash", "[B");
+        if(audioClass)
+		audioHash_hash = e->GetFieldID(audioClass, "hash", "[I");
+ 	if(vidClass)
+		vidHash_hash = e->GetFieldID(vidClass, "hash", "[J");
+
 	hash_filename = e->GetFieldID(e->FindClass("Hash"), "filename", "Ljava/lang/String;");
 
 	dctImCtor = e->GetMethodID(dctImClass, "<init>", "()V");
