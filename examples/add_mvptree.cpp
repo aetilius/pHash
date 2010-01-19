@@ -23,23 +23,31 @@
 */
 
 #include <stdio.h>
-#include <dirent.h>
 #include "pHash.h"
+
+
+float distancefunc(DP *pa, DP *pb){
+    uint8_t *hashA = (uint8_t*)pa->hash;
+    uint8_t *hashB = (uint8_t*)pb->hash;
+    return (float)(1000*ph_hammingdistance2(hashA, pa->hash_length,hashB,pb->hash_length));
+
+}
 
 int main(int argc, char **argv){
  
     const char *dir_name = argv[1];/* name of dir to retrieve image files */
     const char *filename = argv[2];/* name of file to save db */
 
+    int alpha = 2;
+    int lvl  = 1;
+
     MVPFile mvpfile;
     ph_mvp_init(&mvpfile);
     mvpfile.filename = strdup(filename);
-    mvpfile.hashdist = hammingdistance;
-    mvpfile.hash_type = UINT64ARRAY;
+    mvpfile.hashdist = distancefunc;
+    mvpfile.hash_type = BYTEARRAY;
    
 
-    ulong64 tmphash = 0;
-    
     int nbfiles = 0;
     printf("dir name: %s\n", dir_name);
     char **files = ph_readfilenames(dir_name,nbfiles);
@@ -53,32 +61,23 @@ int main(int argc, char **argv){
 	printf("mem alloc error\n");
 	exit(1);
     }
-
+    int hashlength;
     int count = 0;
     for (int i=0;i<nbfiles;i++){
-	printf("file[%d]: %s ", i, files[i]);
-	if (ph_dct_imagehash(files[i],tmphash) < 0){
-	    printf("could not get for file %s\n",files[i]);
+	printf("file[%d]: %s\n", i, files[i]);
+        hashlist[count] = ph_malloc_datapoint(mvpfile.hash_type,mvpfile.pathlength);
+	if (hashlist[count] == NULL){
+	    printf("mem alloc error\n");
 	    continue;
 	}
-	printf("hash = %llx\n", tmphash);
-
-        hashlist[count] = ph_malloc_datapoint(mvpfile.hash_type,mvpfile.pathlength);
-        if (!hashlist[count]){
-	    printf("mem alloc error\n");
-	    exit(1);
+	hashlist[count]->id = files[i];
+	hashlist[count]->hash = ph_mh_imagehash(files[i],hashlength,alpha,lvl);
+	if (hashlist[count]->hash == NULL){
+	    printf("unable to get hash\n");
+	    continue;
 	}
-	hashlist[count]->id = strdup(files[i]);
-        void *ptr_hash = malloc(8);
-	if (!ptr_hash){
-            printf("unable to allocate mem\n");
-            exit(1);
-        }
-        hashlist[count]->hash = ptr_hash;
-	ulong64 *ptr = (ulong64*)hashlist[count]->hash;
-        *ptr = tmphash;
-	hashlist[count]->hash_length = 1;
-         count++;
+	hashlist[count]->hash_length = hashlength;
+        count++;
     }
 
     printf("add files to file %s\n", filename);
