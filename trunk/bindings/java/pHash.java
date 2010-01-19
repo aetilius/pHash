@@ -16,7 +16,14 @@
 	}
 	class ImageHash extends Hash 
 	{
+	}
+	class DCTImageHash extends ImageHash 
+	{
 		long hash;
+	}
+	class MHImageHash extends ImageHash 
+	{
+		byte[] hash;
 	}
 
 class pHash
@@ -33,7 +40,8 @@ class pHash
 
 	native static VideoHash videoHash(String file);
 	native static AudioHash audioHash(String file);
-	native static ImageHash imageHash(String file);
+	native static DCTImageHash dctImageHash(String file);
+	native static MHImageHash mhImageHash(String file);
 	native static TextHash textHash(String file);
 	native static int imageDistance(ImageHash hash1, ImageHash hash2);
 	native static double audioDistance(AudioHash hash1, AudioHash hash2);
@@ -56,10 +64,19 @@ class pHash
 				AudioHash audioHash2 = audioHash(args[2]);
 				System.out.println("cs = " + audioDistance(audioHash1,audioHash2));
 			}
-			else if(args[i].equals("-i"))
+			else if(args[i].equals("-dct"))
 			{
-				ImageHash imHash = imageHash(args[1]);
-				ImageHash imHash2 = imageHash(args[2]);
+				DCTImageHash imHash = dctImageHash(args[1]);
+				DCTImageHash imHash2 = dctImageHash(args[2]);
+				System.out.println("File 1: " + imHash.filename);
+				System.out.println("File 2: " + imHash2.filename);
+
+				System.out.println(imageDistance(imHash,imHash2));
+			}
+			else if(args[i].equals("-mh"))
+			{
+				MHImageHash imHash = mhImageHash(args[1]);
+				MHImageHash imHash2 = mhImageHash(args[2]);
 				System.out.println("File 1: " + imHash.filename);
 				System.out.println("File 2: " + imHash2.filename);
 

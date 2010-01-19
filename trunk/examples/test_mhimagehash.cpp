@@ -84,9 +84,14 @@ int main(int argc, char **argv){
     }
     printf("done\n");
 
+    for(int i = 0; i < nbfiles1; ++i)
+    {
+	free(files1[i]);
+	free(files2[i]);
+	free(hash1[i]);
+    }
     free(files1);
     free(files2);
     free(hash1);
-
     return 0;
 }

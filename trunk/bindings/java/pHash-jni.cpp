@@ -8,17 +8,20 @@
 #include "audiophash.h"
 #endif
  
-jfieldID imHash_hash = NULL; 
+jfieldID dctImHash_hash = NULL; 
+jfieldID mhImHash_hash = NULL; 
 jfieldID vidHash_hash = NULL; 
 jfieldID audioHash_hash = NULL; 
 
 jfieldID hash_filename = NULL; 
 
-jclass imClass = NULL;
+jclass dctImClass = NULL;
+jclass mhImClass = NULL;
 jclass vidClass = NULL;
 jclass audioClass = NULL;
 
-jmethodID imCtor = NULL;
+jmethodID dctImCtor = NULL;
+jmethodID mhImCtor = NULL;
 jmethodID vidCtor = NULL;
 jmethodID audioCtor = NULL;
 
@@ -52,16 +55,24 @@ float image_distance(DP *pntA, DP *pntB)
 {
 	uint8_t htypeA = pntA->hash_type;
 	uint8_t htypeB = pntB->hash_type;
+	float res = 0;
 	if (htypeA != htypeB)
         	return -1.0;
-	if (htypeA != UINT64ARRAY)
+	if (htypeA != UINT64ARRAY || htypeA != 1)
         	return -1.0;
-    	if ((pntA->hash_length > 1) || (pntB->hash_length > 1))
-        	return -1.0;
-    	ulong64 *hashA = (ulong64*)pntA->hash;
-    	ulong64 *hashB = (ulong64*)pntB->hash;
-    	int res = ph_hamming_distance(*hashA, *hashB);
-    	return (float)res;
+	if(htypeA == UINT64ARRAY)
+	{
+    		ulong64 *hashA = (ulong64*)pntA->hash;
+    		ulong64 *hashB = (ulong64*)pntB->hash;
+    		res = ph_hamming_distance(*hashA, *hashB);
+	}
+	else
+	{
+		uint8_t *hashA = (uint8_t*)pntA->hash;
+		uint8_t *hashB = (uint8_t*)pntB->hash;
+		res = ph_hammingdistance2(hashA,pntA->hash_length,hashB,pntB->hash_length);
+	}
+    	return res;
 }
 
 float audio_distance(DP *dpA, DP *dpB)
@@ -90,7 +101,8 @@ float audio_distance(DP *dpA, DP *dpB)
 
 static jniHashes hashes[] = 
 			{ 	
-				{imClass, UINT64ARRAY, image_distance, IMAGE_HASH, imCtor, imHash_hash}, 
+				{mhImClass, BYTEARRAY, image_distance, IMAGE_HASH, mhImCtor, mhImHash_hash}, 
+				{dctImClass, UINT64ARRAY, image_distance, IMAGE_HASH, dctImCtor, dctImHash_hash}, 
 				{vidClass, UINT64ARRAY, video_distance, VIDEO_HASH, vidCtor, vidHash_hash}, 
 				{audioClass, UINT32ARRAY, audio_distance, AUDIO_HASH, audioCtor, audioHash_hash},
 			};
@@ -144,23 +156,23 @@ JNIEXPORT jboolean JNICALL Java_pHash_00024MVPTree_create
 		switch(type)
 		{
 			case IMAGE_HASH:
+				if(e->IsInstanceOf(ob, dctImClass))
+				{
 				ulong64 tmphash;
 				ph_dct_imagehash(path, tmphash);
 				hashlist[i]->hash = (ulong64 *)malloc(sizeof(ulong64));
-				if(!hashlist[i]->hash)
-				{
-					for(int i = 0; i < hashLen; i++)
-					{
-						if(hashlist[i])
-							ph_free_datapoint(hashlist[i]);
-					}
-
-					free(hashlist);
-					e->ReleaseStringUTFChars(mvp, mvpfile.filename);
-					return JNI_FALSE;
-				}
 				*(ulong64 *)hashlist[i]->hash = tmphash;
 				hashlist[i]->hash_length = 1;
+				}
+				else if(e->IsInstanceOf(ob, mhImClass))
+				{
+				int N;
+				uint8_t *hash = ph_mh_imagehash(path, N);
+				hashlist[i]->hash = hash;
+				hashlist[i]->hash_length = N;
+				}				
+
+
 				break;
 			case VIDEO_HASH:
 				{
@@ -198,12 +210,6 @@ JNIEXPORT jboolean JNICALL Java_pHash_00024MVPTree_create
 				} 
 				else
 				{
-					for(int i = 0; i < hashLen; i++)
-					{
-						if(hashlist[i])
-							ph_free_datapoint(hashlist[i]);
-					}
-
 					free(hashlist);
 					e->ReleaseStringUTFChars(mvp, mvpfile.filename);
 					return JNI_FALSE;
@@ -265,9 +271,19 @@ JNIEXPORT jobjectArray JNICALL Java_pHash_00024MVPTree_query
 	{
 		case IMAGE_HASH:
 		{	
-			query->hash_length = 1;
-			ulong64 hash = (ulong64)e->GetLongField(hashObj, imHash_hash);
-			query->hash = &hash;
+			if(e->IsInstanceOf(hashObj, dctImClass))
+			{
+				query->hash_length = 1;
+				ulong64 hash = (ulong64)e->GetLongField(hashObj, dctImHash_hash);
+				query->hash = &hash;
+			}
+			else if(e->IsInstanceOf(hashObj, mhImClass))
+			{
+				jbyteArray hash = (jbyteArray)e->GetObjectField(hashObj, mhImHash_hash);
+				query->hash_length = e->GetArrayLength(hash);
+				jbyte *hashes = e->GetByteArrayElements(hash, NULL);
+				query->hash = hashes;				
+			}
 			break;
 		}
 		case VIDEO_HASH:
@@ -306,8 +322,15 @@ JNIEXPORT jobjectArray JNICALL Java_pHash_00024MVPTree_query
 			switch(type)
 			{
 				case IMAGE_HASH:
-					e->SetLongField(obj, hashes[i].hashID, *(jlong *)results[j]->hash);
-					break;
+					if(e->IsInstanceOf(obj, dctImClass))
+						e->SetLongField(obj, hashes[i].hashID, *(jlong *)results[j]->hash);
+					else if(e->IsInstanceOf(obj, mhImClass))
+					{
+						jbyteArray hash;
+						e->SetByteArrayRegion(hash, 0, results[j]->hash_length, (jbyte *)results[j]->hash);
+						e->SetObjectField(obj, hashes[i].hashID, hash);
+					}	
+				break;
 				case VIDEO_HASH:
 					e->SetLongField(obj, hashes[i].hashID, *(jlong *)results[j]->hash);
 					break;
@@ -380,10 +403,22 @@ JNIEXPORT jboolean JNICALL Java_pHash_00024MVPTree_add
 	{
 		case IMAGE_HASH:
 		{
+			
+			if(e->IsInstanceOf(hashObj, dctImClass))
+			{
 			newHashes[j]->hash_length = 1;
-			ulong64 hash = (ulong64)e->GetLongField(hashObj, imHash_hash);
+			ulong64 hash = (ulong64)e->GetLongField(hashObj, dctImHash_hash);
 			newHashes[j]->hash = (ulong64 *)malloc(sizeof(ulong64));
 			*(ulong64 *)newHashes[j]->hash = hash;
+			}
+			else if(e->IsInstanceOf(hashObj, mhImClass))
+			{
+			jbyteArray h = (jbyteArray)e->GetObjectField(hashObj, mhImHash_hash);
+			newHashes[j]->hash_length = e->GetArrayLength(h);
+			jbyte *hash = e->GetByteArrayElements(h, NULL);
+			newHashes[j]->hash = hash;
+			}
+
 			break;
 		}
 		case VIDEO_HASH:
@@ -430,16 +465,19 @@ JNIEXPORT void JNICALL Java_pHash_pHashInit
   (JNIEnv *e, jclass cl)
 {
 	
-	imClass = (jclass)e->NewGlobalRef(e->FindClass("ImageHash"));
+	dctImClass = (jclass)e->NewGlobalRef(e->FindClass("DCTImageHash"));
+	mhImClass = (jclass)e->NewGlobalRef(e->FindClass("MHImageHash"));
 	audioClass = (jclass)e->NewGlobalRef(e->FindClass("AudioHash"));
 	vidClass = (jclass)e->NewGlobalRef(e->FindClass("VideoHash"));
-        imHash_hash = e->GetFieldID(imClass, "hash", "J");
+        dctImHash_hash = e->GetFieldID(dctImClass, "hash", "J");
+        mhImHash_hash = e->GetFieldID(mhImClass, "hash", "[B");
         audioHash_hash = e->GetFieldID(audioClass, "hash", "[I");
         vidHash_hash = e->GetFieldID(vidClass, "hash", "J");
 	
 	hash_filename = e->GetFieldID(e->FindClass("Hash"), "filename", "Ljava/lang/String;");
 
-	imCtor = e->GetMethodID(imClass, "<init>", "()V");
+	dctImCtor = e->GetMethodID(dctImClass, "<init>", "()V");
+	mhImCtor = e->GetMethodID(mhImClass, "<init>", "()V");
 	vidCtor = e->GetMethodID(vidClass, "<init>", "()V");
 	audioCtor = e->GetMethodID(audioClass, "<init>", "()V");
 
@@ -447,7 +485,8 @@ JNIEXPORT void JNICALL Java_pHash_pHashInit
 JNIEXPORT void JNICALL Java_pHash_cleanup
   (JNIEnv *e, jclass cl)
 {
-	e->DeleteGlobalRef(imClass);
+	e->DeleteGlobalRef(mhImClass);
+	e->DeleteGlobalRef(dctImClass);
 	e->DeleteGlobalRef(vidClass);
 	e->DeleteGlobalRef(audioClass);
 
@@ -455,12 +494,26 @@ JNIEXPORT void JNICALL Java_pHash_cleanup
 JNIEXPORT jint JNICALL Java_pHash_imageDistance
   (JNIEnv *e, jclass cl, jobject hash1, jobject hash2)
 {
+	if(e->IsInstanceOf(hash1, dctImClass) && e->IsInstanceOf(hash2, dctImClass))
+	{
 	ulong64 imHash, imHash2;
-	imHash = (ulong64)e->GetLongField(hash1, imHash_hash);
-	imHash2 = (ulong64)e->GetLongField(hash2, imHash_hash);
+	imHash = (ulong64)e->GetLongField(hash1, dctImHash_hash);
+	imHash2 = (ulong64)e->GetLongField(hash2, dctImHash_hash);
 
 	return ph_hamming_distance(imHash, imHash2);
+	}
+	else if(e->IsInstanceOf(hash1, mhImClass) && e->IsInstanceOf(hash2, mhImClass))
+	{
+	jbyteArray h = (jbyteArray)e->GetObjectField(hash1, mhImHash_hash);
+	jbyteArray h2 = (jbyteArray)e->GetObjectField(hash2, mhImHash_hash);
+	int N = e->GetArrayLength(h);
+	int N2 = e->GetArrayLength(h2);
+	jbyte *hash = e->GetByteArrayElements(h, NULL);
+	jbyte *hash2 = e->GetByteArrayElements(h2, NULL);
+	return ph_hammingdistance2((uint8_t*)hash, N, (uint8_t*)hash2, N2);
 	
+	}
+	return -1;
 }
 
 #ifdef HAVE_AUDIO_HASH
@@ -506,7 +559,7 @@ JNIEXPORT jdouble JNICALL Java_pHash_audioDistance
 }
 #endif
 
-JNIEXPORT jobject JNICALL Java_pHash_imageHash
+JNIEXPORT jobject JNICALL Java_pHash_dctImageHash
   (JNIEnv *e, jclass cl, jstring f)
 {
     
@@ -514,10 +567,33 @@ JNIEXPORT jobject JNICALL Java_pHash_imageHash
     
     	ulong64 hash;
     	ph_dct_imagehash(file, hash);
-	jobject imageHash = e->NewObject(imClass, imCtor);
+	jobject imageHash = e->NewObject(dctImClass, dctImCtor);
 	e->SetObjectField(imageHash, hash_filename, f);
 
-	e->SetLongField(imageHash, imHash_hash, (jlong)hash);
+	e->SetLongField(imageHash, dctImHash_hash, (jlong)hash);
+    	e->ReleaseStringUTFChars(f,file);
+	
+	return imageHash;
+	
+}
+
+JNIEXPORT jobject JNICALL Java_pHash_mhImageHash
+  (JNIEnv *e, jclass cl, jstring f)
+{
+    
+	const char *file = e->GetStringUTFChars(f,0);
+    
+	int N;
+    	uint8_t *hash = ph_mh_imagehash(file, N);
+	jobject imageHash = e->NewObject(mhImClass, mhImCtor);
+	e->SetObjectField(imageHash, hash_filename, f);
+
+	jbyteArray hashVals = (jbyteArray)e->GetObjectField(imageHash, mhImHash_hash);
+	
+	e->SetByteArrayRegion(hashVals, 0, N, (jbyte *)hash);
+
+	free(hash);
+
     	e->ReleaseStringUTFChars(f,file);
 	
 	return imageHash;
