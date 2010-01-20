@@ -600,7 +600,7 @@ char** ph_readfilenames(const char *dirname,int &count){
     return files;
 }
 
-__declspec(export)
+__declspec(dllexport)
 uint8_t* ph_mh_imagehash(const char *filename, int &N,int alpha, int lvl){
     if (filename == NULL){
 	return NULL;
@@ -620,8 +620,8 @@ uint8_t* ph_mh_imagehash(const char *filename, int &N,int alpha, int lvl){
     float xpos, ypos, A;
     CImg<float> MHKernel(2*sigma+1,2*sigma+1,1,1,0);
     cimg_forXY(MHKernel,X,Y){
-	xpos = pow(alpha,-lvl)*(X - sigma);
-        ypos = pow(alpha,-lvl)*(Y - sigma);
+	xpos = pow((float)alpha,(float)-lvl)*(X - sigma);
+        ypos = pow((float)alpha,(float)-lvl)*(Y - sigma);
 	A = xpos*xpos + ypos*ypos;
 	MHKernel(X,Y) = (2-A)*exp(-A/2);
     }
@@ -666,7 +666,7 @@ uint8_t* ph_mh_imagehash(const char *filename, int &N,int alpha, int lvl){
     return hash;
 }
 
-__declspec(export)
+__declspec(dllexport)
 int ph_bitcount8(uint8_t val){
     int num = 0;
     while (val){
@@ -677,7 +677,7 @@ int ph_bitcount8(uint8_t val){
 }
 
 
-__declspec(export)
+__declspec(dllexport)
 double ph_hammingdistance2(uint8_t *hashA, int lenA, uint8_t *hashB, int lenB){
     if (lenA != lenB){
 	return -1.0;

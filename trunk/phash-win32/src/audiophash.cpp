@@ -37,8 +37,6 @@ extern "C" {
 __declspec(dllexport)
 int ph_count_samples(const char *filename, int sr,int channels){
 
-    
-
 	av_register_all();
 	avcodec_register_all();
 
