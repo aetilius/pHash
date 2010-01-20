@@ -600,6 +600,102 @@ char** ph_readfilenames(const char *dirname,int &count){
     return files;
 }
 
+__declspec(export)
+uint8_t* ph_mh_imagehash(const char *filename, int &N,int alpha, int lvl){
+    if (filename == NULL){
+	return NULL;
+    }
+    uint8_t *hash = (unsigned char*)malloc(72*sizeof(uint8_t));
+    N = 72;
+
+    CImg<uint8_t> src(filename);
+    CImg<uint8_t> img;
+    if (img.width() == 3){
+	img = src.get_RGBtoYCbCr().channel(0).blur(1.5,1.5,1.5).resize(512,512,1,1,5).get_equalize(256);
+    } else{
+	img = src.get_blur(1.5,1.5,1.5).resize(512,512,1,1,5);
+    }
+    src.clear();
+    int sigma = (int)(4*pow((float)alpha,(float)lvl));
+    float xpos, ypos, A;
+    CImg<float> MHKernel(2*sigma+1,2*sigma+1,1,1,0);
+    cimg_forXY(MHKernel,X,Y){
+	xpos = pow(alpha,-lvl)*(X - sigma);
+        ypos = pow(alpha,-lvl)*(Y - sigma);
+	A = xpos*xpos + ypos*ypos;
+	MHKernel(X,Y) = (2-A)*exp(-A/2);
+    }
+    
+    CImg<float> fresp =  img.get_correlate(MHKernel);
+    img.clear();
+    fresp.normalize(0,1.0);
+    CImg<float> blocks(31,31,1,1,0);
+    for (int rindex=0;rindex < 31;rindex++){
+	for (int cindex=0;cindex < 31;cindex++){
+	    blocks(rindex,cindex) = fresp.get_crop(rindex*16,cindex*16,rindex*16+16-1,cindex*16+16-1).sum();
+	}
+    }
+ 
+    int hash_index;
+    int nb_ones = 0, nb_zeros = 0;
+    int bit_index = 0;
+    unsigned char hashbyte = 0;
+    for (int rindex=0;rindex < 31-2;rindex+=4){
+	CImg<float> subsec;
+	for (int cindex=0;cindex < 31-2;cindex+=4){
+	    subsec = blocks.get_crop(cindex,rindex, cindex+2, rindex+2).unroll('x');
+	    float ave = subsec.mean();
+	    cimg_forX(subsec, I){
+		hashbyte <<= 1;
+		if (subsec(I) > ave){
+		    hashbyte |= 0x01;
+		    nb_ones++;
+		} else {
+		    nb_zeros++;
+		}
+		bit_index++;
+		if ((bit_index%8) == 0){
+		    hash_index = (int)(bit_index/8) - 1; 
+		    hash[hash_index] = hashbyte;
+		    hashbyte = 0x00;
+		}
+	    }
+	}
+    }
+
+    return hash;
+}
+
+__declspec(export)
+int ph_bitcount8(uint8_t val){
+    int num = 0;
+    while (val){
+	++num;
+	val &= val - 1;
+    }
+    return num;
+}
+
+
+__declspec(export)
+double ph_hammingdistance2(uint8_t *hashA, int lenA, uint8_t *hashB, int lenB){
+    if (lenA != lenB){
+	return -1.0;
+    }
+    if ((hashA == NULL) || (hashB == NULL) || (lenA <= 0)){
+	return -1.0;
+    }
+    double dist = 0;
+    uint8_t D = 0;
+    for (int i=0;i<lenA;i++){
+	D = hashA[i]^hashB[i];
+	dist = dist + (double)ph_bitcount8(D);
+    }
+    double bits = (double)lenA*8;
+    return dist/bits;
+
+}
+
 __declspec(dllexport)
 DP* ph_read_datapoint(MVPFile *m){
     DP *dp = NULL;
