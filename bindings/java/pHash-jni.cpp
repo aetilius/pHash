@@ -45,10 +45,10 @@ typedef struct ph_jni_hash_classes
 
 float video_distance(DP *a, DP *b)
 {
-ulong64 *hash1 = (ulong64 *)a->hash;
-ulong64 *hash2 = (ulong64 *)b->hash;
-double sim = ph_dct_videohash_dist(hash1, a->hash_length, hash2, b->hash_length, 21);
-return (float)sim;
+	ulong64 *hash1 = (ulong64 *)a->hash;
+	ulong64 *hash2 = (ulong64 *)b->hash;
+	double sim = ph_dct_videohash_dist(hash1, a->hash_length, hash2, b->hash_length, 21);
+	return (float)sim;
 }
 
 float image_distance(DP *pntA, DP *pntB)
@@ -58,7 +58,7 @@ float image_distance(DP *pntA, DP *pntB)
 	float res = 0;
 	if (htypeA != htypeB)
         	return -1.0;
-	if (htypeA != UINT64ARRAY || htypeA != 1)
+	if (htypeA != UINT64ARRAY || htypeA != BYTEARRAY)
         	return -1.0;
 	if(htypeA == UINT64ARRAY)
 	{
@@ -158,18 +158,18 @@ JNIEXPORT jboolean JNICALL Java_pHash_00024MVPTree_create
 			case IMAGE_HASH:
 				if(e->IsInstanceOf(ob, dctImClass))
 				{
-				ulong64 tmphash;
-				ph_dct_imagehash(path, tmphash);
-				hashlist[i]->hash = (ulong64 *)malloc(sizeof(ulong64));
-				*(ulong64 *)hashlist[i]->hash = tmphash;
-				hashlist[i]->hash_length = 1;
+					ulong64 tmphash;
+					ph_dct_imagehash(path, tmphash);
+					hashlist[i]->hash = (ulong64 *)malloc(sizeof(ulong64));
+					*(ulong64 *)hashlist[i]->hash = tmphash;
+					hashlist[i]->hash_length = 1;
 				}
 				else if(e->IsInstanceOf(ob, mhImClass))
 				{
-				int N;
-				uint8_t *hash = ph_mh_imagehash(path, N);
-				hashlist[i]->hash = hash;
-				hashlist[i]->hash_length = N;
+					int N;
+					uint8_t *hash = ph_mh_imagehash(path, N);
+					hashlist[i]->hash = hash;
+					hashlist[i]->hash_length = N;
 				}				
 
 
