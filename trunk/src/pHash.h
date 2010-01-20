@@ -326,8 +326,28 @@ int ph_hamming_distance(const ulong64 hash1,const ulong64 hash2);
 
 DP** ph_read_imagehashes(const char *dirname,int capacity, int &count);
 
+/** /brief create MH image hash for filename image
+*   /param filename - string name of image file
+*   /param N - (out) int value for length of image hash returned
+*   /param alpha - int scale factor for marr wavelet (default=2)
+*   /param lvl   - int level of scale factor (default = 1)
+*   /return uint8_t array
+**/
 uint8_t* ph_mh_imagehash(const char *filename, int &N, int alpha=2, int lvl = 1);
+
+/** /brief count number bits set in given byte
+*   /param val - uint8_t byte value
+*   /return int value for number of bits set
+**/
 int ph_bitcount8(uint8_t val);
+
+/** /brief compute hamming distance between two byte arrays
+ *  /param hashA - byte array for first hash
+ *  /param lenA - int length of hashA 
+ *  /param hashB - byte array for second hash
+ *  /param lenB - int length of hashB
+ *  /return double value for normalized hamming distance
+ **/
 double ph_hammingdistance2(uint8_t *hashA, int lenA, uint8_t *hashB, int lenB);
 
 /** /brief get all the filenames in specified directory
