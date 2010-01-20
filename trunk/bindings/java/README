@@ -1,0 +1,7 @@
+How to use Java bindings:
+1) Configure pHash with Java support (--enable-java)
+2) Build pHash
+3) Compile Java classes if not done already: javac *.java
+4) Install pHash (make install)
+5) java -Djava.library.path=/usr/local/lib pHash -mh img1.jpg img2.jpg
+	See pHash.java for additional options
