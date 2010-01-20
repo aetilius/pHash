@@ -3,7 +3,7 @@
 #include "pHash-jni.h"
 #include "pHash.h"
 #include "pHash_MVPTree.h"
-
+#include <assert.h>
 #ifdef HAVE_AUDIO_HASH
 #include "audiophash.h"
 #endif
@@ -107,14 +107,14 @@ static jniHashes hashes[] =
 				{audioClass, UINT32ARRAY, audio_distance, AUDIO_HASH, audioCtor, audioHash_hash},
 			};
 
-JNIEXPORT jboolean JNICALL Java_pHash_00024MVPTree_create
+JNIEXPORT jboolean JNICALL Java_MVPTree_create
   (JNIEnv *e, jobject ob, jobjectArray hashArray)
 {
 	jint hashLen;
 	if(hashArray == NULL || (hashLen = e->GetArrayLength(hashArray)) == 0)
 		return JNI_FALSE;
 
-	jstring mvp = (jstring)e->GetObjectField(ob, e->GetFieldID(e->FindClass("pHash/MVPTree"), "mvpFile",
+	jstring mvp = (jstring)e->GetObjectField(ob, e->GetFieldID(e->FindClass("MVPTree"), "mvpFile",
 										"Ljava/lang/String;"));
 	
 
@@ -122,9 +122,11 @@ JNIEXPORT jboolean JNICALL Java_pHash_00024MVPTree_create
 	ph_mvp_init(&mvpfile);
 	mvpfile.filename = e->GetStringUTFChars(mvp, 0);
 	jniHashType type;
+	jobject htype = e->GetObjectArrayElement(hashArray, 0);
 	for(int i = 0; i < sizeof(hashes)/sizeof(hashes[0]); i++)
 	{
-		if(e->IsInstanceOf(hashArray, hashes[i].cl))
+	assert(hashes[i].cl != NULL);
+		if(e->IsInstanceOf(htype, hashes[i].cl))
 		{
 			mvpfile.hashdist = hashes[i].callback;
 			mvpfile.hash_type = hashes[i].hashType;
@@ -232,7 +234,7 @@ JNIEXPORT jboolean JNICALL Java_pHash_00024MVPTree_create
 
 }
 
-JNIEXPORT jobjectArray JNICALL Java_pHash_00024MVPTree_query
+JNIEXPORT jobjectArray JNICALL Java_MVPTree_query
   (JNIEnv *e, jobject ob, jobject hashObj, jfloat radius, jint max)
 {
 
@@ -240,7 +242,7 @@ JNIEXPORT jobjectArray JNICALL Java_pHash_00024MVPTree_query
 	jniHashType type;	
 	ph_mvp_init(&mvpfile);
 	
-	jstring mvp = (jstring)e->GetObjectField(ob, e->GetFieldID(e->FindClass("pHash/MVPTree"), "mvpFile",
+	jstring mvp = (jstring)e->GetObjectField(ob, e->GetFieldID(e->FindClass("MVPTree"), "mvpFile",
 										"Ljava/lang/String;"));
 	
 	mvpfile.filename = e->GetStringUTFChars(mvp, 0);
@@ -355,7 +357,7 @@ JNIEXPORT jobjectArray JNICALL Java_pHash_00024MVPTree_query
 	return ret;
 }
 
-JNIEXPORT jboolean JNICALL Java_pHash_00024MVPTree_add
+JNIEXPORT jboolean JNICALL Java_MVPTree_add
   (JNIEnv *e, jobject ob, jobjectArray hashArray)
 {
 	MVPFile mvpfile;
@@ -365,7 +367,7 @@ JNIEXPORT jboolean JNICALL Java_pHash_00024MVPTree_add
 	if(hashArray == NULL)
 		return JNI_FALSE;
 	
-	jstring mvp = (jstring)e->GetObjectField(ob, e->GetFieldID(e->FindClass("pHash/MVPTree"), "mvpFile",
+	jstring mvp = (jstring)e->GetObjectField(ob, e->GetFieldID(e->FindClass("MVPTree"), "mvpFile",
 										"Ljava/lang/String;"));
 	
 	mvpfile.filename = e->GetStringUTFChars(mvp, 0);
@@ -470,10 +472,10 @@ JNIEXPORT void JNICALL Java_pHash_pHashInit
 	mhImClass = (jclass)e->NewGlobalRef(e->FindClass("MHImageHash"));
 	audioClass = (jclass)e->NewGlobalRef(e->FindClass("AudioHash"));
 	vidClass = (jclass)e->NewGlobalRef(e->FindClass("VideoHash"));
-	        dctImHash_hash = e->GetFieldID(dctImClass, "hash", "J");
-		mhImHash_hash = e->GetFieldID(mhImClass, "hash", "[B");
-		audioHash_hash = e->GetFieldID(audioClass, "hash", "[I");
-		vidHash_hash = e->GetFieldID(vidClass, "hash", "[J");
+        dctImHash_hash = e->GetFieldID(dctImClass, "hash", "J");
+	mhImHash_hash = e->GetFieldID(mhImClass, "hash", "[B");
+	audioHash_hash = e->GetFieldID(audioClass, "hash", "[I");
+	vidHash_hash = e->GetFieldID(vidClass, "hash", "[J");
 
 	hash_filename = e->GetFieldID(e->FindClass("Hash"), "filename", "Ljava/lang/String;");
 
@@ -492,27 +494,29 @@ JNIEXPORT void JNICALL Java_pHash_cleanup
 	e->DeleteGlobalRef(audioClass);
 
 }
-JNIEXPORT jint JNICALL Java_pHash_imageDistance
+JNIEXPORT jdouble JNICALL Java_pHash_imageDistance
   (JNIEnv *e, jclass cl, jobject hash1, jobject hash2)
 {
 	if(e->IsInstanceOf(hash1, dctImClass) && e->IsInstanceOf(hash2, dctImClass))
 	{
-	ulong64 imHash, imHash2;
-	imHash = (ulong64)e->GetLongField(hash1, dctImHash_hash);
-	imHash2 = (ulong64)e->GetLongField(hash2, dctImHash_hash);
+		ulong64 imHash, imHash2;
+		imHash = (ulong64)e->GetLongField(hash1, dctImHash_hash);
+		imHash2 = (ulong64)e->GetLongField(hash2, dctImHash_hash);
 
-	return ph_hamming_distance(imHash, imHash2);
+		return ph_hamming_distance(imHash, imHash2);
 	}
 	else if(e->IsInstanceOf(hash1, mhImClass) && e->IsInstanceOf(hash2, mhImClass))
 	{
-	jbyteArray h = (jbyteArray)e->GetObjectField(hash1, mhImHash_hash);
-	jbyteArray h2 = (jbyteArray)e->GetObjectField(hash2, mhImHash_hash);
-	int N = e->GetArrayLength(h);
-	int N2 = e->GetArrayLength(h2);
-	jbyte *hash = e->GetByteArrayElements(h, NULL);
-	jbyte *hash2 = e->GetByteArrayElements(h2, NULL);
-	return ph_hammingdistance2((uint8_t*)hash, N, (uint8_t*)hash2, N2);
-	
+		jbyteArray h = (jbyteArray)e->GetObjectField(hash1, mhImHash_hash);
+		jbyteArray h2 = (jbyteArray)e->GetObjectField(hash2, mhImHash_hash);
+		int N = e->GetArrayLength(h);
+		int N2 = e->GetArrayLength(h2);
+		jbyte *hash = e->GetByteArrayElements(h, NULL);
+		jbyte *hash2 = e->GetByteArrayElements(h2, NULL);
+		double hd = ph_hammingdistance2((uint8_t*)hash, N, (uint8_t*)hash2, N2);
+		e->ReleaseByteArrayElements(h, hash, 0);
+		e->ReleaseByteArrayElements(h2, hash2, 0);
+		return hd;	
 	}
 	return -1;
 }

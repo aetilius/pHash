@@ -50,9 +50,9 @@ JNIEXPORT jobject JNICALL Java_pHash_textHash
 /*
  * Class:     pHash
  * Method:    imageDistance
- * Signature: (LImageHash;LImageHash;)I
+ * Signature: (LImageHash;LImageHash;)D
  */
-JNIEXPORT jint JNICALL Java_pHash_imageDistance
+JNIEXPORT jdouble JNICALL Java_pHash_imageDistance
   (JNIEnv *, jclass, jobject, jobject);
 
 /*
