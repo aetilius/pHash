@@ -5,6 +5,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pHash", "pHash.vcproj", "{7
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testaudio", "..\testaudio\testaudio.vcproj", "{5DF982AB-36B1-443E-A9D3-5BE305DC8FFB}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testvideo", "..\testvideo\testvideo.vcproj", "{C93F1421-49E9-4712-BF7F-E17C57E3B61E}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testmhimage", "..\testmhimage\testmhimage.vcproj", "{7E9970BA-6F47-4777-81EF-8DF507CCECCC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -19,6 +23,14 @@ Global
 		{5DF982AB-36B1-443E-A9D3-5BE305DC8FFB}.Debug|Win32.Build.0 = Debug|Win32
 		{5DF982AB-36B1-443E-A9D3-5BE305DC8FFB}.Release|Win32.ActiveCfg = Release|Win32
 		{5DF982AB-36B1-443E-A9D3-5BE305DC8FFB}.Release|Win32.Build.0 = Release|Win32
+		{C93F1421-49E9-4712-BF7F-E17C57E3B61E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C93F1421-49E9-4712-BF7F-E17C57E3B61E}.Debug|Win32.Build.0 = Debug|Win32
+		{C93F1421-49E9-4712-BF7F-E17C57E3B61E}.Release|Win32.ActiveCfg = Release|Win32
+		{C93F1421-49E9-4712-BF7F-E17C57E3B61E}.Release|Win32.Build.0 = Release|Win32
+		{7E9970BA-6F47-4777-81EF-8DF507CCECCC}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7E9970BA-6F47-4777-81EF-8DF507CCECCC}.Debug|Win32.Build.0 = Debug|Win32
+		{7E9970BA-6F47-4777-81EF-8DF507CCECCC}.Release|Win32.ActiveCfg = Release|Win32
+		{7E9970BA-6F47-4777-81EF-8DF507CCECCC}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

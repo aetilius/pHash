@@ -353,19 +353,11 @@ long GetNumberVideoFrames(const char *file)
 	}
 	if(videoStream==-1)
 	   return -1; // Didn't find a video stream
+    AVStream *str = pFormatCtx->streams[videoStream];
 	nb_frames = (long)(pFormatCtx->streams[videoStream]->nb_frames);
 	if (nb_frames <= 0)
 	{    
-		AVPacket packet;
-		//read each frame - one frame per packet
-		while(av_read_frame(pFormatCtx, &packet)>=0) 
-		{
-		  if(packet.stream_index==videoStream) {
-                  //packet is from video stream
-		      nb_frames++;
-		  }
-		  av_free_packet(&packet);
-		}
+         nb_frames = (long)av_index_search_timestamp(str, str->duration, AVSEEK_FLAG_ANY|AVSEEK_FLAG_BACKWARD)+ 1;
 	}
 	// Close the video file
 	av_close_input_file(pFormatCtx); 
