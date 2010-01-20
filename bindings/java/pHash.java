@@ -1,49 +1,12 @@
-	abstract class Hash
-	{
-		String filename;
-	}
-	class AudioHash extends Hash 
-	{
-		int[] hash;
-	}
-	class TextHash extends Hash 
-	{
-		String[] hash;
-	}
-	class VideoHash extends Hash 
-	{
-		long[] hash;
-	}
-	class ImageHash extends Hash 
-	{
-	}
-	class DCTImageHash extends ImageHash 
-	{
-		long hash;
-	}
-	class MHImageHash extends ImageHash 
-	{
-		byte[] hash;
-	}
-
-class pHash
+public class pHash
 {
-	class MVPTree
-	{
-		String mvpFile;
-
-		public MVPTree(String filename) { mvpFile = filename; }
-		public native boolean create(Hash[] hashes);
-		public native Hash[] query(Hash hash, float radius, int maxResults);
-		public native boolean add(Hash[] hashes);
-	}
 
 	native static VideoHash videoHash(String file);
 	native static AudioHash audioHash(String file);
 	native static DCTImageHash dctImageHash(String file);
 	native static MHImageHash mhImageHash(String file);
 	native static TextHash textHash(String file);
-	native static int imageDistance(ImageHash hash1, ImageHash hash2);
+	native static double imageDistance(ImageHash hash1, ImageHash hash2);
 	native static double audioDistance(AudioHash hash1, AudioHash hash2);
 	native static double videoDistance(VideoHash hash1, VideoHash hash2, int threshold);
 	native static int textDistance(TextHash txtHash1, TextHash txtHash2);
@@ -57,6 +20,8 @@ class pHash
 
 	public static void main(String args[])
 	{
+			
+			MVPTree mvp = new MVPTree("mvp");
 			int i = 0;
 			if(args[i].equals("-a"))
 			{
@@ -81,6 +46,16 @@ class pHash
 				System.out.println("File 2: " + imHash2.filename);
 
 				System.out.println(imageDistance(imHash,imHash2));
+
+				if(mvp.create(new MHImageHash[]{imHash,imHash2}))
+				{
+					Hash[] hashes = mvp.query(imHash, 20, 20);
+					if(hashes != null)
+					for(int j = 0; i < hashes.length; ++j)
+						System.out.println("File: " + hashes[j].filename);
+					
+				}
+
 			}
 			else if(args[i].equals("-v"))
 			{
