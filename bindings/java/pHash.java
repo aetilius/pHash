@@ -1,3 +1,5 @@
+import java.io.*;
+
 public class pHash
 {
 
@@ -21,9 +23,26 @@ public class pHash
 	public static void main(String args[])
 	{
 			
-			MVPTree mvp = new MVPTree("mvp");
 			int i = 0;
-			if(args[i].equals("-a"))
+			if(args[i].equals("-mvp"))
+			{
+				File dir = new File(args[1]);
+				if(dir.isDirectory())
+				{
+					File[] files = dir.listFiles();
+					MHImageHash[] hashes = new MHImageHash[files.length];
+					for(int j = 0; j < files.length; ++j)
+					{
+						hashes[j] = mhImageHash(files[j].toString());
+												
+					}	
+					MVPTree mvp = new MVPTree("mvp");
+					boolean result = mvp.create(hashes);
+					if(result)
+						System.out.println("Successfully created MVP tree");									
+				}
+			}
+			else if(args[i].equals("-a"))
 			{
 				AudioHash audioHash1 = audioHash(args[1]);
 				AudioHash audioHash2 = audioHash(args[2]);
@@ -46,15 +65,6 @@ public class pHash
 				System.out.println("File 2: " + imHash2.filename);
 
 				System.out.println(imageDistance(imHash,imHash2));
-
-				if(mvp.create(new MHImageHash[]{imHash,imHash2}))
-				{
-					Hash[] hashes = mvp.query(imHash, 20, 20);
-					if(hashes != null)
-					for(int j = 0; i < hashes.length; ++j)
-						System.out.println("File: " + hashes[j].filename);
-					
-				}
 
 			}
 			else if(args[i].equals("-v"))
