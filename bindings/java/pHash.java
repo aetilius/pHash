@@ -33,13 +33,23 @@ public class pHash
 					MHImageHash[] hashes = new MHImageHash[files.length];
 					for(int j = 0; j < files.length; ++j)
 					{
-						hashes[j] = mhImageHash(files[j].toString());
-												
+						MHImageHash mh = mhImageHash(files[j].toString());
+						if(mh != null)
+							hashes[j] = mh;
 					}	
 					MVPTree mvp = new MVPTree("mvp");
 					boolean result = mvp.create(hashes);
 					if(result)
+					{
 						System.out.println("Successfully created MVP tree");									
+						Hash[] results = mvp.query(hashes[0], 200, 20);
+						if(results != null && results.length > 0)
+						{
+						System.out.println("Query found " + results.length + " results");
+						for(int j = 0; j < results.length; ++j)
+							System.out.println("File: " + results[j].filename);
+						}
+					}
 				}
 			}
 			else if(args[i].equals("-a"))
