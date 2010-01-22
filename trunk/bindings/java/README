@@ -5,3 +5,7 @@ How to use Java bindings:
 4) Install pHash (make install)
 5) java -Djava.library.path=/usr/local/lib pHash -mh img1.jpg img2.jpg
 	See pHash.java for additional options
+
+	Note: When using the MVP storage functions, the number of hashes needed to create the tree is the leaf 
+	capacity + 3 (28 by default).
+
