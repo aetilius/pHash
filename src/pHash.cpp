@@ -1942,8 +1942,8 @@ MVPRetCode _ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
     page_mask = ~(m->pgsize - 1);
 
     off_t start_pos = m->file_pos;
-
     memcpy(&ntype, &m->buf[m->file_pos++ & offset_mask], sizeof(uint8_t));
+
     if (ntype == 0){
 	uint8_t Np = 0;
 	DP *sv1 = ph_read_datapoint(m);
@@ -1953,7 +1953,7 @@ MVPRetCode _ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 		off_t Np_pos = m->file_pos;
 		memcpy(&Np,&m->buf[m->file_pos & offset_mask], sizeof(uint8_t));
 		m->file_pos++;
-
+		
 		off_t offset_start = m->file_pos;
 
 		float d1 = hashdist(sv1,new_dp);
@@ -2057,9 +2057,17 @@ MVPRetCode _ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 		memcpy(&m->buf[m->file_pos & offset_mask], &Np, sizeof(uint8_t));
 		m->file_pos++;
 	    }
+            ph_free_datapoint(sv1);
 	    ph_free_datapoint(sv2);
 	}
-	ph_free_datapoint(sv1);
+        else {
+            m->file_pos = start_pos;
+	    ntype = 0;
+	    memcpy(&m->buf[m->file_pos & offset_mask], &ntype, sizeof(uint8_t));
+	    m->file_pos++;
+	    ph_save_datapoint(new_dp, m);
+	    ph_save_datapoint(NULL, m);
+	}
     } else if (ntype == 1){
 	int LengthM1 = m->branchfactor - 1;
 	int LengthM2 = (m->branchfactor)*LengthM1;
@@ -2103,6 +2111,7 @@ MVPRetCode _ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 	for (pivot1=0;pivot1 < LengthM1;pivot1++){
 	    if (d1 <= M1[pivot1]){
 		/* check <= each M2 pivot */
+
 		for (pivot2 = 0; pivot2 < LengthM1;pivot2++){
 		    if (d2 <= M2[pivot2+pivot1*LengthM1]){
 			/* determine pos from which to read filenumber and offset */
@@ -2270,9 +2279,11 @@ int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints){
     }
 
     int nbsaved = 0;
+    int retval;
     for (int i=0;i<nbpoints;i++){
         m->file_pos = HeaderSize;
-	if (_ph_add_mvptree(m, points[i], 0) != PH_SUCCESS){
+	retval = _ph_add_mvptree(m, points[i], 0);
+	if (retval != 0){
 	    continue;
 	}
 	nbsaved++;
