@@ -1,9 +1,33 @@
+/*
+
+    pHash, the open source perceptual hash library
+    Copyright (C) 2010 Aetilius, Inc.
+    All rights reserved.
+ 
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+    Evan Klinger - eklinger@phash.org
+    David Starkweather - dstarkweather@phash.org
+
+*/
+
 #include "config.h"
 #include <jni.h>
 #include "pHash-jni.h"
 #include "pHash.h"
 #include "pHash_MVPTree.h"
-#include <assert.h>
+
 #ifdef HAVE_AUDIO_HASH
 #include "audiophash.h"
 #endif
@@ -100,7 +124,7 @@ float audio_distance(DP *dpA, DP *dpB)
 }
 
 
-static jniHashes hashes[] = 
+const static jniHashes hashes[] = 
 			{ 	
 				{&mhImClass, BYTEARRAY, image_distance, IMAGE_HASH, &mhImCtor, mhImHash_hash}, 
 				{&dctImClass, UINT64ARRAY, image_distance, IMAGE_HASH, &dctImCtor, dctImHash_hash}, 
@@ -146,7 +170,7 @@ JNIEXPORT jboolean JNICALL Java_MVPTree_create
 			free(hashlist);
 			e->ReleaseStringUTFChars(mvp, mvpfile.filename);
 			return JNI_FALSE;
-		}			
+		}
 		jstring fname = (jstring)e->GetObjectField(hashObj, hash_filename);
 
 		const char *path = e->GetStringUTFChars(fname, 0);
@@ -168,7 +192,6 @@ JNIEXPORT jboolean JNICALL Java_MVPTree_create
 				{
 					int N;
 					uint8_t *hash = ph_mh_imagehash(path, N);
-					assert(hash != NULL && N>0);			
 					hashlist[i]->hash = hash;
 					hashlist[i]->hash_length = N;
 				}				
