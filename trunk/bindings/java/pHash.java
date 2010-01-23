@@ -19,38 +19,59 @@ public class pHash
 		pHashInit();
 	}
 
+	public static MHImageHash[] getMHImageHashes(String d)
+	{
+		File dir = new File(d);
+		MHImageHash[] hashes = null;
+		if(dir.isDirectory())
+		{
+			File[] files = dir.listFiles();
+			hashes = new MHImageHash[files.length];
+			for(int i = 0; i < files.length; ++i)
+			{
+				MHImageHash mh = mhImageHash(files[i].toString());
+				if(mh != null)
+					hashes[i] = mh;
+			}	
 
+		}
+		return hashes;
+
+	}
 	public static void main(String args[])
 	{
 			
 			int i = 0;
 			if(args[i].equals("-mvp"))
 			{
-				File dir = new File(args[1]);
-				if(dir.isDirectory())
-				{
-					File[] files = dir.listFiles();
-					MHImageHash[] hashes = new MHImageHash[files.length];
-					for(int j = 0; j < files.length; ++j)
-					{
-						MHImageHash mh = mhImageHash(files[j].toString());
-						if(mh != null)
-							hashes[j] = mh;
-					}	
 					MVPTree mvp = new MVPTree("mvp");
+					MHImageHash[] hashes = getMHImageHashes(args[1]);
 					boolean result = mvp.create(hashes);
 					if(result)
 					{
 						System.out.println("Successfully created MVP tree");									
-						Hash[] results = mvp.query(hashes[0], 200, 20);
+						Hash[] results = mvp.query(hashes[0], 100, 20);
 						if(results != null && results.length > 0)
 						{
 						System.out.println("Query found " + results.length + " results");
 						for(int j = 0; j < results.length; ++j)
 							System.out.println("File: " + results[j].filename);
 						}
+
+						MHImageHash[] newHashes = getMHImageHashes(args[2]);
+
+						boolean added = mvp.add(newHashes);
+						if(added)
+						{
+							System.out.println("Hashes added successfully.");
+							Hash[] foundHashes = mvp.query(newHashes[0], 100, 20);
+							if(foundHashes != null && foundHashes.length > 0)
+							{
+								System.out.println("Found newly added hash.");
+							}
+						}
 					}
-				}
+				
 			}
 			else if(args[i].equals("-a"))
 			{
