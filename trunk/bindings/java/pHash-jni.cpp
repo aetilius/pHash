@@ -64,7 +64,7 @@ typedef struct ph_jni_hash_classes
 	hash_compareCB callback;
 	jniHashType kind;
 	jmethodID *ctor;
-	jfieldID hashID;
+	jfieldID *hashID;
 } jniHashes;
 
 float video_distance(DP *a, DP *b)
@@ -126,10 +126,10 @@ float audio_distance(DP *dpA, DP *dpB)
 
 const static jniHashes hashes[] = 
 			{ 	
-				{&mhImClass, BYTEARRAY, image_distance, IMAGE_HASH, &mhImCtor, mhImHash_hash}, 
-				{&dctImClass, UINT64ARRAY, image_distance, IMAGE_HASH, &dctImCtor, dctImHash_hash}, 
-				{&vidClass, UINT64ARRAY, video_distance, VIDEO_HASH, &vidCtor, vidHash_hash}, 
-				{&audioClass, UINT32ARRAY, audio_distance, AUDIO_HASH, &audioCtor, audioHash_hash},
+				{&mhImClass, BYTEARRAY, image_distance, IMAGE_HASH, &mhImCtor, &mhImHash_hash}, 
+				{&dctImClass, UINT64ARRAY, image_distance, IMAGE_HASH, &dctImCtor, &dctImHash_hash}, 
+				{&vidClass, UINT64ARRAY, video_distance, VIDEO_HASH, &vidCtor, &vidHash_hash}, 
+				{&audioClass, UINT32ARRAY, audio_distance, AUDIO_HASH, &audioCtor, &audioHash_hash},
 			};
 
 JNIEXPORT jboolean JNICALL Java_MVPTree_create
@@ -345,28 +345,27 @@ JNIEXPORT jobjectArray JNICALL Java_MVPTree_query
 		{
 			jobject obj = e->NewObject(*hashes[i].cl, *hashes[i].ctor);
 
-			printf("Result: %s\n", results[j]->id);
 			jstring id = e->NewStringUTF(results[j]->id);
 			e->SetObjectField(obj, hash_filename, id);
 			switch(type)
 			{
 				case IMAGE_HASH:
 					if(e->IsInstanceOf(obj, dctImClass))
-						e->SetLongField(obj, hashes[i].hashID, *(jlong *)results[j]->hash);
+						e->SetLongField(obj, *hashes[i].hashID, *(jlong *)results[j]->hash);
 					else if(e->IsInstanceOf(obj, mhImClass))
 					{
 						jbyteArray hash = e->NewByteArray(results[j]->hash_length);
 						e->SetByteArrayRegion(hash, 0, results[j]->hash_length, (jbyte *)results[j]->hash);
-						e->SetObjectField(obj, hashes[i].hashID, hash);
+						e->SetObjectField(obj, *hashes[i].hashID, hash);
 					}	
 				break;
 				case VIDEO_HASH:
-					e->SetLongField(obj, hashes[i].hashID, *(jlong *)results[j]->hash);
+					e->SetLongField(obj, *hashes[i].hashID, *(jlong *)results[j]->hash);
 					break;
 				case AUDIO_HASH:
 					jintArray hashArray = e->NewIntArray(results[j]->hash_length);
 					e->SetIntArrayRegion(hashArray, 0, results[j]->hash_length, (jint *)results[j]->hash); 
-					e->SetObjectField(obj, hashes[i].hashID, hashArray);
+					e->SetObjectField(obj, *hashes[i].hashID, hashArray);
 					break;
 			}
 			e->SetObjectArrayElement(ret,j,obj);
