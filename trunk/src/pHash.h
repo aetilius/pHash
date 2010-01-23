@@ -142,7 +142,7 @@ typedef struct ph_mvp_file {
 void ph_mvp_init(MVPFile *m){
     m->branchfactor = 2;
     m->pathlength = 5;
-    m->leafcapacity = 25;
+    m->leafcapacity = 20;
     m->pgsize = sysconf(_SC_PAGE_SIZE);     /* use host page size */
     return;
 }
