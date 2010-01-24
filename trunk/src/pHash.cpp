@@ -835,6 +835,28 @@ double ph_hammingdistance2(uint8_t *hashA, int lenA, uint8_t *hashB, int lenB){
 
 }
 
+int ph_selectvantagepoints(MVPFile *m, DP **points, int N, int &sv1_pos, int &sv2_pos, float &maxdist, float &mindist){
+    sv1_pos = 0;
+    sv2_pos = 0;
+    maxdist = 0.0;
+    mindist = INT_MAX;
+    float d;
+    for (int i=0;i<N;i++){
+	for (int j=i+1;j<N;j++){
+	    d = m->hashdist(points[i],points[j]);
+	    if (d > maxdist){
+		maxdist = d;
+		sv1_pos = i;
+		sv2_pos = j;
+		
+	    }
+	    if (m->hashdist(points[i],points[j]) < mindist){
+		mindist = d;
+	    }
+	}
+    }
+    return 0;
+}
 
 DP* ph_read_datapoint(MVPFile *m){
     DP *dp = NULL;
@@ -1355,15 +1377,15 @@ FileIndex* _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
     int Fanout = BranchFactor*BranchFactor;
 
     if ((!m) || (!points) || (nbpoints <= 0))
-	return NULL;
+	return (FileIndex*)PH_ERRARG;
     FileIndex *pOffset = (FileIndex*)malloc(sizeof(FileIndex));
     if (!pOffset){
-	return NULL;
+	return (FileIndex*)PH_ERRMEM;
     }
     hash_compareCB hashdist = m->hashdist;
     if (hashdist == NULL){
 	free(pOffset);
-	return NULL;
+	return (FileIndex*)PH_ERRARG;
     }
 
     off_t offset_mask = m->pgsize - 1;
@@ -1375,6 +1397,7 @@ FileIndex* _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 	m2.leafcapacity = m->leafcapacity;
 	m2.pathlength = m->pathlength;
 	m2.pgsize = m->pgsize;
+	m2.hashdist = hashdist;
 
 	/* open new file */
 	char extfile[256];
@@ -1431,31 +1454,21 @@ FileIndex* _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 	m2.file_pos++;
 
 	/* find vantage points, sv1 and sv2 */
-	DP *sv1 = points[0];
-	DP *sv2 = NULL;
-	float d, max_dist = 0;
-	int max_pos = 0;
-	for (int i=1; i< nbpoints;i++){
-	    d = hashdist(sv1, points[i]);
-	    if (d > max_dist){
-		max_dist = d;
-		max_pos = i;
-	    }
-	}
-	
-	if (max_pos > 0){
-	    sv2 = points[max_pos]; /* sv2 is furthest point from sv1 */
-	}
+	int sv1_pos, sv2_pos;
+	float max_distance, min_distance;
+	ph_selectvantagepoints(&m2, points, nbpoints, sv1_pos, sv2_pos,max_distance, min_distance);
+	DP *sv1 = points[sv1_pos];
+	DP *sv2 = points[sv2_pos];
 
 	/* if file pos is beyond pg size*/
 	if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,&m2) > m->pgsize)
-	    return NULL;
+	    return (FileIndex*)PH_ERRPGSIZE;
 
 	ph_save_datapoint(sv1, &m2);
 
 	/*if file pos is beyond pg size */
 	if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,&m2) > m->pgsize)
-	    return NULL;
+	    return (FileIndex*)PH_ERRPGSIZE;
 
 	ph_save_datapoint(sv2, &m2);
 
@@ -1467,8 +1480,8 @@ FileIndex* _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 	off_t curr_pos = m2.file_pos;
 	off_t last_pos = curr_pos + LeafCapacity*(2*sizeof(float) + sizeof(off_t));
 	off_t dp_pos;
-	for (int i=1;i<nbpoints;i++){
-	    if (i==max_pos) /* skip sv2 */
+	for (int i=0;i<nbpoints;i++){
+	    if ((i==sv1_pos)||(i==sv2_pos)) /* skip sv1 and sv2 */
 		continue;
 	    /* write d1, d2 */
 	    d1 = hashdist(sv1, points[i]);
@@ -1484,7 +1497,7 @@ FileIndex* _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 
 	    /* if file pos is beyond pg size */
 	    if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,&m2) > m->pgsize)
-		return NULL;
+		return (FileIndex*)PH_ERRPGSIZE;
 	    
 	    dp_pos = ph_save_datapoint(points[i], &m2);
 	    last_pos = m2.file_pos;
@@ -1546,58 +1559,41 @@ FileIndex* _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 	memcpy(&m->buf[m->file_pos++ & offset_mask],  &ntype, sizeof(uint8_t));
 	
 	/* choose vantage points, sv1, sv2 */
-	DP *sv1 = points[0]; 
-	DP *sv2 = NULL;
-	float max_dist = 0.0, min_dist = INT_MAX;
-	float *dist = (float*)malloc(nbpoints*sizeof(float));
-	if (!dist){
-	    free(pOffset);
-	    return NULL;
-	}
-	int max_pos = 0;
-	for (int i=0;i<nbpoints;i++){
-	    dist[i] = hashdist(sv1, points[i]);
-	    if (dist[i] > max_dist){
-		max_pos = i;
-		max_dist = dist[i];
-	    }
-	    if ((dist[i] < min_dist) && (dist[i] != 0)){
-		min_dist = dist[i];
-	    }
-            if (level <= PathLength)
-		points[i]->path[level] = dist[i];
-	}
-	sv2 = points[max_pos]; /* sv2 is furthest away from sv1 */
+	int sv1_pos, sv2_pos;
+	float max_distance, min_distance;
+	ph_selectvantagepoints(m, points, nbpoints, sv1_pos, sv2_pos, max_distance, min_distance);
+
+	DP *sv1 = points[sv1_pos]; 
+	DP *sv2 = points[sv2_pos];
 
 	/* save sv1, sv2 */
 	
 	/* check that file_pos does not exceed pgsize */
 	if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,m) > m->pgsize)
-	    return NULL;
+	    return (FileIndex*)PH_ERRPGSIZE;
 
 	ph_save_datapoint(sv1, m);
 
 	/* check the file_os does not exceed pgsize */
 	if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,m) > m->pgsize)
-	    return NULL;
+	    return (FileIndex*)PH_ERRPGSIZE;
 
 	ph_save_datapoint(sv2, m);
 
 	/* 1st tier pivots, M1, derived from the distance of each point from sv1*/
-	float step = (max_dist - min_dist)/BranchFactor;
+	float step = (max_distance - min_distance)/BranchFactor;
         float incr = step;
 
 	float *M1 = (float*)malloc(LengthM1*sizeof(float));
 	float *M2 = (float*)malloc(LengthM2*sizeof(float));
 	if (!M1 || !M2){
 	    free(pOffset);
-	    free(dist);
 	    return NULL;
 	}
 
 
 	for (int i=0;i<LengthM1;i++){
-	    M1[i] = min_dist + incr;
+	    M1[i] = min_distance + incr;
 	    incr += step;
 	    memcpy(&(m->buf[m->file_pos & offset_mask]),&M1[i], sizeof(float));
 	    m->file_pos += sizeof(float);
@@ -1608,7 +1604,6 @@ FileIndex* _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 	DP ***bins = (DP***)malloc(BranchFactor*sizeof(DP***));
 	if (!bins){
 	    free(pOffset);
-	    free(dist);
 	    free(M1);
 	    free(M2);
 	    return NULL;
@@ -1616,7 +1611,6 @@ FileIndex* _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 	int *mlens = (int*)calloc(BranchFactor, sizeof(int)); /*no. points in each bin */
 	if (!mlens){
 	    free(pOffset);
-	    free(dist);
 	    free(M1);
 	    free(M2);
 	    free(bins);
@@ -1627,7 +1621,6 @@ FileIndex* _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 	    bins[i] = (DP**)malloc(Np*sizeof(DP**)); /*Np should be more than enough */            
 	    if (!bins[i]){
 		free(pOffset);
-		free(dist);
 		free(M1);
 		free(M2);
 		free(bins);
@@ -1637,10 +1630,13 @@ FileIndex* _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 	}
 
 	/* sort points into bins (except sv1 and sv2 )*/
-	for (int i=1;i<nbpoints;i++){
-	    if (i == max_pos)
+	for (int i=0;i<nbpoints;i++){
+	    if ((i == sv1_pos)||(i==sv2_pos))
 		continue;
-	    float cur_dist = dist[i];
+	    float cur_dist = m->hashdist(sv1, points[i]);
+	    if (level < PathLength){
+		points[i]->path[level] = cur_dist;
+	    }
 	    /* check if <= M1[i] */
 	    for (int j=0;j < LengthM1;j++){
 		if (cur_dist <= M1[j]){
@@ -1670,7 +1666,6 @@ FileIndex* _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 	DP ***bins2 = (DP***)malloc(BranchFactor*sizeof(DP***));
 	if (!bins2){
 	    free(pOffset);
-	    free(dist);
 	    free(M1);
 	    free(M2);
 	    free(bins);
@@ -1680,7 +1675,6 @@ FileIndex* _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 	int *mlens2 = (int*)calloc(BranchFactor, sizeof(int)); /*number points in each bin */
 	if (!mlens2){
 	    free(pOffset);
-	    free(dist);
 	    free(M1);
 	    free(M2);
 	    free(bins);
@@ -1693,7 +1687,6 @@ FileIndex* _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 	    bins2[i] = (DP**)malloc(Np*sizeof(DP**)); /* Np is more than enough */
 	    if (!bins2[i]){
 		free(pOffset);
-		free(dist);
 		free(M1);
 		free(M2);
 		free(bins);
@@ -1709,17 +1702,16 @@ FileIndex* _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 	off_t child_pos = m2_pos + LengthM2*sizeof(float); /*pos where child offsets are written*/
 	off_t last_pos = child_pos + Fanout*(sizeof(uint8_t) + sizeof(off_t)); /* last pos in
                                                                       in internal node */
-
+	float *distance_vector = NULL;
 	/* for each row of bin, sort the row into bins2 */
 	for (int i=0;i < BranchFactor;i++){
 	    int row_len = mlens[i]; /* length of current row, bins[i] */
 	    for (int j=0;j < BranchFactor;j++){ /* reset the lengths to 0 */
 		mlens2[j] = 0;
 	    }
-	    float *dist2 = (float*)realloc(dist,row_len*sizeof(float));
-	    if (!dist2){
+	    float *dist_temp = (float*)realloc(distance_vector, row_len*sizeof(float));
+	    if (!dist_temp){
 		free(pOffset);
-		free(dist);
 		free(M1);
 		free(M2);
 		free(bins);
@@ -1728,27 +1720,27 @@ FileIndex* _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 		free(mlens2);
 		return NULL;
 	    }
-	    dist = dist2;
+	    distance_vector = dist_temp;
 
 	    /* 2nd tier pivots M2[], for row */
-	    max_dist = 0;
-	    min_dist = INT_MAX;
+	    max_distance = 0;
+	    min_distance = INT_MAX;
 	    for (int j=0;j<row_len;j++){
-		dist[j] = hashdist(sv2, bins[i][j]);
-		if ( dist[j] > max_dist)
-		    max_dist = dist[j];
-		if (dist[j] < min_dist)
-		    min_dist = dist[j];
-		if (level < PathLength){
-		    bins[i][j]->path[level+1] = dist[j];
+		distance_vector[j] = hashdist(sv2, bins[i][j]);
+		if ( distance_vector[j] > max_distance)
+		    max_distance = distance_vector[j];
+		if (distance_vector[j] < min_distance)
+		    min_distance = distance_vector[j];
+		if (level+1 < PathLength){
+		    bins[i][j]->path[level+1] = distance_vector[j];
 		}
 	    }
 
-	    step = (max_dist - min_dist)/BranchFactor;
+	    step = (max_distance - min_distance)/BranchFactor;
 	    incr = step;
 	    
 	    for (int j=0;j < LengthM1;j++){
-		M2[j+i*LengthM1] = min_dist + incr;
+		M2[j+i*LengthM1] = min_distance + incr;
 		memcpy(&(m->buf[m2_pos & offset_mask]),&M2[j+i*LengthM1],sizeof(float));
 		incr += step;
 		m2_pos += sizeof(float);
@@ -1759,14 +1751,14 @@ FileIndex* _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 		DP *current = bins[i][j];
 		/*check <= each M2 pivot  */
 		for (int k=0;k<LengthM1;k++){
-		    if (dist[j] <= M2[k+i*LengthM1]){
+		    if (distance_vector[j] <= M2[k+i*LengthM1]){
 			bins2[k][mlens2[k]] = current;
 			mlens2[k]++;
 			break;
 		    }
 		}
 		/* check > last M2 pivot  */
-		if (dist[j] > M2[LengthM1-1 + i*LengthM1]){
+		if (distance_vector[j] > M2[LengthM1-1 + i*LengthM1]){
 		    bins2[BranchFactor-1][mlens2[BranchFactor-1]] = current;
 		    mlens2[BranchFactor-1]++;
 		}
@@ -1780,6 +1772,7 @@ FileIndex* _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 		}
 	    }
 	    */
+
 	    /* save child nodes */
 	    FileIndex *pChild = NULL;
 	    for (int j=0;j<BranchFactor;j++){
@@ -1827,11 +1820,11 @@ FileIndex* _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 	}
 	/* cleanup */
 cleanup:
+	free(distance_vector);
 	free(bins);
 	free(bins2);
 	free(mlens);
 	free(mlens2);
-	free(dist);
 	free(M1);
 	free(M2);
     }
@@ -1843,16 +1836,19 @@ MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints){
 
     if (m->pgsize == 0) /*use host pg size as default */
 	m->pgsize = sysconf(_SC_PAGE_SIZE);
-
+   
     /* check to see that the pg sizes are at least the size of host page size */
     off_t host_pgsize = sysconf(_SC_PAGE_SIZE);
     if (m->pgsize < host_pgsize){
 	return PH_ERRPGSIZE;
     }
-
+    
     /* pg sizes must be a power of 2 */
     if ((m->pgsize) & (m->pgsize - 1))
 	return PH_ERRPGSIZE;
+    if (nbpoints < m->leafcapacity + 2){
+	return PH_ERRARG;
+    }
 
     /* open main file */
     char mainfile[256];
