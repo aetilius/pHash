@@ -23,17 +23,27 @@
 */
 
 #include <stdio.h>
+#include <math.h>
 #include "pHash.h"
 
 
 float distancefunc(DP *pa, DP *pb){
+    if ((!pa)||(!pb)){
+	printf("dp is null\n");
+	return -1.0;
+    }
     uint8_t *hashA = (uint8_t*)pa->hash;
     uint8_t *hashB = (uint8_t*)pb->hash;
-    return (float)(1000*ph_hammingdistance2(hashA, pa->hash_length,hashB,pb->hash_length));
-
+    float d = 10*ph_hammingdistance2(hashA,pa->hash_length,hashB,pb->hash_length);
+    float res = exp(d);
+    return res;
 }
 
 int main(int argc, char **argv){
+    if (argc < 3){
+	printf("not enough input args\n");
+	return 1;
+    }
  
     const char *dir_name = argv[1];/* name of dir to retrieve image files */
     const char *filename = argv[2];/* name of file to save db */

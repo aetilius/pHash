@@ -23,6 +23,7 @@
 */
 
 #include <stdio.h>
+#include <math.h>
 #include "pHash.h"
 
 static int nb_calcs;
@@ -32,13 +33,19 @@ float distancefunc(DP *pa, DP *pb){
     nb_calcs++;
     uint8_t *hashA = (uint8_t*)pa->hash;
     uint8_t *hashB = (uint8_t*)pb->hash;
-    return (float)(1000*ph_hammingdistance2(hashA, pa->hash_length,hashB,pb->hash_length));
+    float d = 10*ph_hammingdistance2(hashA, pa->hash_length, hashB, pb->hash_length);
+    float result = exp(d);
+    return result;
 
 }
 
 
 int main(int argc, char **argv){
- 
+    if (argc <= 3){
+	printf("not enough input args\n");
+	return 1;
+    }
+
     const char *dir_name = argv[1];/* name of files in directory of query images */
     const char *filename = argv[2];/* name of file to save db */
 
@@ -63,8 +70,16 @@ int main(int argc, char **argv){
     printf("nb query files = %d\n", nbfiles);
 
     DP *query = ph_malloc_datapoint(mvpfile.hash_type,mvpfile.pathlength);
+    
+    float radius;
+    if (argc <= 4){
+	char *radius_str = argv[3];
+	radius = atof(radius_str);
+    } else {
+	radius = 30.0f;
+    }
+    printf("radius = %f\n", radius);
 
-    float radius = 200.0f;
     const int knearest = 20;
     DP **results = (DP**)malloc(knearest*sizeof(DP**));
     int nbfound = 0, count = 0, sum_calcs = 0;
