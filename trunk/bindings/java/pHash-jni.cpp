@@ -75,28 +75,20 @@ float video_distance(DP *a, DP *b)
 	return (float)sim;
 }
 
-float image_distance(DP *pntA, DP *pntB)
+float dctImage_distance(DP *pntA, DP *pntB)
 {
-	uint8_t htypeA = pntA->hash_type;
-	uint8_t htypeB = pntB->hash_type;
+	
+	ulong64 *hashA = (ulong64*)pntA->hash;
+	ulong64 *hashB = (ulong64*)pntB->hash;
+	float res = ph_hamming_distance(*hashA, *hashB);
+	return res;
+}
 
-	float res = 0;
-	if (htypeA != htypeB)
-        	return -1.0;
-	if (htypeA != UINT64ARRAY && htypeA != BYTEARRAY)
-        	return -1.0;
-	if(htypeA == UINT64ARRAY)
-	{
-    		ulong64 *hashA = (ulong64*)pntA->hash;
-    		ulong64 *hashB = (ulong64*)pntB->hash;
-    		res = ph_hamming_distance(*hashA, *hashB);
-	}
-	else
-	{
-		uint8_t *hashA = (uint8_t*)pntA->hash;
-		uint8_t *hashB = (uint8_t*)pntB->hash;
-		res = ph_hammingdistance2(hashA,pntA->hash_length,hashB,pntB->hash_length)*1000;
-	}
+float mhImage_distance(DP *a, DP *b)
+{
+	uint8_t *hashA = (uint8_t*)a->hash;
+	uint8_t *hashB = (uint8_t*)b->hash;
+	float res = ph_hammingdistance2(hashA,a->hash_length,hashB,b->hash_length)*1000;
     	return res;
 }
 
@@ -126,8 +118,8 @@ float audio_distance(DP *dpA, DP *dpB)
 
 const static jniHashes hashes[] = 
 			{ 	
-				{&mhImClass, BYTEARRAY, image_distance, IMAGE_HASH, &mhImCtor, &mhImHash_hash}, 
-				{&dctImClass, UINT64ARRAY, image_distance, IMAGE_HASH, &dctImCtor, &dctImHash_hash}, 
+				{&mhImClass, BYTEARRAY, mhImage_distance, IMAGE_HASH, &mhImCtor, &mhImHash_hash}, 
+				{&dctImClass, UINT64ARRAY, dctImage_distance, IMAGE_HASH, &dctImCtor, &dctImHash_hash},
 				{&vidClass, UINT64ARRAY, video_distance, VIDEO_HASH, &vidCtor, &vidHash_hash}, 
 				{&audioClass, UINT32ARRAY, audio_distance, AUDIO_HASH, &audioCtor, &audioHash_hash},
 			};
