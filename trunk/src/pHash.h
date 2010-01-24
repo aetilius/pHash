@@ -83,6 +83,7 @@ typedef enum ph_mvp_retcode {
     PH_ERRNTYPE,      /* unrecognized node type */
     PH_ERRCAP,     /* more results found than can be supported in ret array */
     PH_ERRFILETYPE,  /*unrecognized file type  */
+    PH_ERRDIST,      /*not enough variance in distances */
 }MVPRetCode;
 
 

@@ -1582,6 +1582,10 @@ FileIndex* _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 
 	/* 1st tier pivots, M1, derived from the distance of each point from sv1*/
 	float step = (max_distance - min_distance)/BranchFactor;
+	if (step == 0.0){
+	    return (FileIndex*)PH_ERRDIST;
+	}
+
         float incr = step;
 
 	float *M1 = (float*)malloc(LengthM1*sizeof(float));
