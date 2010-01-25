@@ -88,8 +88,8 @@ float mhImage_distance(DP *a, DP *b)
 {
 	uint8_t *hashA = (uint8_t*)a->hash;
 	uint8_t *hashB = (uint8_t*)b->hash;
-	float res = ph_hammingdistance2(hashA,a->hash_length,hashB,b->hash_length)*1000;
-    	return res;
+	float res = ph_hammingdistance2(hashA,a->hash_length,hashB,b->hash_length)*10;
+    	return exp(res);
 }
 
 float audio_distance(DP *dpA, DP *dpB)
