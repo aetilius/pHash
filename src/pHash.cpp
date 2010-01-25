@@ -841,7 +841,7 @@ int ph_selectvantagepoints(MVPFile *m, DP **points, int N, int &sv1_pos, int &sv
     maxdist = 0.0;
     mindist = INT_MAX;
     float d;
-    for (int i=0;i<N;i++){
+    for (int i=0;i<N;i++){ /* find 2 points furthest apart */
 	for (int j=i+1;j<N;j++){
 	    d = m->hashdist(points[i],points[j]);
 	    if (d > maxdist){
@@ -1582,7 +1582,7 @@ FileIndex* _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 
 	/* 1st tier pivots, M1, derived from the distance of each point from sv1*/
 	float step = (max_distance - min_distance)/BranchFactor;
-	if (step == 0.0){
+	if (step <= 0.5){
 	    return (FileIndex*)PH_ERRDIST;
 	}
 
