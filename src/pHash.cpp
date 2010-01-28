@@ -749,7 +749,7 @@ uint8_t* ph_mh_imagehash(const char *filename, int &N,int alpha, int lvl){
 
     CImg<uint8_t> src(filename);
     CImg<uint8_t> img;
-    if (img.width() == 3){
+    if (img.spectrum() == 3){
 	img = src.get_RGBtoYCbCr().channel(0).blur(1.5,1.5,1.5).resize(512,512,1,1,5).get_equalize(256);
     } else{
 	img = src.get_blur(1.5,1.5,1.5).resize(512,512,1,1,5);
@@ -759,8 +759,8 @@ uint8_t* ph_mh_imagehash(const char *filename, int &N,int alpha, int lvl){
     float xpos, ypos, A;
     CImg<float> MHKernel(2*sigma+1,2*sigma+1,1,1,0);
     cimg_forXY(MHKernel,X,Y){
-	xpos = pow(alpha,-lvl)*(X - sigma);
-        ypos = pow(alpha,-lvl)*(Y - sigma);
+	xpos = pow((float)alpha,-lvl)*(X - sigma);
+        ypos = pow((float)alpha,-lvl)*(Y - sigma);
 	A = xpos*xpos + ypos*ypos;
 	MHKernel(X,Y) = (2-A)*exp(-A/2);
     }
