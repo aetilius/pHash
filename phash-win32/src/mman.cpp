@@ -26,13 +26,20 @@ long getregionsize (void) {
 
 /* mmap for windows */
 __declspec(dllexport)
-void *mmap (void *ptr, size_t size, int prot, int flags, int fd,  off_t offset) {
+void *mmap (void *ptr, size_t size, int prot, int flags, int fd,  char *fm_name, off_t offset) {
 	long alloc_size = getregionsize();
 	DWORD alloc_mask = ~(alloc_size - 1);
 	DWORD alloc_offset_mask = alloc_size - 1;
-	
+	LPCTSTR fm_objname = (LPCTSTR)fm_name;
 	HANDLE fh = (HANDLE)_get_osfhandle(fd);
-	HANDLE fmaph = CreateFileMapping(fh, NULL, prot, 0, 0, NULL);
+	HANDLE fmaph = CreateFileMapping(fh, NULL, prot, 0, 0, fm_objname);
+
+    if (fmaph == NULL){
+        DWORD err = GetLastError();
+		fprintf(stderr, "mmap:unable to get file mapping object: errorcode %d\n", err);
+        return NULL;
+	}
+
 	DWORD offs = (DWORD)offset;
 	long alloc_unit = offs & alloc_mask;
 	long alloc_offset = offs & alloc_offset_mask;
@@ -43,6 +50,8 @@ void *mmap (void *ptr, size_t size, int prot, int flags, int fd,  off_t offset) 
 	char *buf = (char*)MapViewOfFile(fmaph, flags, offsethigh, offsetlow, alloc_offset+size);
 	
 	if (buf == NULL){
+        DWORD err = GetLastError();
+		fprintf(stderr,"mmap:unable to create view of file: errorcode %d\n", err);
 		return buf;
 	}
 	buf += alloc_offset;

@@ -28,10 +28,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <errno.h>
 #include "pHash.h"
 #include "dirent.h"
 #include "mman.h"
-
 
 #ifdef HAVE_VIDEO_HASH
 #include "cimgffmpeg.h"
@@ -821,45 +821,65 @@ off_t ph_save_datapoint(DP *dp, MVPFile *m){
 __declspec(dllexport)
 MVPFile* _ph_map_mvpfile(uint8_t filenumber, off_t offset, MVPFile *m){
     MVPFile *ret_file = NULL;
-
+    char fm_objname[256];
+    char *filename = strdup(m->filename);
+    snprintf(fm_objname, sizeof(fm_objname), strcat(filename,"%d"), filenumber);
+    DWORD alloc_size = getregionsize();
+    DWORD alloc_mask = ~(alloc_size - 1);
+    DWORD alloc_offset_mask = alloc_size - 1;
     if (filenumber == 0){ /* in the file denoted by m , must advance to page containing offset */
-	off_t page_mask = ~(m->pgsize - 1);
-	off_t page_offset = offset & page_mask;
-	ret_file = m;
-	m->file_pos = offset;
-	munmap(m->buf, m->pgsize);
-	m->buf = (char*)mmap(NULL,m->pgsize,PAGE_READWRITE,FILE_MAP_ALL_ACCESS,m->fd, page_offset);
-	//madvise(m->buf,m->pgsize,MADV_SEQUENTIAL);
-	if ((int)(m->buf) == MMAP_FAILURE){
-	    return NULL;
-	}
-	
+		ret_file = m;
+		m->file_pos = offset;
+		if (!UnmapViewOfFile(m->buf)){
+            return NULL;
+		}
+        HANDLE fmhandle = CreateFileMapping(m->fh, NULL,PAGE_READWRITE,0,0,fm_objname);
+		if (fmhandle == NULL){
+            return NULL;
+		}
+        DWORD alloc_unit = alloc_mask & offset;
+        DWORD alloc_offset = alloc_offset_mask & offset;
+        DWORD offset_hi = 0, offset_lo = alloc_unit;
+        m->buf = (char*)MapViewOfFile(fmhandle,FILE_MAP_WRITE,offset_hi,offset_lo,alloc_offset+m->pgsize); 
+		if (m->buf == NULL){
+			return NULL;
+		}
+	    m->buf += alloc_offset;
     } else { /* open and map to new file denoted by m->filename and filenumber */
-	off_t page_mask = ~(m->pgsize - 1);
-	ret_file = (MVPFile*)malloc(sizeof(MVPFile));
-        if (!ret_file)
-	    return NULL;
+		ret_file = (MVPFile*)malloc(sizeof(MVPFile));
+		if (!ret_file){
+			return NULL;
+		}
         char extfile[256];
-	snprintf(extfile, sizeof(extfile),"%s%d.mvp", m->filename, filenumber);
+		snprintf(extfile, sizeof(extfile),"%s%d.mvp", m->filename, filenumber);
         ret_file->filename = strdup(m->filename);
-	ret_file->fd = _sopen(extfile,_O_APPEND|_O_RDWR|_O_BINARY|_O_SEQUENTIAL , _SH_DENYNO, _S_IREAD|_S_IWRITE);
-	ret_file->pathlength = m->pathlength;
-	ret_file->hash_type = m->hash_type;
-	ret_file->hashdist = m->hashdist;
-	ret_file->branchfactor = m->branchfactor;
-	ret_file->leafcapacity = m->leafcapacity;
-	ret_file->nbdbfiles  = m->nbdbfiles;
-	ret_file->pgsize = m->pgsize;
-	ret_file->file_pos = offset;
-	off_t page_offset = offset & page_mask;
-	
-	ret_file->buf = (char*)mmap(NULL, ret_file->pgsize, PAGE_READWRITE, FILE_MAP_ALL_ACCESS, 
-                                         ret_file->fd, page_offset);
-	if ((int)(ret_file->buf) == MMAP_FAILURE){
-	    free(ret_file);
-	    return NULL;
-	}
-	//madvise(ret_file->buf, ret_file->pgsize, MADV_SEQUENTIAL);
+        ret_file->fh = CreateFile(extfile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,NULL);
+		if (ret_file == INVALID_HANDLE_VALUE){
+            free(ret_file);
+            return NULL;
+		}
+        HANDLE fmhandle = CreateFileMapping(ret_file->fh,NULL,PAGE_READWRITE,0,0,fm_objname);
+		if (fmhandle == NULL){
+            free(ret_file);
+            return NULL;
+		}
+		ret_file->pathlength = m->pathlength;
+		ret_file->hash_type = m->hash_type;
+		ret_file->hashdist = m->hashdist;
+		ret_file->branchfactor = m->branchfactor;
+		ret_file->leafcapacity = m->leafcapacity;
+		ret_file->nbdbfiles  = m->nbdbfiles;
+		ret_file->pgsize = m->pgsize;
+		ret_file->file_pos = offset;
+	    DWORD alloc_unit = alloc_mask & offset;
+        DWORD alloc_offset = alloc_offset_mask & offset;
+        DWORD offset_hi = 0, offset_lo = alloc_unit;
+        ret_file->buf = (char*)MapViewOfFile(fmhandle,FILE_MAP_ALL_ACCESS,offset_hi,offset_lo,alloc_offset+m->pgsize);        
+		if (ret_file->buf == NULL){
+            free(ret_file);
+            return NULL;
+		}
+		ret_file->buf += alloc_offset;
     }
     return ret_file;
 }
@@ -867,20 +887,31 @@ MVPFile* _ph_map_mvpfile(uint8_t filenumber, off_t offset, MVPFile *m){
 
 __declspec(dllexport)
 void _ph_unmap_mvpfile(uint8_t filenumber, off_t orig_pos, MVPFile *m, MVPFile *m2){
-
-    if (filenumber == 0){ /*remap to same main file  */
-	off_t page_mask = ~(m->pgsize - 1);
-	munmap(m->buf, m->pgsize);
-	m->file_pos = orig_pos;
-	off_t pg_offset = orig_pos & page_mask;
-	m->buf = (char*)mmap(NULL, m->pgsize, PAGE_READWRITE, FILE_MAP_ALL_ACCESS,m->fd,pg_offset);
-	if ((int)(m->buf) == MMAP_FAILURE){
-	    return;
-	}
-	//madvise(m->buf,m->pgsize,MADV_SEQUENTIAL);
+    char fm_objname[256];
+    char *filename = strdup(m->filename);
+    snprintf(fm_objname, sizeof(fm_objname), strcat(filename, "%d"), filenumber);
+ 
+   DWORD alloc_size = getregionsize();
+   DWORD alloc_mask = ~(alloc_size - 1);
+   DWORD alloc_offset_mask = alloc_size - 1;
+   if (filenumber == 0){ /*remap to same main file  */
+		UnmapViewOfFile(m->buf);
+        HANDLE fmhandle = CreateFileMapping(m->fh,NULL,PAGE_READWRITE,0,0,fm_objname);
+		if (fmhandle == NULL){
+            return;
+		}
+        DWORD alloc_unit = alloc_mask & orig_pos;
+        DWORD alloc_offset = alloc_offset_mask & orig_pos;
+        DWORD offset_hi = 0, offset_lo = alloc_unit;
+	    m->buf = (char*)MapViewOfFile(fmhandle,FILE_MAP_ALL_ACCESS,offset_hi,offset_lo,alloc_offset+m->pgsize);
+		if (m->buf == NULL){
+           return;
+		}
+        m->buf += alloc_offset;
+        m->file_pos = orig_pos;
     } else { /*remap to back to main file  */
-	munmap(m2->buf, m2->pgsize);
-	_close(m2->fd);
+        UnmapViewOfFile(m2->buf);
+		CloseHandle(m2->fh);
         free(m2);
     }
 }
@@ -929,97 +960,96 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
     m->file_pos++;
 
     if (ntype == 0){ /* leaf */
-	DP *sv1 = ph_read_datapoint(m);
-	DP *sv2 = ph_read_datapoint(m);
-	float d1 = hashdist(query,sv1);
+		DP *sv1 = ph_read_datapoint(m);
+		DP *sv2 = ph_read_datapoint(m);
+		float d1 = hashdist(query,sv1);
 
-	/* check if distance(sv1,query) <= radius  */
-	if (d1 <= radius){
-	    results[(*count)++] = sv1;
-	    if (*count >= knearest)
-		return PH_ERRCAP;
-	} else {
-	    ph_free_datapoint(sv1);
-	}
-
-	if (sv2){
-	    float d2 = hashdist(query,sv2);
-	    /* check if distance(sv2,query) <= radius */
-	    if (d2 <= radius){
-		results[(*count)++] = sv2;
-		if (*count >= knearest)
-		    return PH_ERRCAP;
-	    } else {
-		ph_free_datapoint(sv2);
-	    }
-
-	    uint8_t Np;
-	    memcpy(&Np, &m->buf[m->file_pos & offset_mask], sizeof(uint8_t));
-	    m->file_pos += sizeof(uint8_t);
-	    off_t curr_pos;
-
-	    /* read in each datapoint in the leaf - only retrieve the point if it 
-	       dist(sv1,dp)=da  and dist(sv2,dp)=db cannot preclude the point */
-	    for (int i=0;i<Np;i++){
-		int include = 1;
-		float da, db;
-		off_t point_offset;
-		memcpy(&da, &m->buf[m->file_pos & offset_mask], sizeof(float));
-		m->file_pos += sizeof(float);
-		memcpy(&db, &m->buf[m->file_pos & offset_mask], sizeof(float));
-		m->file_pos += sizeof(float);
-		if ((d1-radius <= da)&&(d1+radius >= da)&&(d2-radius <= db)&&(d2+radius >= db)){
-		    memcpy(&point_offset, &m->buf[m->file_pos & offset_mask],sizeof(off_t));
-		    m->file_pos += sizeof(off_t);
-		    curr_pos = m->file_pos;
-		    m->file_pos = point_offset;
-		    DP *dp = ph_read_datapoint(m);
-		    m->file_pos = curr_pos;
-		    
-		    /* test each path[] distance and as soon as one does not fit 
-		       disclude the point                                        */
-                    if (dp){
-			for (int j=0;j<level;j++){
-			    if ((query->path[j]-radius <= dp->path[j])
-				&&(query->path[j]+radius >= dp->path[j])){
-				if (hashdist(query,dp) > radius){
-				    include = 0;
-				    break;
-				}
-			    }
-			}
-		    } else {
-			include = 0;
-		    }
-		    if (include){
-			results[(*count)++] = dp;
+		/* check if distance(sv1,query) <= radius  */
+		if (d1 <= radius){
+			results[(*count)++] = sv1;
 			if (*count >= knearest)
-			    return PH_ERRCAP;
-		    } else {
-			ph_free_datapoint(dp);
-		    }
+				return PH_ERRCAP;
 		} else {
-		    m->file_pos += sizeof(off_t);
+			ph_free_datapoint(sv1);
 		}
-	    }
-	}
-    } else if (ntype == 1) { /* internal */
-	/* read sv1, sv2 */
-	DP *sv1 = ph_read_datapoint(m);
-	DP *sv2 = ph_read_datapoint(m);
-	/* read 1st and 2nd level pivots */
-	float *M1 = (float*)malloc(LengthM1*sizeof(float));
-	if (!M1){
-	    return PH_ERRMEM;
-	}
-	float *M2 = (float*)malloc(LengthM2*sizeof(float));
-	if (!M2){
-	    return PH_ERRMEM;
-	}
 
-	memcpy(M1, &m->buf[m->file_pos & offset_mask], LengthM1*sizeof(float));
-        m->file_pos += LengthM1*sizeof(float);
-	memcpy(M2, &m->buf[m->file_pos & offset_mask], LengthM2*sizeof(float));
+		if (sv2){
+			float d2 = hashdist(query,sv2);
+			/* check if distance(sv2,query) <= radius */
+			if (d2 <= radius){
+				results[(*count)++] = sv2;
+				if (*count >= knearest){
+					return PH_ERRCAP;
+				}
+			} else {
+				ph_free_datapoint(sv2);
+			}
+
+			uint8_t Np;
+			memcpy(&Np, &m->buf[m->file_pos & offset_mask], sizeof(uint8_t));
+			m->file_pos += sizeof(uint8_t);
+			off_t curr_pos;
+
+			/* read in each datapoint in the leaf - only retrieve the point if it 
+			dist(sv1,dp)=da  and dist(sv2,dp)=db cannot preclude the point */
+			for (int i=0;i<Np;i++){
+				int include = 1;
+				float da, db;
+				off_t point_offset;
+				memcpy(&da, &m->buf[m->file_pos & offset_mask], sizeof(float));
+				m->file_pos += sizeof(float);
+				memcpy(&db, &m->buf[m->file_pos & offset_mask], sizeof(float));
+				m->file_pos += sizeof(float);
+				if ((d1-radius <= da)&&(d1+radius >= da)&&(d2-radius <= db)&&(d2+radius >= db)){
+					memcpy(&point_offset, &m->buf[m->file_pos & offset_mask],sizeof(off_t));
+					m->file_pos += sizeof(off_t);
+					curr_pos = m->file_pos;
+					m->file_pos = point_offset;
+					DP *dp = ph_read_datapoint(m);
+					m->file_pos = curr_pos;
+		    
+					/* test each path[] distance and as soon as one does not fit 
+					disclude the point                                        */
+                    if (dp){
+						int pl = (level < PathLength) ? level : PathLength;
+						for (int j=0;j < pl;j++){
+							if (!((query->path[j]-radius <= dp->path[j])&&(query->path[j]+radius >= dp->path[j]))){
+                                include = 0;
+                                break;
+							}
+						}
+						if (include){
+							if (hashdist(query,dp) <= radius){
+                                 results[(*count)++] = dp;
+								 if (*count >= knearest){
+                                      return PH_SUCCESS;
+								 }
+							}
+						}
+					} else {
+						ph_free_datapoint(dp);
+					}
+				} else {
+					m->file_pos += sizeof(off_t);
+				}
+			}
+		}
+    } else if (ntype == 1) { /* internal */
+		/* read sv1, sv2 */
+		DP *sv1 = ph_read_datapoint(m);
+		DP *sv2 = ph_read_datapoint(m);
+		/* read 1st and 2nd level pivots */
+		float *M1 = (float*)malloc(LengthM1*sizeof(float));
+		if (!M1){
+			return PH_ERRMEM;
+		}
+		float *M2 = (float*)malloc(LengthM2*sizeof(float));
+		if (!M2){
+			return PH_ERRMEM;
+		}
+		memcpy(M1, &m->buf[m->file_pos & offset_mask], LengthM1*sizeof(float));
+		m->file_pos += LengthM1*sizeof(float);
+		memcpy(M2, &m->buf[m->file_pos & offset_mask], LengthM2*sizeof(float));
 	m->file_pos += LengthM2*sizeof(float);
 
 	float d1 = hashdist(query, sv1);
@@ -1035,7 +1065,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
 	if (d1 <= radius){
 	    results[(*count)++] = sv1;
 	    if (*count >= knearest)
-		return PH_ERRCAP;
+			return PH_SUCCESS;
 	} else {
 	    ph_free_datapoint(sv1);
 	}
@@ -1043,7 +1073,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
 	if (d2 <= radius){
 	    results[(*count)++] = sv2;
 	    if (*count >= knearest)
-		return PH_ERRCAP;
+		return PH_SUCCESS;
 	} else {
 	    ph_free_datapoint(sv2);
 	}
@@ -1152,7 +1182,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
 	    }
 	}
     } else { /* unrecognized node */
-	ret = PH_ERRNTYPE;
+		ret = PH_ERRNTYPE;
     }
     return ret;
 }
@@ -1165,17 +1195,26 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
 
     char mainfile[256];
     snprintf(mainfile, sizeof(mainfile),"%s.mvp", m->filename);
-    m->fd = _sopen(mainfile, _O_RDONLY|_O_BINARY|O_SEQUENTIAL, _SH_DENYNO, _S_IREAD);
-    if (m->fd < 0){
-	return PH_ERRFILE;
+    m->fh = CreateFile(mainfile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (m->fh == INVALID_HANDLE_VALUE){
+        fprintf(stderr,"unable to open file %s\n", mainfile);
+		return PH_ERRFILE;
     }
-    m->file_pos = 0;
-    m->buf=(char*)mmap(NULL,m->pgsize,PAGE_READONLY,FILE_MAP_READ,m->fd,m->file_pos);
-    if ((int)(m->buf) == MMAP_FAILURE){
-	return PH_ERRMMAP;
-    }
-    //madvise(m->buf,m->pgsize,MADV_SEQUENTIAL);
+    char fm_objname[256];
+    char *filename = strdup(m->filename);
+    snprintf(fm_objname, sizeof(fm_objname), strcat(filename, "%d"), 0); 
 
+    m->file_pos = 0;
+    HANDLE fmhandle = CreateFileMapping(m->fh,NULL,PAGE_READWRITE,0,0,fm_objname);
+	if (fmhandle == NULL){
+        fprintf(stderr,"unable to open file mapping object for %s\n",fm_objname);
+        return PH_ERRMMAP;
+	}
+    m->buf = (char*)MapViewOfFile(fmhandle,FILE_MAP_ALL_ACCESS,0,0,m->pgsize);
+	if (m->buf == NULL){
+        fprintf(stderr,"unable to map view for %s\n", fm_objname);
+        return PH_ERRMMAP;
+	}
     char tag[17];
     int version;
     int int_pgsize, leaf_pgsize;
@@ -1204,28 +1243,27 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
     
     memcpy(&type, &m->buf[m->file_pos++], 1);
 
-    //replace mremap with munmap/mmap
-	//m->buf = (char*)mremap(m->buf,m->pgsize,int_pgsize,MREMAP_MAYMOVE);
-	if (munmap(m->buf, m->pgsize) == MUNMAP_FAILURE){
+	if (!UnmapViewOfFile(m->buf)){
 		return PH_ERRMMAP;
 	}
-	m->buf = (char*)mmap(NULL, int_pgsize,PAGE_READONLY,FILE_MAP_READ,m->fd, 0);
-	if ((int)(m->buf) == MMAP_FAILURE){
+    m->buf = (char*)MapViewOfFile(fmhandle,FILE_MAP_ALL_ACCESS,0,0,int_pgsize);
+	if (m->buf == NULL){
+        fprintf(stderr,"unable to remap view for %s\n", fm_objname);
 		return PH_ERRMMAP;
 	}
-    m->pgsize = int_pgsize;
+    m->pgsize = (off_t)int_pgsize;
     m->file_pos = HeaderSize;
 
     /* finish the query by calling the recursive auxiliary function */
     *count = 0;
     MVPRetCode res = ph_query_mvptree(m,query,knearest,radius,results,count,0);
 
-    munmap(m->buf, m->pgsize);
-    m->buf = NULL;
-
-    _close(m->fd);
-    m->fd = 0;
-    m->file_pos = 0;
+	if (!UnmapViewOfFile(m->buf)){
+        fprintf(stderr,"unable to unmap for %s\n", fm_objname);
+        return PH_ERRMMAP;
+	}
+    CloseHandle(fmhandle);
+    CloseHandle(m->fh);
 
     return res;
 }
@@ -1239,285 +1277,291 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
     int LengthM1 = BranchFactor-1;
     int LengthM2 = BranchFactor*LengthM1;
     int Fanout = BranchFactor*BranchFactor;
-
     if ((!m) || (!points) || (nbpoints <= 0))
-	return NULL;
+		return NULL;
     FileIndex *pOffset = (FileIndex*)malloc(sizeof(FileIndex));
     if (!pOffset){
-	return NULL;
+		return NULL;
     }
     hash_compareCB hashdist = m->hashdist;
     if (hashdist == NULL){
-	free(pOffset);
-	return NULL;
-    }
-
-    off_t offset_mask = m->pgsize - 1;
-    off_t page_mask = ~(m->pgsize - 1);
-    if (nbpoints <= LeafCapacity + 2){ /* leaf */
-	uint8_t ntype = 0;
-	MVPFile m2;
-	m2.branchfactor = m->branchfactor;
-	m2.leafcapacity = m->leafcapacity;
-	m2.pathlength = m->pathlength;
-	m2.pgsize = m->pgsize;
-	m2.hashdist = hashdist;
-
-	/* open new file */
-	char extfile[256];
-	snprintf(extfile, sizeof(extfile),"%s%d.mvp", m->filename, m->nbdbfiles);
-	
-	m2.fd = _sopen(extfile, _O_CREAT|_O_RDWR|_O_APPEND, _SH_DENYNO, _S_IREAD|_S_IWRITE);
-	if (m2.fd < 0){
-	    free(pOffset);
-	    return NULL;
-	}
-        m2.hash_type = m->hash_type;
-
-	struct stat fileinfo;
-	fstat(m2.fd, &fileinfo);
-
-	/* test file size and open new file if necessary */
-	while (fileinfo.st_size >= MaxFileSize){
-	    _close(m2.fd);
-	    m->nbdbfiles++;
-	    snprintf(extfile, sizeof(extfile),"%s%d.mvp", m->filename, m->nbdbfiles);
-	    
-	    m2.fd = open(extfile,_O_CREAT|_O_RDWR|_O_APPEND, _SH_DENYNO, _S_IREAD|_S_IWRITE);
-	    if (m2.fd < 0){
 		free(pOffset);
 		return NULL;
-	    }
-	    fstat(m2.fd, &fileinfo);
-	}
+    }
+    DWORD alloc_size = getregionsize();
+    DWORD alloc_mask = ~(alloc_size - 1);
+    DWORD alloc_offset_mask = alloc_size - 1;
+    off_t offset_mask = m->pgsize - 1;
+    off_t page_mask = ~(m->pgsize - 1);
 
-	m2.file_pos = lseek(m2.fd, 0, SEEK_END);
+    if (nbpoints <= LeafCapacity + 2){ /* leaf */
+		uint8_t ntype = 0;
+		MVPFile m2;
+		m2.branchfactor = m->branchfactor;
+		m2.leafcapacity = m->leafcapacity;
+		m2.pathlength = m->pathlength;
+		m2.pgsize = m->pgsize;
+		m2.hashdist = hashdist;
 
-	if (m2.file_pos < 0){
-	    free(pOffset);
-	    return NULL;
-	}
-	if (ftruncate(m2.fd, m2.file_pos + m->pgsize) < 0){
-	    free(pOffset);
-	    return NULL;
-	}
+		/* open new file */
+		char extfile[256];
+		snprintf(extfile, sizeof(extfile),"%s%d.mvp", m->filename, m->nbdbfiles);
+        m2.fh = CreateFile(extfile,GENERIC_READ|GENERIC_WRITE,FILE_SHARE_WRITE|FILE_SHARE_READ|FILE_SHARE_DELETE,NULL,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);
+		if (m2.fh == INVALID_HANDLE_VALUE){
+			free(pOffset);
+			return NULL;
+		}
+        m2.hash_type = m->hash_type;
+        DWORD fsize = GetFileSize(m2.fh, NULL);
 
-	off_t end_pos = m2.file_pos + m->pgsize;
-	pOffset->fileno = m->nbdbfiles;
-	pOffset->offset = m2.file_pos;
+		/* test file size and open new file if necessary */
+		while (fsize >= MaxFileSize){
+			CloseHandle(m2.fh);
+			m->nbdbfiles++;
+			snprintf(extfile, sizeof(extfile),"%s%d.mvp", m->filename, m->nbdbfiles);
+            m2.fh = CreateFile(extfile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,NULL, OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL); 
+			if (m2.fh < INVALID_HANDLE_VALUE){
+				free(pOffset);
+				return NULL;
+			}
+			fsize = GetFileSize(m2.fh, NULL);
+		}
 
-	off_t pa_offset = m2.file_pos & page_mask;
-        m2.buf = (char*)mmap(NULL,m->pgsize,PAGE_READWRITE,FILE_MAP_ALL_ACCESS,m2.fd,pa_offset);
-	if ((int)(m2.buf) == MMAP_FAILURE){
-	    close(m2.fd);
-	    free(pOffset);
-	    return NULL;
-	}
+        char fm_objname[256];
+        char *filename = strdup(m->filename);
+        snprintf(fm_objname,sizeof(fm_objname), strcat(filename,"%d"),m->nbdbfiles);
 
-	m2.buf[m2.file_pos & offset_mask] = ntype;
-	m2.file_pos++;
+        m2.file_pos = fsize;
+		off_t end_pos = fsize + m->pgsize;
+		pOffset->fileno = m->nbdbfiles;
+		pOffset->offset = m2.file_pos;
+		off_t pa_offset = m2.file_pos & page_mask;
+        
+		if (SetFilePointer(m2.fh,m->pgsize, 0, FILE_END) == INVALID_SET_FILE_POINTER){
+            return NULL;
+		}
+		if (!SetEndOfFile(m2.fh)){
+            return NULL;
+		}
 
-	/* find vantage points, sv1 and sv2 */
-	int sv1_pos, sv2_pos;
-	float max_distance, min_distance;
-	ph_selectvantagepoints(&m2, points, nbpoints, sv1_pos, sv2_pos, max_distance, min_distance);  	    DP *sv1 = points[sv1_pos];
-	DP *sv2 = points[sv2_pos];
+        HANDLE fmhandle = CreateFileMapping(m2.fh, NULL, PAGE_READWRITE, 0, (DWORD)end_pos, fm_objname);
+		if (fmhandle == NULL){
+             return NULL;
+		}
+
+       DWORD alloc_unit = alloc_mask & m2.file_pos;
+       DWORD alloc_offset = alloc_offset_mask & m2.file_pos;
+
+       DWORD offset_low = alloc_unit;
+       DWORD offset_hi  = 0;
 
 
-	/* if file pos is beyond pg size*/
-	if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,&m2) > m->pgsize)
-	    return NULL;
+        m2.buf = (char*)MapViewOfFile(fmhandle, FILE_MAP_ALL_ACCESS, offset_hi, offset_low, alloc_offset + m2.pgsize);
+		if (m2.buf == NULL){
+             return NULL;
+		}
+        m2.buf += alloc_offset;
 
-	ph_save_datapoint(sv1, &m2);
+		m2.buf[m2.file_pos & offset_mask] = ntype;
+		m2.file_pos++;
 
-	/*if file pos is beyond pg size */
-	if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,&m2) > m->pgsize)
-	    return NULL;
+		/* find vantage points, sv1 and sv2 */
+		int sv1_pos, sv2_pos;
+		float max_distance, min_distance;
+		ph_selectvantagepoints(&m2, points, nbpoints, sv1_pos, sv2_pos, max_distance, min_distance);  	   
+		DP *sv1 = points[sv1_pos];
+		DP *sv2 = points[sv2_pos];
 
-	ph_save_datapoint(sv2, &m2);
+		/* if file pos is beyond pg size*/
+		if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,&m2) > m->pgsize)
+			return NULL;
 
-	m2.buf[m2.file_pos & offset_mask] = (uint8_t)Np;
-	m2.file_pos++;
+		ph_save_datapoint(sv1, &m2);
 
-	/* write the leaf points */
-	float d1, d2;
-	off_t curr_pos = m2.file_pos;
-	off_t last_pos = curr_pos + LeafCapacity*(2*sizeof(float) + sizeof(off_t));
-	off_t dp_pos;
-	for (int i=1;i<nbpoints;i++){
-	    if ((i==sv1_pos)||(i==sv2_pos)) /* skip sv2 */
-		continue;
-	    /* write d1, d2 */
-	    d1 = hashdist(sv1, points[i]);
-	    d2 = hashdist(sv2, points[i]);
+		/*if file pos is beyond pg size */
+		if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv2,&m2) > m->pgsize)
+			return NULL;
+
+		ph_save_datapoint(sv2, &m2);
+
+		m2.buf[m2.file_pos & offset_mask] = (uint8_t)Np;
+		m2.file_pos++;
+
+		/* write the leaf points */
+		float d1, d2;
+		off_t curr_pos = m2.file_pos;
+		off_t last_pos = curr_pos + LeafCapacity*(2*sizeof(float) + sizeof(off_t));
+		off_t dp_pos;
+		for (int i=1;i<nbpoints;i++){
+			if ((i==sv1_pos)||(i==sv2_pos)) /* skip sv1 and sv2 */
+				continue;
+			/* write d1, d2 */
+			d1 = hashdist(sv1, points[i]);
+			d2 = hashdist(sv2, points[i]);
             memcpy(&(m2.buf[m2.file_pos & offset_mask]), &d1, sizeof(float));
-	    m2.file_pos += sizeof(float);
+			m2.file_pos += sizeof(float);
             memcpy(&(m2.buf[m2.file_pos & offset_mask]), &d2, sizeof(float));
-	    m2.file_pos += sizeof(float);
+			m2.file_pos += sizeof(float);
 	    
-	    /* write the point[i] at the end and return to write what the offset is*/
-	    curr_pos = m2.file_pos;
-	    m2.file_pos = last_pos;
+			/* write the point[i] at the end and return to write what the offset is*/
+			curr_pos = m2.file_pos;
+			m2.file_pos = last_pos;
 
-	    /* if file pos is beyond pg size */
-	    if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,&m2) > m->pgsize)
-		return NULL;
+			/* if file pos is beyond pg size */
+			if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,&m2) > m->pgsize)
+				return NULL;
 	    
-	    dp_pos = ph_save_datapoint(points[i], &m2);
-	    last_pos = m2.file_pos;
-	    m2.file_pos = curr_pos;
+			dp_pos = ph_save_datapoint(points[i], &m2);
+			last_pos = m2.file_pos;
+			m2.file_pos = curr_pos;
 
-	    memcpy(&(m2.buf[m2.file_pos & offset_mask]), &dp_pos, sizeof(off_t));
-	    m2.file_pos += sizeof(off_t);
-	}
-
-	if (msync(m2.buf, m->pgsize, MS_SYNC) < 0){
-	    free(pOffset);
-	    close(m2.fd);
-	    return NULL;
-	}
-	
-	munmap(m2.buf, m->pgsize);
-
-	if (ftruncate(m2.fd, end_pos) < 0){
-	    free(pOffset);
-	    close(m2.fd);
-	    return NULL;
-	}
-
-	close(m2.fd);
-    } else {
-	off_t pgsize = m->pgsize;
-
-	pOffset->fileno = 0;
-	pOffset->offset = m->file_pos;
-
-	off_t orig_pos = m->file_pos;
+			memcpy(&(m2.buf[m2.file_pos & offset_mask]), &dp_pos, sizeof(off_t));
+			m2.file_pos += sizeof(off_t);
+		}
+		UnmapViewOfFile(m2.buf);
+		CloseHandle(fmhandle);
+		CloseHandle(m2.fh);
+	} else {
+		off_t pgsize = m->pgsize;
+		pOffset->fileno = 0;
+		pOffset->offset = m->file_pos;
+		off_t orig_pos = m->file_pos;
         off_t end_pos;
+        char fm_objname[256];
+        char *filename = strdup(m->filename);
+        snprintf(fm_objname, sizeof(fm_objname), strcat(filename,"%d"), 0);
 
         if ((level > 0) && (saveall_flag == 1)){ /* append new page to mainfile, unmap/map to it */
 
-	    if (msync(m->buf, pgsize ,MS_SYNC) < 0){
-		free(pOffset);
-		return NULL;
-	    }
-	    
-	    munmap(m->buf, pgsize);
-
-	    m->file_pos = lseek(m->fd, 0, SEEK_END);
+			if (!FlushViewOfFile(m->buf, m->pgsize)){
+                return NULL;
+			}
+			if (!UnmapViewOfFile(m->buf)){
+                return NULL;
+			}
+            DWORD fsize = GetFileSize(m->fh, NULL);
+			m->file_pos = fsize;
             end_pos = m->file_pos + pgsize;
-	    if (ftruncate(m->fd, m->file_pos + pgsize) < 0){
-		free(pOffset);
-		return NULL;
-	    }
-	    off_t pa_offset = m->file_pos & page_mask;
-	    m->buf = (char*)mmap(NULL,pgsize,PAGE_READWRITE,FILE_MAP_ALL_ACCESS,m->fd,pa_offset);
-	    if ((int)(m->buf) == MMAP_FAILURE){
-			free(pOffset);
+           
+			if (SetFilePointer(m->fh,m->pgsize, 0, FILE_END) == INVALID_SET_FILE_POINTER){
+                return NULL;
+			}
+			if (!SetEndOfFile(m->fh)){
+                return NULL;
+			}
+
+            HANDLE fmhandle = CreateFileMapping(m->fh,NULL,PAGE_READWRITE,0,(DWORD)end_pos,fm_objname); 
+			if (fmhandle == NULL){
+                 return NULL;
+			}
+            DWORD alloc_unit = alloc_mask & m->file_pos;
+            DWORD alloc_offset = alloc_offset_mask & m->file_pos;
+            DWORD offset_hi = 0, offset_lo = alloc_unit;
+            m->buf = (char*)MapViewOfFile(fmhandle,FILE_MAP_ALL_ACCESS,offset_hi,offset_lo, alloc_offset + m->pgsize);
+            m->buf += alloc_offset;
+
+			pOffset->offset = m->file_pos;
+		}
+
+		uint8_t ntype = 1;
+		memcpy(&m->buf[m->file_pos++ & offset_mask],  &ntype, sizeof(uint8_t));
+	
+		/* choose vantage points, sv1, sv2 */
+		int sv1_pos, sv2_pos;
+		float max_distance, min_distance;
+		ph_selectvantagepoints(m, points, nbpoints,sv1_pos,sv2_pos,max_distance,min_distance);
+		DP *sv1 = points[sv1_pos]; 
+		DP *sv2 = points[sv2_pos];
+
+		/* save sv1, sv2 */
+	
+		/* check that file_pos does not exceed pgsize */
+		if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,m) > m->pgsize)
 			return NULL;
-	    }
-	    pOffset->offset = m->file_pos;
-	}
 
-	uint8_t ntype = 1;
-	memcpy(&m->buf[m->file_pos++ & offset_mask],  &ntype, sizeof(uint8_t));
-	
-	/* choose vantage points, sv1, sv2 */
-	int sv1_pos, sv2_pos;
-	float max_distance, min_distance;
-	ph_selectvantagepoints(m, points, nbpoints,sv1_pos,sv2_pos,max_distance,min_distance);
-	DP *sv1 = points[sv1_pos]; 
-	DP *sv2 = points[sv2_pos];
+		ph_save_datapoint(sv1, m);
 
-	/* save sv1, sv2 */
-	
-	/* check that file_pos does not exceed pgsize */
-	if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,m) > m->pgsize)
-	    return NULL;
+		/* check the file_os does not exceed pgsize */
+		if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,m) > m->pgsize)
+			return NULL;
 
-	ph_save_datapoint(sv1, m);
+		ph_save_datapoint(sv2, m);
 
-	/* check the file_os does not exceed pgsize */
-	if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,m) > m->pgsize)
-	    return NULL;
-
-	ph_save_datapoint(sv2, m);
-
-	/* 1st tier pivots, M1, derived from the distance of each point from sv1*/
-	float step = (max_dist - min_dist)/BranchFactor;
-	if (step <= 0.5){
-	    return NULL;
-	}
+		/* 1st tier pivots, M1, derived from the distance of each point from sv1*/
+		float step = (max_distance - min_distance)/BranchFactor;
+		if (step <= 0.5){
+			return NULL;
+		}
 
         float incr = step;
 
-	float *M1 = (float*)malloc(LengthM1*sizeof(float));
-	float *M2 = (float*)malloc(LengthM2*sizeof(float));
-	if (!M1 || !M2){
-	    free(pOffset);
-	    return NULL;
-	}
-
-
-	for (int i=0;i<LengthM1;i++){
-	    M1[i] = min_dist + incr;
-	    incr += step;
-	    memcpy(&(m->buf[m->file_pos & offset_mask]),&M1[i], sizeof(float));
-	    m->file_pos += sizeof(float);
-	}
-
-	/*set up 1st tier sorting bins - contain pointers to DP points[] param so that we only 
-          move pointers, not the actual datapoints */
-	DP ***bins = (DP***)malloc(BranchFactor*sizeof(DP***));
-	if (!bins){
-	    free(pOffset);
-	    free(M1);
-	    free(M2);
-	    return NULL;
-	}
-	int *mlens = (int*)calloc(BranchFactor, sizeof(int)); /*no. points in each bin */
-	if (!mlens){
-	    free(pOffset);
-	    free(M1);
-	    free(M2);
-	    free(bins);
-	    return NULL;
-	}
-
-	for (int i=0;i<BranchFactor;i++){
-	    bins[i] = (DP**)malloc(Np*sizeof(DP**)); /*Np should be more than enough */            
-	    if (!bins[i]){
-		free(pOffset);
-		free(M1);
-		free(M2);
-		free(bins);
-		free(mlens);
-		return NULL;
-	    }
-	}
-
-	/* sort points into bins (except sv1 and sv2 )*/
-	for (int i=1;i<nbpoints;i++){
-	    if ((i == sv1_pos)||(i==sv2_pos))
-		continue;
-	    float cur_dist = m->hashdist(sv1, points[i]);
-	    if (level < PathLength){
-		points[i]->path[level] = cur_dist;
-	    }
-	    /* check if <= M1[i] */
-	    for (int j=0;j < LengthM1;j++){
-		if (cur_dist <= M1[j]){
-		    bins[j][mlens[j]] = points[i];
-		    mlens[j]++;
-		    break;
+		float *M1 = (float*)malloc(LengthM1*sizeof(float));
+		float *M2 = (float*)malloc(LengthM2*sizeof(float));
+		if (!M1 || !M2){
+			free(pOffset);
+			return NULL;
 		}
-	    }
-	    /* check if > last M1[] pivot */
-	    if (cur_dist > M1[LengthM1-1]){
-		bins[BranchFactor-1][mlens[BranchFactor-1]] = points[i];
-		mlens[BranchFactor-1]++;
-	    }
-	}
+
+
+		for (int i=0;i<LengthM1;i++){
+			M1[i] = min_distance + incr;
+			incr += step;
+			memcpy(&(m->buf[m->file_pos & offset_mask]),&M1[i], sizeof(float));
+			m->file_pos += sizeof(float);
+		}
+
+		/*set up 1st tier sorting bins - contain pointers to DP points[] param so that we only 
+          move pointers, not the actual datapoints */
+		DP ***bins = (DP***)malloc(BranchFactor*sizeof(DP***));
+		if (!bins){
+			free(pOffset);
+			free(M1);
+			free(M2);
+			return NULL;
+		}
+		int *mlens = (int*)calloc(BranchFactor, sizeof(int)); /*no. points in each bin */
+		if (!mlens){
+			free(pOffset);
+			free(M1);
+			free(M2);
+			free(bins);
+			return NULL;
+		}
+
+		for (int i=0;i<BranchFactor;i++){
+			bins[i] = (DP**)malloc(Np*sizeof(DP**)); /*Np should be more than enough */            
+			if (!bins[i]){
+				free(pOffset);
+				free(M1);
+				free(M2);
+				free(bins);
+				free(mlens);
+				return NULL;
+			}
+		}
+
+		/* sort points into bins (except sv1 and sv2 )*/
+		for (int i=1;i<nbpoints;i++){
+			if ((i == sv1_pos)||(i==sv2_pos))
+				continue;
+			float cur_dist = m->hashdist(sv1, points[i]);
+			if (level < PathLength){
+				points[i]->path[level] = cur_dist;
+			}
+			/* check if <= M1[i] */
+			for (int j=0;j < LengthM1;j++){
+				if (cur_dist <= M1[j]){
+					bins[j][mlens[j]] = points[i];
+					mlens[j]++;
+					break;
+				}
+			}
+			/* check if > last M1[] pivot */
+			if (cur_dist > M1[LengthM1-1]){
+				bins[BranchFactor-1][mlens[BranchFactor-1]] = points[i];
+				mlens[BranchFactor-1]++;
+			}
+		}
 
 	/* print 1st level sort bins 
 	for (int i=0; i<BranchFactor;i++){
@@ -1575,40 +1619,40 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 	for (int i=0;i < BranchFactor;i++){
 	    int row_len = mlens[i]; /* length of current row, bins[i] */
 	    for (int j=0;j < BranchFactor;j++){ /* reset the lengths to 0 */
-		mlens2[j] = 0;
+			mlens2[j] = 0;
 	    }
 	    float *dist_temp = (float*)realloc(distance_vector,row_len*sizeof(float));
-	    if (!dist2){
-		free(pOffset);
-		free(M1);
-		free(M2);
-		free(bins);
-		free(mlens);
-		free(bins2);
-		free(mlens2);
-		return NULL;
-	    }
+	    if (!dist_temp){
+			free(pOffset);
+			free(M1);
+			free(M2);
+			free(bins);
+			free(mlens);
+			free(bins2);
+			free(mlens2);
+			return NULL;
+		}
 	    distance_vector = dist_temp;
 
 	    /* 2nd tier pivots M2[], for row */
-	    max_dist = 0;
-	    min_dist = float(INT_MAX);
+	    max_distance = 0;
+	    min_distance = float(INT_MAX);
 	    for (int j=0;j<row_len;j++){
 		distance_vector[j] = hashdist(sv2, bins[i][j]);
-		if ( distance_vector[j] > max_dist)
-		    max_dist = distance_vector[j];
-		if (distance_vector[j] < min_dist)
-		    min_dist = distance_vector[j];
+		if ( distance_vector[j] > max_distance)
+		    max_distance = distance_vector[j];
+		if (distance_vector[j] < min_distance)
+		    min_distance = distance_vector[j];
 		if (level < PathLength){
-		    bins[i][j]->path[level+1] = dist[j];
+		    bins[i][j]->path[level+1] = distance_vector[j];
 		}
 	    }
 
-	    step = (max_dist - min_dist)/BranchFactor;
+	    step = (max_distance - min_distance)/BranchFactor;
 	    incr = step;
 	    
 	    for (int j=0;j < LengthM1;j++){
-		M2[j+i*LengthM1] = min_dist + incr;
+		M2[j+i*LengthM1] = min_distance + incr;
 		memcpy(&(m->buf[m2_pos & offset_mask]),&M2[j+i*LengthM1],sizeof(float));
 		incr += step;
 		m2_pos += sizeof(float);
@@ -1626,7 +1670,7 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 		    }
 		}
 		/* check > last M2 pivot  */
-		if (dist[j] > M2[LengthM1-1 + i*LengthM1]){
+		if (distance_vector[j] > M2[LengthM1-1 + i*LengthM1]){
 		    bins2[BranchFactor-1][mlens2[BranchFactor-1]] = current;
 		    mlens2[BranchFactor-1]++;
 		}
@@ -1671,18 +1715,21 @@ FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 
         /* remap to orig_pos */
 	if ((level > 0) && (saveall_flag == 1)){
-            /* unmap/remap to page with original position */
-	    if (msync(m->buf, pgsize, MS_SYNC) < 0){
-		free(pOffset);
-		goto cleanup;
-	    }
-	    munmap(m->buf, pgsize);
-	    m->buf=(char*)mmap(NULL,pgsize,PAGE_READWRITE,FILE_MAP_ALL_ACCESS,
-                                  m->fd,orig_pos & page_mask);
-	    if ((int)(m->buf) == MMAP_FAILURE){
-		free(pOffset);
-		goto cleanup;
-	    }
+        /* unmap/remap to page with original position */
+        FlushViewOfFile(m->buf, m->pgsize);
+	    UnmapViewOfFile(m->buf);
+        HANDLE fmhandle = CreateFileMapping(m->fh,NULL,PAGE_READWRITE,0,(DWORD)orig_pos, fm_objname);
+		if (fmhandle == NULL){
+            return NULL;
+		}
+        DWORD alloc_unit = alloc_mask & orig_pos;
+        DWORD alloc_offset = alloc_offset_mask & orig_pos;
+        DWORD offset_hi = 0, offset_lo = alloc_unit;
+        m->buf = (char*)MapViewOfFile(fmhandle,FILE_MAP_ALL_ACCESS,offset_hi,offset_lo,alloc_offset+m->pgsize);        
+		if (m->buf){
+             return NULL;
+		}
+        m->buf += alloc_unit;
 	    m->file_pos = orig_pos;
 	}
 	/* cleanup */
@@ -1702,44 +1749,56 @@ __declspec(dllexport)
 MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints){
 
     if (m->pgsize == 0) /*use host pg size as default */
-	m->pgsize = getpagesize();
+		m->pgsize = getpagesize();
 
     /* check to see that the pg sizes are at least the size of host page size */
     off_t host_pgsize = getpagesize();
-    if (m->pgsize < host_pgsize){
-	return PH_ERRPGSIZE;
+	if (m->pgsize < host_pgsize){
+		return PH_ERRPGSIZE;
     }
 
     /* pg sizes must be a power of 2 */
     if ((m->pgsize) & (m->pgsize - 1)){
-	return PH_ERRPGSIZE;
+		return PH_ERRPGSIZE;
     }
     if (nbpoints < m->leafcapacity + 2){
-	return PH_ERRARG;
+		return PH_ERRARG;
     }
     
     /* open main file */
     char mainfile[256];
     snprintf(mainfile, sizeof(mainfile),"%s.mvp", m->filename);
-    m->fd = _sopen(mainfile,_O_CREAT|_O_RDWR|_O_SEQUENTIAL|_O_TRUNC|_O_BINARY ,_SH_DENYNO,_S_IREAD|_S_IWRITE);
-    if (m->fd < 0){
+	printf("open file: %s\n", mainfile);
+    m->fh = CreateFile(mainfile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_WRITE|FILE_SHARE_READ|FILE_SHARE_DELETE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (m->fh == INVALID_HANDLE_VALUE){
 		return PH_ERRFILE;
     }
     /* enlarge to page*/
     m->file_pos = 0;
-    if (ftruncate(m->fd, m->pgsize) < 0){
+	if (SetFilePointer(m->fh,m->pgsize,0,FILE_END)==INVALID_SET_FILE_POINTER){
 		return PH_ERRFILE;
     }
+	if (!SetEndOfFile(m->fh)){
+        return PH_ERRFILE;
+	}
+    char fm_objname[256];
+    char *filename = strdup(m->filename);
+    snprintf(fm_objname,sizeof(fm_objname),strcat(filename,"%d"), 0);
 
-    m->buf  = (char*)mmap(NULL,m->pgsize,PAGE_READWRITE,FILE_MAP_ALL_ACCESS,m->fd,m->file_pos);
-    if ((int)(m->buf) == MMAP_FAILURE){
-	return PH_ERRMMAP;
-    }
-
-    //madvise(m->buf,m->pgsize,MADV_SEQUENTIAL);
+    HANDLE fmhandle = CreateFileMapping(m->fh,NULL,PAGE_READWRITE, 0, 0, fm_objname);
+	if (fmhandle==NULL){
+        return PH_ERRMMAP;
+	}
+    DWORD alloc_unit = 0;
+    DWORD alloc_offset = 0;
+    DWORD offset_hi=0, offset_lo=alloc_unit;
+    m->buf = (char*)MapViewOfFile(fmhandle,FILE_MAP_ALL_ACCESS,offset_hi,offset_lo,alloc_offset+m->pgsize);
+    m->buf += alloc_offset;
+	if (m->buf == NULL){
+        return PH_ERRMMAP;
+	}
 
     m->nbdbfiles = 1;
-
     /* write header within first HeaderSize bytes */
     int version = 0;
     int int_pgsize = (int)(m->pgsize);
@@ -1770,19 +1829,20 @@ MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints){
 
     m->file_pos = HeaderSize;
 
+    printf("enter ph_save_mvptree\n");
     if (ph_save_mvptree(m, points, nbpoints, 1, 0) == NULL){
-	return PH_ERRSAVEMVP;
+		return PH_ERRSAVEMVP;
     }
 
     memcpy(&m->buf[nbfiles_pos],&m->nbdbfiles, sizeof(uint8_t));
 
-    if (msync(m->buf, m->pgsize, MS_SYNC) < 0){
+	if (!FlushViewOfFile(m->buf, m->pgsize)){
         return PH_ERRMSYNC;
     }
 
-    munmap(m->buf, m->pgsize);
-      
-    _close(m->fd);
+    UnmapViewOfFile(m->buf);
+    CloseHandle(fmhandle);  
+    CloseHandle(m->fh);
 
     return PH_SUCCESS;
 
@@ -2082,17 +2142,19 @@ int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints){
 
     m->fd = _sopen(mainfile, _O_BINARY|_O_RDWR|_O_SEQUENTIAL, _SH_DENYNO, _S_IREAD|_S_IWRITE);
     if (m->fd < 0){
-	return -1;
+		return -1;
     }
-
+    char fm_objname[256];
+    char *filename = strdup(m->filename);
+    snprintf(fm_objname, sizeof(fm_objname), strcat(filename, "%d"), 0);
     /*use host pg size until pg size of file can be read  */ 
     m->pgsize = getpagesize();
 
     /* map to first page */
     m->file_pos = 0;
-    m->buf  = (char*)mmap(NULL,m->pgsize,PAGE_READWRITE,FILE_MAP_ALL_ACCESS,m->fd,m->file_pos);
+    m->buf  = (char*)mmap(NULL,m->pgsize,PAGE_READWRITE,FILE_MAP_ALL_ACCESS,m->fd,fm_objname, m->file_pos);
     if ((int)(m->buf) == MMAP_FAILURE){
-	return -1;
+		return -1;
     }
     //madvise(m->buf, m->pgsize,MADV_SEQUENTIAL);
 
@@ -2134,7 +2196,7 @@ int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints){
 	if (munmap(m->buf,m->pgsize) == MUNMAP_FAILURE){
 		return -1;
 	}
-	m->buf = (char*)mmap(NULL,int_pgsize,PAGE_READWRITE, FILE_MAP_ALL_ACCESS,m->fd,0);
+	m->buf = (char*)mmap(NULL,int_pgsize,PAGE_READWRITE, FILE_MAP_ALL_ACCESS,m->fd,fm_objname, 0);
     if (m->buf == NULL)
 		return -1;
 
@@ -2142,10 +2204,10 @@ int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints){
     int nbsaved = 0;
     for (int i=0;i<nbpoints;i++){
         m->file_pos = HeaderSize;
-	if (ph_add_mvptree(m, points[i], 0) != PH_SUCCESS){
-	    continue;
-	}
-	nbsaved++;
+		if (ph_add_mvptree(m, points[i], 0) != PH_SUCCESS){
+			continue;
+		}
+		nbsaved++;
     }
 
     /* save new nbdbfiles if new files added */
