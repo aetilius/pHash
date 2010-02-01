@@ -213,10 +213,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\mman.h"
-				>
-			</File>
-			<File
 				RelativePath=".\src\ph_fft.h"
 				>
 			</File>
@@ -250,10 +246,6 @@
 			</File>
 			<File
 				RelativePath=".\src\dirent.c"
-				>
-			</File>
-			<File
-				RelativePath=".\src\mman.cpp"
 				>
 			</File>
 			<File

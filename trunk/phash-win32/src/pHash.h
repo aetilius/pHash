@@ -63,10 +63,10 @@ __declspec(dllexport) const char *mvptag = "pHashMVPfile2009";
 typedef enum ph_mvp_retcode {
     PH_SUCCESS = 0,   /* success */
     PH_ERRPGSIZE,     /* page size error */
-    PH_ERRFILE,       /* file operations */
-    PH_ERRMMAP,        /* mmap'ing error */
-    PH_ERRMSYNC,       /* msync error */
-    PH_ERRTRUNC,       /* error truncating file */
+    PH_ERRFILE ,       /* file operations */
+    PH_ERRMMAP ,        /* mmap'ing error */
+    PH_ERRMSYNC ,       /* msync error */
+    PH_ERRTRUNC ,       /* error truncating file */
     PH_ERRSAVEMVP,      /* could not save mvp file */
     PH_ERRARG,   /* null arg */
     PH_ERRMEM,       /* mem alloc error - not enough available memory */
@@ -395,6 +395,9 @@ int ph_sizeof_dp(DP *dp,MVPFile *m);
  **/
 __declspec(dllexport)
 off_t ph_save_datapoint(DP *new_dp, MVPFile *m);
+
+DWORD getpagesize();
+DWORD getregionsize();
 
 /** /brief mmap memory to filenumber/offset
  *  /param filenumber - uint8_t number of file to map
