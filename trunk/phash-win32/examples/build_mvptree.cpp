@@ -23,17 +23,23 @@
 */
 
 #include <stdio.h>
+#include <math.h>
 #include "pHash.h"
 
 
 float distancefunc(DP *pa, DP *pb){
     uint8_t *hashA = (uint8_t*)pa->hash;
     uint8_t *hashB = (uint8_t*)pb->hash;
-    return (float)(1000*ph_hammingdistance2(hashA, pa->hash_length,hashB,pb->hash_length));
-
+    float d = 10*ph_hammingdistance2(hashA, pa->hash_length,hashB,pb->hash_length);
+    float res = exp(d)-1;
+    return res;
 }
 
 int main(int argc, char **argv){
+	if (argc < 3){
+       printf("not enough input args\n");
+       return 1;
+	}
  
     const char *dir_name = argv[1];/* name of dir to retrieve image files */
     const char *filename = argv[2];/* name of file to save db */
@@ -58,34 +64,35 @@ int main(int argc, char **argv){
     printf("nbfiles = %d\n", nbfiles);
     DP **hashlist = (DP**)malloc(nbfiles*sizeof(DP*));
     if (!hashlist){
-	printf("mem alloc error\n");
-	exit(1);
+	    printf("mem alloc error\n");
+	    exit(1);
     }
     int hashlength;
     int count = 0;
     for (int i=0;i<nbfiles;i++){
-	printf("file[%d]: %s\n", i, files[i]);
+		printf("file[%d]: %s\n", i, files[i]);
         hashlist[count] = ph_malloc_datapoint(mvpfile.hash_type,mvpfile.pathlength);
-	if (hashlist[count] == NULL){
-	    printf("mem alloc error\n");
-	    exit(1);
-	}
-	hashlist[count]->id = files[i];
-	hashlist[count]->hash = ph_mh_imagehash(files[i],hashlength, alpha, lvl);
-	if (hashlist[count]->hash == NULL){
-	    printf("unable to get hash\n");
-	    exit(1);
-	}
-	printf("len %d\n", hashlength);
-	hashlist[count]->hash_length = hashlength;
+		if (hashlist[count] == NULL){
+			printf("mem alloc error\n");
+			exit(1);
+		}
+		hashlist[count]->id = files[i];
+		hashlist[count]->hash = ph_mh_imagehash(files[i],hashlength, alpha, lvl);
+		if (hashlist[count]->hash == NULL){
+			printf("unable to get hash\n");
+			exit(1);
+		}
+		printf("len %d\n", hashlength);
+		hashlist[count]->hash_length = hashlength;
         count++;
     }
  
-
-    if (ph_save_mvptree(&mvpfile, hashlist, count) < 0){
-	printf("unable to save %s\n", filename);
-	exit(1);
+    int err = ph_save_mvptree(&mvpfile, hashlist, count);
+    if (err != 0){
+		printf("unable to save %s, err %d\n", filename, err);
+		exit(1);
     }
+    printf("saved files\n");
 
     return 0;
 }

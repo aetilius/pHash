@@ -106,6 +106,7 @@ typedef struct ph_mvp_file {
     char *buf;
     off_t file_pos;
     int fd;
+    HANDLE fh;
     uint8_t nbdbfiles;
     uint8_t branchfactor; /*branch factor of tree, M(=2)*/
 

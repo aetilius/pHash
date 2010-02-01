@@ -2,6 +2,7 @@
 #define _MMAN_H_
 
 #include <Windows.h>
+#include <stdio.h>
 #include <io.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -28,7 +29,7 @@ __declspec(dllexport) long getregionsize (void);
 *  @param fd - int file descriptor
 *  @return void ptr to mapped memory - null for error
 */
-__declspec(dllexport) void *mmap (void *ptr, size_t size, int prot, int flags, int fd, off_t offset);
+__declspec(dllexport) void *mmap (void *ptr, size_t size, int prot, int flags, int fd, char *fm_name, off_t offset);
 
 /* !unmap memory
  * @param ptr - ptr to memory to release
