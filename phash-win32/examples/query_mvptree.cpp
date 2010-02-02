@@ -54,7 +54,6 @@ int main(int argc, char **argv){
     ph_mvp_init(&mvpfile);
     mvpfile.filename = strdup(filename);
     mvpfile.hashdist = distancefunc;
-    mvpfile.hash_type = BYTEARRAY;
 
     int nbfiles = 0;
     printf("using db %s\n", filename);

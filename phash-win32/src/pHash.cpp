@@ -730,21 +730,16 @@ DP* ph_read_datapoint(MVPFile *m){
     int PathLength = m->pathlength;
     off_t file_pos = m->file_pos;
     off_t offset_mask = m->pgsize - 1; 
-
     memcpy(&active, &(m->buf[file_pos & offset_mask]), sizeof(uint8_t));
     file_pos++;
-
     memcpy(&byte_len,&(m->buf[file_pos & offset_mask]), sizeof(uint16_t));
     file_pos += sizeof(uint16_t);
-
     if ((active == 0) ||(byte_len == 0)){
 		return dp;
     }
     dp = ph_malloc_datapoint(type,PathLength);
-
     memcpy(&id_len,&(m->buf[file_pos & offset_mask]), sizeof(uint16_t));
     file_pos += sizeof(uint16_t);
-
     dp->id = (char*)malloc((id_len+1)*sizeof(uint8_t));
     memcpy(dp->id, &(m->buf[file_pos & offset_mask]), id_len);
     dp->id[id_len] = '\0';
@@ -762,7 +757,7 @@ DP* ph_read_datapoint(MVPFile *m){
     file_pos += PathLength*sizeof(float);
 
     m->file_pos = file_pos;
-
+    
     return dp;
 }
 
@@ -1267,9 +1262,13 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
 	if (m->buf == NULL){
 		return PH_ERRMMAP;
 	}
+    m->branchfactor = bf;
+    m->pathlength = p;
+    m->leafcapacity = k;
     m->pgsize = (off_t)int_pgsize;
+    m->hash_type = (HashType)type;
     m->file_pos = HeaderSize;
-
+    m->nbdbfiles = nbdbfiles;
     /* finish the query by calling the recursive auxiliary function */
     *count = 0;
     MVPRetCode res = ph_query_mvptree(m,query,knearest,radius,results,count,0);
@@ -1837,8 +1836,8 @@ MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints){
     memcpy(&m->buf[m->file_pos++], &m->pathlength, sizeof(uint8_t));
 
     memcpy(&m->buf[m->file_pos++], &m->leafcapacity, sizeof(uint8_t));
-
-    memcpy(&m->buf[m->file_pos++], &m->hash_type, sizeof(uint8_t));
+    uint8_t type = (uint8_t)m->hash_type;
+    memcpy(&m->buf[m->file_pos++], &type, sizeof(uint8_t));
 
     m->file_pos = HeaderSize;
 
@@ -2175,7 +2174,8 @@ int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints){
     int version;;
     int int_pgsize;
     int leaf_pgsize;
-    
+    uint8_t bf, pl, lc, nbdbfiles, type;
+
     memcpy(tag, &m->buf[m->file_pos], 16);
     tag[16] = '\0';
     m->file_pos += 16;
@@ -2190,18 +2190,24 @@ int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints){
     m->file_pos += sizeof(int);
 
     off_t nb_pos = m->file_pos;
-    memcpy(&m->nbdbfiles, &m->buf[m->file_pos++], 1);
+    memcpy(&nbdbfiles, &m->buf[m->file_pos++], 1);
 
-    memcpy(&m->branchfactor, &m->buf[m->file_pos++], 1);
+    memcpy(&bf, &m->buf[m->file_pos++], 1);
 
-    memcpy(&m->pathlength, &m->buf[m->file_pos++], 1);
+    memcpy(&pl, &m->buf[m->file_pos++], 1);
 
-    memcpy(&m->leafcapacity, &m->buf[m->file_pos++], 1);
+    memcpy(&lc, &m->buf[m->file_pos++], 1);
 
-    memcpy(&m->hash_type, &m->buf[m->file_pos++], 1);
+    memcpy(&type, &m->buf[m->file_pos++], 1);
+
+    m->branchfactor = bf;
+    m->pathlength = pl;
+    m->leafcapacity = lc;
+    m->hash_type = (HashType)type;
+    m->nbdbfiles = nbdbfiles;
 
     m->file_pos = HeaderSize;
-
+    
     /* remap to true pg size used in making file */
 	if (!UnmapViewOfFile(m->buf)){
 		return -1;
