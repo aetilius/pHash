@@ -51,7 +51,6 @@ int main(int argc, char **argv){
     mvpfile.filename = strdup(filename);
     mvpfile.hashdist = distancefunc;
     mvpfile.hash_type = BYTEARRAY;
-   
 
     int nbfiles = 0;
     printf("dir name: %s\n", dir_name);
