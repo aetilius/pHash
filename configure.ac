@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([pHash],[0.8.0],[support@phash.org])
+AC_INIT([pHash],[0.8.2],[support@phash.org])
 AM_INIT_AUTOMAKE($PACKAGE_NAME,$PACKAGE_VERSION)
 AC_CONFIG_SRCDIR([src/pHash.cpp])
 AC_CONFIG_HEADERS([config.h])
@@ -11,6 +11,14 @@ AC_CONFIG_HEADERS([config.h])
 AC_PROG_CXX
 AC_PROG_CC
 AM_PROG_GCJ
+
+if test -z $DISTRO; then
+   AC_CHECK_FILE(/etc/gentoo-release, [DISTRO="gentoo"])
+   AC_CHECK_FILE(/etc/redhat-release, [DISTRO="redhat"])
+   AC_CHECK_FILE(/etc/slackware-version, [DISTRO="slackware"])
+   AC_CHECK_FILE(/etc/debian_version, [DISTRO="debian"])
+   AC_CHECK_FILE(/etc/SuSErelease, [DISTRO="suse"])
+fi
 
 AC_ARG_ENABLE(debug, [AS_HELP_STRING([--enable-debug],
 [compile with debugging support @<:@default=no@:>@])], 
@@ -168,6 +176,16 @@ AS_IF([test x"$audio_hash" != x"no"],
 
 AM_CONDITIONAL(HAVE_AUDIO_HASH, test x$audio_hash != xno)
 
+if test "$audio_hash" = "yes" -o "$video_hash" = "yes"; then
+case "$DISTRO" in
+	debian)
+		CPPFLAGS="$CPPFLAGS -I/usr/include/ffmpeg"
+		;;
+	redhat)
+		CPPFLAGS="$CPPFLAGS -I/usr/include/libavcodec -I/usr/include/libavformat -I/usr/include/libswscale"
+		;;
+esac
+fi
 # Checks for libraries.
 
 
