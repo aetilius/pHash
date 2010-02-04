@@ -1,3 +1,13 @@
+0.8.2
+---
+02.04.2010 include fix for ffmpeg header location on debian, function prototype change
+
+
+0.8.1
+---
+01.28.2010 minor bug fix for mh image hash and compilation fix for older gcc versions
+
+
 0.8.0
 ---
 01.18.2010 change example files build_mvptree.cpp, add_mvptree.cpp, query_mvptree.cpp

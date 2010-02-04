@@ -222,7 +222,7 @@ int ph_crosscorr(const Digest &x,const Digest &y,double &pcc,double threshold){
 #undef max
 #endif
 
-int ph_image_digest(const CImg<uint8_t> &img,double sigma, double gamma,Digest &digest, int N){
+int _ph_image_digest(const CImg<uint8_t> &img,double sigma, double gamma,Digest &digest, int N){
     
     int result = EXIT_FAILURE;
     CImg<uint8_t> graysc;
@@ -270,7 +270,7 @@ int ph_image_digest(const char *file, double sigma, double gamma, Digest &digest
 	int res = -1;
 	if(src)
 	{
-    		int result = ph_image_digest(*src,sigma,gamma,digest,N);
+    		int result = _ph_image_digest(*src,sigma,gamma,digest,N);
 		delete src;
     		res = result;
 	}
@@ -281,11 +281,11 @@ int _ph_compare_images(const CImg<uint8_t> &imA,const CImg<uint8_t> &imB,double 
 
     int result = 0;
     Digest digestA;
-    if (ph_image_digest(imA,sigma,gamma,digestA,N) < 0)
+    if (_ph_image_digest(imA,sigma,gamma,digestA,N) < 0)
 	goto cleanup;
 
     Digest digestB;
-    if (ph_image_digest(imB,sigma,gamma,digestB,N) < 0)
+    if (_ph_image_digest(imB,sigma,gamma,digestB,N) < 0)
 	goto cleanup;
 
     if (ph_crosscorr(digestA,digestB,pcc,threshold) < 0)
@@ -296,8 +296,6 @@ int _ph_compare_images(const CImg<uint8_t> &imA,const CImg<uint8_t> &imB,double 
 
 cleanup:
 
-    delete &imA;
-    delete &imB;
     free(digestA.coeffs);
     free(digestB.coeffs);
     return result;
@@ -310,6 +308,8 @@ int ph_compare_images(const char *file1, const char *file2,double &pcc, double s
     
     int res = _ph_compare_images(*imA,*imB,pcc,sigma,gamma,N,threshold);
 
+    delete imA;
+    delete imB;
     return res;
 }
 
