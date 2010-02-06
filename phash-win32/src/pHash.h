@@ -128,10 +128,15 @@ typedef struct ph_mvp_file {
 
 } MVPFile ;
 
-
 /* convenience function to set var's of mvp tree */
 __declspec(dllexport)
-void ph_mvp_init(MVPFile *m);
+void ph_mvp_init(MVPFile *m){
+    m->branchfactor = 2;
+    m->pathlength = 5;
+    m->leafcapacity = 20;
+    m->pgsize = 4096;     /* use host page size */
+    return;
+}
 
 /*! /brief Radon Projection info
  */
