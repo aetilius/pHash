@@ -44,7 +44,7 @@ int main(int argc, char **argv){
     const char *filename = argv[2];/* name of file to save db */
 
     int alpha = 2;
-    int lvl  = 1;
+    int lvl  = 0;
 
     MVPFile mvpfile;
     ph_mvp_init(&mvpfile);
