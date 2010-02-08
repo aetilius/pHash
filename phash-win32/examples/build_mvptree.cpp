@@ -31,7 +31,7 @@ float distancefunc(DP *pa, DP *pb){
     uint8_t *hashA = (uint8_t*)pa->hash;
     uint8_t *hashB = (uint8_t*)pb->hash;
     float d = 10*ph_hammingdistance2(hashA, pa->hash_length,hashB,pb->hash_length);
-    float res = exp(d)-1;
+    float res = d;
     return res;
 }
 
@@ -45,7 +45,7 @@ int main(int argc, char **argv){
     const char *filename = argv[2];/* name of file to save db */
 
     int alpha = 2;
-    int lvl = 0;
+    int lvl = 1;
 
     MVPFile mvpfile;
     ph_mvp_init(&mvpfile);

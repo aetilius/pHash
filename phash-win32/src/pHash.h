@@ -73,6 +73,8 @@ typedef enum ph_mvp_retcode {
     PH_ERRNTYPE,      /* unrecognized node type */
     PH_ERRCAP,     /* more results found than can be supported in ret array */
     PH_ERRFILETYPE,  /*unrecognized file type  */
+    PH_SMPGSIZE,
+    PH_ERRDISTFUNC,
 }MVPRetCode;
 
 
@@ -462,7 +464,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
  *  /return FileIndex* - fileno and offset into file.
 **/
 __declspec(dllexport)
-FileIndex* ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_flag, int level);
+MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_flag, int level, FileIndex *pOffset);
 
 /** /brief save points to mvp file 
  *  /param m - MVPFile state info of file
@@ -489,7 +491,7 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level);
     /return int - number of points added, neg for error
 **/
 __declspec(dllexport)
-int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints);
+MVPRetCode ph_add_mvptree(MVPFile *m, DP **points, int nbpoints, int &nbsaved);
 
 /** /brief textual hash for file
  *  /param filename - char* name of file
