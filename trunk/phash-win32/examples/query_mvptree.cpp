@@ -48,7 +48,7 @@ int main(int argc, char **argv){
     const char *filename = argv[2];/* name of file to save db */
 
     int alpha = 2;
-    int lvl = 0;
+    int lvl = 1;
 
     MVPFile mvpfile;
     ph_mvp_init(&mvpfile);
@@ -68,7 +68,7 @@ int main(int argc, char **argv){
 
     DP *query = ph_malloc_datapoint(mvpfile.hash_type,mvpfile.pathlength);
 
-    float radius = 30.0f;
+    float radius = 40.0f;
 	if (argc >= 4){
         radius = atof(argv[3]);
 	}

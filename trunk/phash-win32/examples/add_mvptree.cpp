@@ -44,7 +44,7 @@ int main(int argc, char **argv){
     const char *filename = argv[2];/* name of file to save db */
 
     int alpha = 2;
-    int lvl  = 0;
+    int lvl  = 1;
 
     MVPFile mvpfile;
     ph_mvp_init(&mvpfile);
@@ -81,15 +81,16 @@ int main(int argc, char **argv){
 			continue;
 		}
 		hashlist[count]->hash_length = hashlength;
+		printf("len: %d\n", hashlength);
         count++;
     }
 
     printf("add files to file %s\n", filename);
-    int n = ph_add_mvptree(&mvpfile, hashlist, count);
-    printf("number saved %d out of %d\n", n,count);
-    if (n <= 0){
-		printf("unable to add points to %s\n", filename);
+    int nbsaved;
+    MVPRetCode ret = ph_add_mvptree(&mvpfile, hashlist, count,nbsaved);
+    if (ret != PH_SUCCESS){
+		printf("unable to add points to %s db, %d\n", filename,ret);
     }
-
+    printf(" %d out of %d saved\n", nbsaved, count);
     return 0;
 }
