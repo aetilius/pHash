@@ -72,7 +72,7 @@ int main(int argc, char **argv){
         hashlist[count] = ph_malloc_datapoint(mvpfile.hash_type,mvpfile.pathlength);
 		if (hashlist[count] == NULL){
 			printf("mem alloc error\n");
-			continue;
+		    continue;
 		}
 		hashlist[count]->id = files[i];
 		hashlist[count]->hash = ph_mh_imagehash(files[i],hashlength,alpha,lvl);

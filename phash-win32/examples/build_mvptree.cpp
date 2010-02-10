@@ -31,7 +31,7 @@ float distancefunc(DP *pa, DP *pb){
     uint8_t *hashA = (uint8_t*)pa->hash;
     uint8_t *hashB = (uint8_t*)pb->hash;
     float d = 10*ph_hammingdistance2(hashA, pa->hash_length,hashB,pb->hash_length);
-    float res = d;
+    float res = exp(d)-1;
     return res;
 }
 

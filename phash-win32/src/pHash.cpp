@@ -489,13 +489,13 @@ DP* ph_malloc_datapoint(int hashtype, int pathlength){
 __declspec(dllexport)
 void ph_free_datapoint(DP *dp){
     if (!dp)
-	return;
+		return;
     if (dp->path)
-	free(dp->path);
+		free(dp->path);
     if (dp->id)
-	free(dp->id);
+		free(dp->id);
     if (dp->hash)
-	free(dp->hash);
+		free(dp->hash);
     free(dp);
     
     return;
@@ -854,11 +854,15 @@ DWORD getregionsize (void) {
 }
 
 __declspec(dllexport)
-MVPFile* _ph_map_mvpfile(uint8_t filenumber, off_t offset, MVPFile *m){
+MVPFile* _ph_map_mvpfile(uint8_t filenumber, off_t offset, MVPFile *m,int use_existing){
     MVPFile *ret_file = NULL;
-    char fm_objname[256];
+    char objname[256];
+    char *fm_objname = NULL;
     char *filename = strdup(m->filename);
-    snprintf(fm_objname, sizeof(fm_objname), strcat(filename,"%d"), filenumber);
+	if (use_existing){
+		snprintf(objname, sizeof(objname), strcat(filename,"%d"), filenumber);
+        fm_objname = objname;
+	}
     DWORD alloc_size = getregionsize();
     DWORD alloc_mask = ~(alloc_size - 1);
     DWORD alloc_offset_mask = alloc_size - 1;
@@ -1082,7 +1086,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
 		/* fill in path values in query */
 		if (level < PathLength)
 			query->path[level] = d1;
-		if (level < PathLength - 1)
+		if (level+1 < PathLength)
 			query->path[level+1] = d2;
 
 		/* check if sv1 sv2 are close enough to query  */
@@ -1125,7 +1129,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
 						/*save position and remap to new file/position  */
 						orig_pos = m->file_pos;
                         tmpbuf = m->buf;
-						MVPFile *m2 = _ph_map_mvpfile(filenumber,child_pos, m);
+						MVPFile *m2 = _ph_map_mvpfile(filenumber,child_pos, m, 1);
 						if (m2){
 							ret = ph_query_mvptree(m2,query,knearest,radius,results,count,level+2);
 						}
@@ -1147,7 +1151,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
 					/*saveposition and remap to new file/position */
 					orig_pos = m->file_pos;
                     tmpbuf = m->buf;
-					MVPFile *m2 = _ph_map_mvpfile(filenumber, child_pos,m); 
+					MVPFile *m2 = _ph_map_mvpfile(filenumber, child_pos,m,1); 
 					if (m2){
 						ret = ph_query_mvptree(m2,query,knearest,radius,results,count,level+2);
 					}
@@ -1172,7 +1176,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
 					/*save file position and remap to new filenumber/offset  */
 					orig_pos = m->file_pos;
                     tmpbuf = m->buf;
-					MVPFile *m2 = _ph_map_mvpfile(filenumber, child_pos, m);
+					MVPFile *m2 = _ph_map_mvpfile(filenumber, child_pos, m, 1);
 					if (m2){
 						ret = ph_query_mvptree(m2,query,knearest,radius,results,count,level+2);
 					}
@@ -1194,7 +1198,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
 				/* save position and remap to new filenumber/position */
 				orig_pos = m->file_pos;
                 tmpbuf = m->buf;
-				MVPFile *m2 = _ph_map_mvpfile(filenumber, child_pos, m);
+				MVPFile *m2 = _ph_map_mvpfile(filenumber, child_pos, m, 1);
 				if (m2){
 					ret = ph_query_mvptree(m2,query,knearest,radius,results,count,level+2);
 				}
@@ -1648,7 +1652,7 @@ leafcleanup:
 					max_distance = distance_vector[j];
 				if (distance_vector[j] < min_distance)
 					min_distance = distance_vector[j];
-				if (level < PathLength){
+				if (level+1 < PathLength){
 					bins[i][j]->path[level+1] = distance_vector[j];
 				}
 			}
@@ -2009,7 +2013,7 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 
 		if (level < m->pathlength)
 			new_dp->path[level] = d1;
-		if (level < m->pathlength - 1)
+		if (level+1 < m->pathlength)
 			new_dp->path[level+1] = d2;
 
 		ph_free_datapoint(sv1);
@@ -2039,7 +2043,7 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 						/* save position and remap to new file/position */
 						orig_pos = m->file_pos;
                         tmpbuf = m->buf;
-						MVPFile *m2 = _ph_map_mvpfile(filenumber,child_pos,m);
+						MVPFile *m2 = _ph_map_mvpfile(filenumber,child_pos,m, 0);
 						if (m2){
 							retcode = ph_add_mvptree(m2, new_dp, level+2);
 							if (retcode != PH_SUCCESS){
@@ -2061,7 +2065,7 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 		    
 					orig_pos = m->file_pos;
                     tmpbuf = m->buf;
-					MVPFile *m2 = _ph_map_mvpfile(filenumber, child_pos, m);
+					MVPFile *m2 = _ph_map_mvpfile(filenumber, child_pos, m, 0);
 					if (m2){
 						retcode = ph_add_mvptree(m2, new_dp, level+2);
 						if (retcode != PH_SUCCESS){
@@ -2087,7 +2091,7 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 					m->file_pos += sizeof(off_t);
 		    		orig_pos = m->file_pos;
                     tmpbuf = m->buf;
-					MVPFile *m2 = _ph_map_mvpfile(filenumber,child_pos,m);
+					MVPFile *m2 = _ph_map_mvpfile(filenumber,child_pos,m, 0);
 					if (m2){
 						retcode = ph_add_mvptree(m2,new_dp,level+2);
 						if (retcode != PH_SUCCESS){
@@ -2109,7 +2113,7 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 				m->file_pos += sizeof(off_t);
 				orig_pos = m->file_pos;
                 tmpbuf = m->buf;
-				MVPFile *m2 = _ph_map_mvpfile(filenumber, child_pos, m);
+				MVPFile *m2 = _ph_map_mvpfile(filenumber, child_pos, m, 0);
 				if (m2){
 					retcode = ph_add_mvptree(m2, new_dp, level+2);
 					if (retcode != PH_SUCCESS){
