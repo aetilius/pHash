@@ -413,7 +413,7 @@ DWORD getregionsize();
  *  /return MVPFile - ptr to new struct containing the mmap info
  **/
 __declspec(dllexport)
-MVPFile* _ph_map_mvpfile(uint8_t filenumber, off_t offset, MVPFile *m);
+MVPFile* _ph_map_mvpfile(uint8_t filenumber, off_t offset, MVPFile *m, int use_existing=1);
 
 /** /brief unmap/map from m2 to m
  *  /param filenumber - uint8_t filenumber of m2
