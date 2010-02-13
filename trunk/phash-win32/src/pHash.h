@@ -62,18 +62,26 @@ __declspec(dllexport) const char *mvptag = "pHashMVPfile2009";
 
 typedef enum ph_mvp_retcode {
     PH_SUCCESS = 0,   /* success */
-    PH_ERRPGSIZE,     /* page size error */
-    PH_ERRFILE ,       /* file operations */
-    PH_ERRMMAP ,        /* mmap'ing error */
-    PH_ERRMSYNC ,       /* msync error */
-    PH_ERRTRUNC ,       /* error truncating file */
-    PH_ERRSAVEMVP,      /* could not save mvp file */
-    PH_ERRARG,   /* null arg */
-    PH_ERRMEM,       /* mem alloc error - not enough available memory */
+    PH_ERRFILEOPEN ,       /* file open error */
+    PH_ERRFILECLOSE, 
+    PH_ERRFILESETPOINTER,
+    PH_ERRFILESETEOF, 
+    PH_ERRMMAP,
+    PH_ERRMMAPCREATE ,        /* error creating file mapping object */
+    PH_ERRMMAPVIEW,            /* error creating view from file mapping object */
+    PH_ERRMMAPUNVIEW, 
+    PH_ERRMMAPFLUSH,
+    PH_ERRARG,   /* general arg error */
+    PH_ERRNULLARG,
+    PH_INSUFFPOINTS, /* not enough data points in list */
+    PH_ERRMEM,
+    PH_ERRMEMALLOC,       /* mem alloc error - not enough available memory */
     PH_ERRNTYPE,      /* unrecognized node type */
     PH_ERRCAP,     /* more results found than can be supported in ret array */
     PH_ERRFILETYPE,  /*unrecognized file type  */
-    PH_SMPGSIZE,
+    PH_ERRPGSIZE,    /* general pg size error */
+    PH_ERRPGSZINCOMP, /* incompatibility between host page size and requested page size */ 
+    PH_SMPGSIZE,     /* page size is too small - over flow error */
     PH_ERRDISTFUNC,
 }MVPRetCode;
 
@@ -412,16 +420,14 @@ DWORD getregionsize();
  *  /param m - MVPFile
  *  /return MVPFile - ptr to new struct containing the mmap info
  **/
-__declspec(dllexport)
-MVPFile* _ph_map_mvpfile(uint8_t filenumber, off_t offset, MVPFile *m, int use_existing=1);
+MVPRetCode _ph_map_mvpfile(uint8_t filenumber, off_t offset, MVPFile *m, MVPFile *m2, int use_existing=1);
 
 /** /brief unmap/map from m2 to m
  *  /param filenumber - uint8_t filenumber of m2
  *  /param orig_pos   = off_t offset into original file in m.
  *  /return void
  **/
-__declspec(dllexport)
-void _ph_unmap_mvpfile(uint8_t filenumber, off_t orig_pos, MVPFile *m, MVPFile *m2);
+MVPRetCode _ph_unmap_mvpfile(uint8_t filenumber, off_t orig_pos, MVPFile *m, MVPFile *m2);
 
 /**
  * callback function for dct image hash use in mvptree structure.

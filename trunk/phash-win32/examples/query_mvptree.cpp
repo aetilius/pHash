@@ -68,7 +68,7 @@ int main(int argc, char **argv){
 
     DP *query = ph_malloc_datapoint(mvpfile.hash_type,mvpfile.pathlength);
 
-    float radius = 40.0f;
+    float radius = 55.0f;
 	if (argc >= 4){
         radius = atof(argv[3]);
 	}
@@ -91,14 +91,18 @@ int main(int argc, char **argv){
 		nb_calcs = 0;
 		nbfound = 0;
 		int res = ph_query_mvptree(&mvpfile,query,knearest,radius,results,&nbfound);
-		if (res != PH_SUCCESS){
+		if (res == PH_ERRCAP){
+            printf("possibly more found\n");
+		} else if (res != PH_SUCCESS){
 			printf("could not complete query - %d\n",res);
 			continue;
 		}
         count++;
 		sum_calcs += nb_calcs;
 
+		nbfound = (nbfound <= knearest) ? nbfound : knearest;
 		printf(" %d files found\n", nbfound);
+        
 		for (int i=0;i<nbfound;i++){
             float d = distancefunc(query, results[i]);
 			printf("==>  %d  %s dist = %f\n", i, results[i]->id, d);
