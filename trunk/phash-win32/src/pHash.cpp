@@ -990,7 +990,6 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,DP
 		DP *sv2 = ph_read_datapoint(m);
 		if (sv1){
 			float d1 = hashdist(query,sv1);
-
 			/* check if distance(sv1,query) <= radius  */
 			if (d1 <= radius){
 				results[(*count)++] = sv1;
@@ -1002,7 +1001,6 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,DP
 
 			if (sv2){
 				float d2 = hashdist(query,sv2);
-			
 				/* check if distance(sv2,query) <= radius */
 				if (d2 <= radius){
 					results[(*count)++] = sv2;
@@ -1029,6 +1027,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,DP
 					memcpy(&db, &m->buf[m->file_pos & offset_mask], sizeof(float));
 					m->file_pos += sizeof(float);
 					if ((d1-radius <= da)&&(d1+radius >= da)&&(d2-radius <= db)&&(d2+radius >= db)){
+                    //if (1) {
 						memcpy(&point_offset, &m->buf[m->file_pos & offset_mask],sizeof(off_t));
 						m->file_pos += sizeof(off_t);
 						curr_pos = m->file_pos;
@@ -1044,6 +1043,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,DP
 							for (int j=0;j < pl;j++){
 								if (!((query->path[j]-radius <= dp->path[j])&&(query->path[j]+radius >= dp->path[j]))){
 									include = 0;
+                                    break;
 								}
 							}
 							if (include){
@@ -1065,7 +1065,6 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,DP
 		/* read sv1, sv2 */
 		DP *sv1 = ph_read_datapoint(m);
 		DP *sv2 = ph_read_datapoint(m);
-	
 		/* read 1st and 2nd level pivots */
 		float *M1 = (float*)malloc(LengthM1*sizeof(float));
 		if (!M1){
