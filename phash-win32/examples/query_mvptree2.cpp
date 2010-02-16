@@ -23,6 +23,7 @@
 */
 
 #include <stdio.h>
+#include <math.h>
 #include "pHash.h"
 
 static int nb_calcs;
@@ -30,69 +31,77 @@ static int nb_calcs;
 
 float distancefunc(DP *pa, DP *pb){
     nb_calcs++;
-    uint8_t *hashA = (uint8_t*)pa->hash;
-    uint8_t *hashB = (uint8_t*)pb->hash;
-    return (float)(1000*ph_hammingdistance2(hashA, pa->hash_length,hashB,pb->hash_length));
-
+    float d = 10*hammingdistance(pa,pb)/64;
+    float res = exp(d)-1;
+    return res;
 }
 
 
 int main(int argc, char **argv){
- 
+	if (argc < 3){
+        printf("not enough input args\n");
+	}
     const char *dir_name = argv[1];/* name of files in directory of query images */
     const char *filename = argv[2];/* name of file to save db */
-
-    int alpha = 2;
-    int lvl = 1;
 
     MVPFile mvpfile;
     ph_mvp_init(&mvpfile);
     mvpfile.filename = strdup(filename);
     mvpfile.hashdist = distancefunc;
-    mvpfile.hash_type = BYTEARRAY;
+    mvpfile.hash_type = UINT64ARRAY;
+    mvpfile.pgsize = 4096;
+    mvpfile.leafcapacity = 25;
 
     int nbfiles = 0;
     printf("using db %s\n", filename);
     printf("using dir %s for query files\n", dir_name);
     char **files = ph_readfilenames(dir_name,nbfiles);
     if (!files){
-	printf("mem alloc error\n");
-	exit(1);
+		printf("mem alloc error\n");
+		exit(1);
     }
 
     printf("nb query files = %d\n", nbfiles);
 
     DP *query = ph_malloc_datapoint(mvpfile.hash_type,mvpfile.pathlength);
+    query->hash = malloc(sizeof(ulong64));
 
-    float radius = 200.0f;
-    const int knearest = 20;
+    float radius = 50.0f;
+    if (argc >= 4) radius = atof(argv[3]);
+    int knearest = 20;
+    if (argc >=5) knearest = atoi(argv[4]);
+    float threshold = 26.0f;
+    if (argc >= 6) threshold = atof(argv[5]);
+
     DP **results = (DP**)malloc(knearest*sizeof(DP**));
     int nbfound = 0, count = 0, sum_calcs = 0;
-    int hashlength;
+    ulong64 tmphash;
     for (int i=0;i<nbfiles;i++){
-	printf("query[%d]: %s\n", i, files[i]);
+		printf("query[%d]: %s\n", i, files[i]);
+		query->id = files[i];
+		if (ph_dct_imagehash(files[i],tmphash)<0){
+           printf("unable to get hash\n");
+           continue;
+		}
+		*((ulong64*)query->hash) = tmphash;
+		query->hash_length = 1;
 
-	query->id = files[i];
-	query->hash = ph_mh_imagehash(files[i],hashlength,alpha,lvl);
-	query->hash_length = hashlength;
-
-	printf("do query ...\n");
-	nb_calcs = 0;
-	nbfound = 0;
-	int res = ph_query_mvptree(&mvpfile,query,knearest,radius,results,&nbfound);
-	if (res != 0){
-	    printf("could not complete query\n");
-	    continue;
-	}
+		printf("do query ...\n");
+		nb_calcs = 0;
+		nbfound = 0;
+		int res = ph_query_mvptree(&mvpfile,query,knearest,radius,threshold,results,&nbfound);
+		if (res != PH_SUCCESS){
+			printf("could not complete query, error %d\n",res);
+			continue;
+		}
         count++;
-	sum_calcs += nb_calcs;
+		sum_calcs += nb_calcs;
 
-	printf(" %d files found\n", nbfound);
-	for (int i=0;i<nbfound;i++){
-	    printf(" %d  %s\n", i, results[i]->id);
-	}
-	printf("nb distance calcs: %d\n", nb_calcs);
-	free(query->hash);
+		printf(" %d files found, %d calcs\n", nbfound,nb_calcs);
+		for (int i=0;i<nbfound;i++){
+			printf(" %d  %s distance = %f\n", i, results[i]->id, distancefunc(results[i],query));
+		}
+        printf("**************************\n");
     } 
    float ave_calcs = (float)sum_calcs/(float)count;      
    printf("ave calcs/query: %f\n", ave_calcs);
