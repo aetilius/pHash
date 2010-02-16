@@ -73,13 +73,18 @@ const char mvptag[] = "pHashMVPfile2009";
 typedef enum ph_mvp_retcode {
     PH_SUCCESS = 0,   /* success */
     PH_ERRPGSIZE,     /* page size error */
-    PH_ERRFILE,       /* file operations */
+    PH_ERRSMPGSIZE,
+    PH_ERRFILEOPEN,       /* file open err */
+    PH_ERRFILETRUNC,
+    PH_ERRFILESEEK,
     PH_ERRMMAP,        /* mmap'ing error */
     PH_ERRMSYNC,       /* msync error */
     PH_ERRTRUNC,       /* error truncating file */
     PH_ERRSAVEMVP,      /* could not save mvp file */
-    PH_ERRARG,   /* null arg */
-    PH_ERRMEM,       /* mem alloc error - not enough available memory */
+    PH_ERRARG,   /* general arg err*/
+    PH_ERRNULLARG,   /* null arg */
+    PH_ERRMEM,       /* general memory error  */
+    PH_ERRMEMALLOC,  /* mem alloc error */
     PH_ERRNTYPE,      /* unrecognized node type */
     PH_ERRCAP,     /* more results found than can be supported in ret array */
     PH_ERRFILETYPE,  /*unrecognized file type  */
@@ -117,6 +122,7 @@ typedef struct ph_mvp_file {
     char *buf;
     off_t file_pos;
     int fd;
+    uint8_t filenumber;
     uint8_t nbdbfiles;
     uint8_t branchfactor; /*branch factor of tree, M(=2)*/
 
@@ -334,7 +340,7 @@ DP** ph_read_imagehashes(const char *dirname,int capacity, int &count);
 *   /param lvl   - int level of scale factor (default = 1)
 *   /return uint8_t array
 **/
-uint8_t* ph_mh_imagehash(const char *filename, int &N, int alpha=2, int lvl = 1);
+uint8_t* ph_mh_imagehash(const char *filename, int &N, float alpha=2.0f, float lvl = 1.0f);
 
 /** /brief count number bits set in given byte
 *   /param val - uint8_t byte value
@@ -386,14 +392,14 @@ off_t ph_save_datapoint(DP *new_dp, MVPFile *m);
  *  /param m - MVPFile
  *  /return MVPFile - ptr to new struct containing the mmap info
  **/
-MVPFile* _ph_map_mvpfile(uint8_t filenumber, off_t offset, MVPFile *m);
+MVPRetCode _ph_map_mvpfile(uint8_t filenumber, off_t offset, MVPFile *m, MVPFile *m2);
 
 /** /brief unmap/map from m2 to m
  *  /param filenumber - uint8_t filenumber of m2
  *  /param orig_pos   = off_t offset into original file in m.
  *  /return void
  **/
-void _ph_unmap_mvpfile(uint8_t filenumber, off_t orig_pos, MVPFile *m, MVPFile *m2);
+MVPRetCode _ph_unmap_mvpfile(uint8_t filenumber, off_t orig_pos, MVPFile *m, MVPFile *m2);
 
 /**
  * callback function for dct image hash use in mvptree structure.
@@ -410,8 +416,8 @@ float hammingdistance(DP *pntA, DP *pntB);
  *  /param level - int value to track recursion depth.
  *  /return MVPRetCode
 **/
-static MVPRetCode _ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
-			    DP **results, int *count, int level);
+static MVPRetCode _ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, 
+                float threshold, DP **results, int *count, int level);
 
 /**  /brief query mvptree function
  *   /param m - MVPFile file state info
@@ -422,7 +428,7 @@ static MVPRetCode _ph_query_mvptree(MVPFile *m, DP *query, int knearest, float r
  *   /param count -  int number of results found (out)
  **/
 MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
-			    DP **results, int *count);
+		float threshold,   DP **results, int *count);
 
 /** /brief save dp points to a file (aux func)
  *  /param m - MVPFile state information of file
@@ -432,7 +438,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
  *  /param level - int track recursion level
  *  /return FileIndex* - fileno and offset into file.
 **/
-static FileIndex* _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_flag, int level);
+static MVPRetCode _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_flag, int level,FileIndex *pOffset);
 
 /** /brief save points to mvp file 
  *  /param m - MVPFile state info of file
@@ -457,7 +463,7 @@ static MVPRetCode _ph_add_mvptree(MVPFile *m, DP *new_dp, int level);
     /param nbpoints - int number of points
     /return int - number of points added, neg for error
 **/
-int ph_add_mvptree(MVPFile *m, DP **points, int nbpoints);
+MVPRetCode ph_add_mvptree(MVPFile *m, DP **points, int nbpoints, int &nbsaved);
 
 /** /brief textual hash for file
  *  /param filename - char* name of file
