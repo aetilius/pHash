@@ -117,6 +117,7 @@ typedef struct ph_mvp_file {
     off_t file_pos;
     int fd;
     HANDLE fh;
+    uint8_t filenumber;
     uint8_t nbdbfiles;
     uint8_t branchfactor; /*branch factor of tree, M(=2)*/
 
@@ -359,7 +360,7 @@ DP** ph_read_imagehashes(const char *dirname,int capacity, int &count);
 *   /return uint8_t array
 **/
 __declspec(dllexport) 
-uint8_t* ph_mh_imagehash(const char *filename, int &N, int alpha=2, int lvl = 1);
+uint8_t* ph_mh_imagehash(const char *filename, int &N, float alpha=2.0f, float lvl = 1.0f);
 
 /** /brief count number bits set in given byte
 *   /param val - uint8_t byte value
@@ -446,7 +447,7 @@ float hammingdistance(DP *pntA, DP *pntB);
  *  /return MVPRetCode
 **/
 __declspec(dllexport)
-MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
+MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, float threshold,
 			    DP **results, int *count, int level);
 
 /**  /brief query mvptree function
@@ -458,7 +459,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
  *   /param count -  int number of results found (out)
  **/
 __declspec(dllexport)
-MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
+MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, float threshold, 
 			    DP **results, int *count);
 
 /** /brief save dp points to a file (aux func)

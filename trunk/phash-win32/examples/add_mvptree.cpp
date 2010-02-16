@@ -43,8 +43,8 @@ int main(int argc, char **argv){
     const char *dir_name = argv[1];/* name of dir to retrieve image files */
     const char *filename = argv[2];/* name of file to save db */
 
-    int alpha = 2;
-    int lvl  = 1;
+    float alpha = 2.0f;
+    float lvl  = 1.0f;
 
     MVPFile mvpfile;
     ph_mvp_init(&mvpfile);

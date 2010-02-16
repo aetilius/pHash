@@ -47,8 +47,8 @@ int main(int argc, char **argv){
     const char *dir_name = argv[1];/* name of files in directory of query images */
     const char *filename = argv[2];/* name of file to save db */
 
-    int alpha = 2;
-    int lvl = 1;
+    float alpha = 2.0f;
+    float lvl = 1.0f;
 
     MVPFile mvpfile;
     ph_mvp_init(&mvpfile);
@@ -68,7 +68,7 @@ int main(int argc, char **argv){
 
     DP *query = ph_malloc_datapoint(mvpfile.hash_type,mvpfile.pathlength);
 
-    float radius = 55.0f;
+    float radius = 80.0f;
 	if (argc >= 4){
         radius = atof(argv[3]);
 	}
@@ -76,7 +76,11 @@ int main(int argc, char **argv){
 	if (argc >= 5){
         knearest = atoi(argv[4]);
 	}
-    printf("radius = %f, knearest = %d\n", radius, knearest);
+    float threshold = 55.0f;
+	if (argc >= 6){
+        threshold = atof(argv[5]);
+	}
+    printf("radius = %f, knearest = %d, threshold = %f\n", radius, knearest,threshold);
 
     DP **results = (DP**)malloc(knearest*sizeof(DP**));
     int nbfound = 0, count = 0, sum_calcs = 0;
@@ -90,7 +94,7 @@ int main(int argc, char **argv){
 	   
 		nb_calcs = 0;
 		nbfound = 0;
-		int res = ph_query_mvptree(&mvpfile,query,knearest,radius,results,&nbfound);
+		int res = ph_query_mvptree(&mvpfile,query,knearest,radius,threshold,results,&nbfound);
 		if (res == PH_ERRCAP){
             printf("possibly more found\n");
 		} else if (res != PH_SUCCESS){
