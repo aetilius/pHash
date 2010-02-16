@@ -34,14 +34,14 @@ float distancefunc(DP *pa, DP *pb){
     uint8_t *hashA = (uint8_t*)pa->hash;
     uint8_t *hashB = (uint8_t*)pb->hash;
     float d = 10*ph_hammingdistance2(hashA, pa->hash_length, hashB, pb->hash_length);
-    float result = exp(d);
+    float result = exp(d)-1;
     return result;
 
 }
 
 
 int main(int argc, char **argv){
-    if (argc <= 3){
+    if (argc < 3){
 	printf("not enough input args\n");
 	return 1;
     }
@@ -49,14 +49,16 @@ int main(int argc, char **argv){
     const char *dir_name = argv[1];/* name of files in directory of query images */
     const char *filename = argv[2];/* name of file to save db */
 
-    int alpha = 2;
-    int lvl = 2;
+    float alpha = 2.0f;
+    float lvl = 1.0f;
 
     MVPFile mvpfile;
     ph_mvp_init(&mvpfile);
     mvpfile.filename = strdup(filename);
     mvpfile.hashdist = distancefunc;
     mvpfile.hash_type = BYTEARRAY;
+    mvpfile.pgsize = 8192;
+    mvpfile.leafcapacity = 46;
 
     int nbfiles = 0;
     printf("using db %s\n", filename);
@@ -71,19 +73,26 @@ int main(int argc, char **argv){
 
     DP *query = ph_malloc_datapoint(mvpfile.hash_type,mvpfile.pathlength);
     
-    float radius;
-    if (argc <= 4){
+    float radius = 80.0f;
+    float threshold = 55.0f;
+    int knearest = 20;
+    if (argc >= 4){
 	char *radius_str = argv[3];
 	radius = atof(radius_str);
-    } else {
-	radius = 30.0f;
+    }
+    if (argc >= 5){
+	knearest = atoi(argv[4]);
+    }
+    if (argc >= 6){
+        threshold = atof(argv[5]);
     }
     printf("radius = %f\n", radius);
-
-    const int knearest = 20;
+    printf("knearest = %d\n", knearest);
+    printf("threshold = %f\n", threshold);
     DP **results = (DP**)malloc(knearest*sizeof(DP**));
     int nbfound = 0, count = 0, sum_calcs = 0;
     int hashlength;
+    float d;
     for (int i=0;i<nbfiles;i++){
 	printf("query[%d]: %s\n", i, files[i]);
 
@@ -94,17 +103,18 @@ int main(int argc, char **argv){
 	printf("do query ...\n");
 	nb_calcs = 0;
 	nbfound = 0;
-	int res = ph_query_mvptree(&mvpfile,query,knearest,radius,results,&nbfound);
+	int res = ph_query_mvptree(&mvpfile,query,knearest,radius,threshold,results,&nbfound);
 	if (res != 0){
-	    printf("could not complete query\n");
+	    printf("could not complete query, %d\n",res);
 	    continue;
 	}
         count++;
 	sum_calcs += nb_calcs;
-
+	
 	printf(" %d files found\n", nbfound);
 	for (int i=0;i<nbfound;i++){
-	    printf(" %d  %s\n", i, results[i]->id);
+	    d = distancefunc(query, results[i]);
+	    printf(" %d  %s distance = %f\n", i, results[i]->id, d);
 	}
 	printf("nb distance calcs: %d\n", nb_calcs);
 	free(query->hash);

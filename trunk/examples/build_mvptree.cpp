@@ -35,7 +35,7 @@ float distancefunc(DP *pa, DP *pb){
     uint8_t *hashA = (uint8_t*)pa->hash;
     uint8_t *hashB = (uint8_t*)pb->hash;
     float d = 10*ph_hammingdistance2(hashA,pa->hash_length,hashB,pb->hash_length);
-    float res = exp(d);
+    float res = exp(d)-1;
     return res;
 }
 
@@ -48,15 +48,16 @@ int main(int argc, char **argv){
     const char *dir_name = argv[1];/* name of dir to retrieve image files */
     const char *filename = argv[2];/* name of file to save db */
 
-    int alpha = 2;
-    int lvl = 2;
+    float alpha = 2.0f;
+    float lvl = 1.0f;
 
     MVPFile mvpfile;
     ph_mvp_init(&mvpfile);
     mvpfile.filename = strdup(filename);
     mvpfile.hashdist = distancefunc;
     mvpfile.hash_type = BYTEARRAY;
-
+    mvpfile.pgsize = 8192;
+    mvpfile.leafcapacity = 45;    
 
     int nbfiles = 0;
     printf("dir name: %s\n", dir_name);
@@ -91,11 +92,9 @@ int main(int argc, char **argv){
         count++;
     }
  
-
-    if (ph_save_mvptree(&mvpfile, hashlist, count) < 0){
-	printf("unable to save %s\n", filename);
-	exit(1);
-    }
+    
+    MVPRetCode ret = ph_save_mvptree(&mvpfile, hashlist, count);
+    printf("save: ret code %d", ret);
 
     return 0;
 }

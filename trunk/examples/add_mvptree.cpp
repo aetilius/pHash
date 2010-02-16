@@ -31,7 +31,7 @@ float distancefunc(DP *pa, DP *pb){
     uint8_t *hashA = (uint8_t*)pa->hash;
     uint8_t *hashB = (uint8_t*)pb->hash;
     float d = 10*ph_hammingdistance2(hashA,pa->hash_length, hashB, pb->hash_length);
-    float res = exp(d);
+    float res = exp(d)-1;
     return res;
 }
 
@@ -44,15 +44,16 @@ int main(int argc, char **argv){
     const char *dir_name = argv[1];/* name of dir to retrieve image files */
     const char *filename = argv[2];/* name of file to save db */
 
-    int alpha = 2;
-    int lvl  = 2;
+    float alpha = 2.0f;
+    float lvl  = 1.0f;
 
     MVPFile mvpfile;
     ph_mvp_init(&mvpfile);
     mvpfile.filename = strdup(filename);
     mvpfile.hashdist = distancefunc;
     mvpfile.hash_type = BYTEARRAY;
-   
+    mvpfile.pgsize = 8192;
+    mvpfile.leafcapacity = 46;
 
     int nbfiles = 0;
     printf("dir name: %s\n", dir_name);
@@ -87,11 +88,9 @@ int main(int argc, char **argv){
     }
 
     printf("add files to file %s\n", filename);
-    int n = ph_add_mvptree(&mvpfile, hashlist, count);
-    printf("number saved %d out of %d\n", n,count);
-    if (n <= 0){
-	printf("unable to add points to %s\n", filename);
-    }
+    int nbsaved;
+    MVPRetCode ret = ph_add_mvptree(&mvpfile, hashlist, count,nbsaved);
+    printf("number saved %d out of %d, ret code %d\n", nbsaved,count,ret);
 
     return 0;
 }
