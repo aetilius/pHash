@@ -218,8 +218,7 @@ float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, i
             buflen += 2*cnt;
 	    }   
 	   for (int i=0;i<cnt;i++){
-	       buf[index+i] = ((float)out_buf16[i]/(float)SHRT_MAX);
-
+           buf[index+i] = (float)out_buf16[i]/(float)SHRT_MAX;
 	   }
 
        cap   += cnt;
