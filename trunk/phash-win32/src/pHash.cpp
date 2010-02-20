@@ -1345,8 +1345,6 @@ MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
     off_t offset_mask = m->pgsize - 1;
     off_t page_mask = ~(m->pgsize - 1);
 
-	fprintf(stderr,"savemvptree: level %d, nbpoints %d\n", level, nbpoints);
-
     if (nbpoints <= LeafCapacity + 2){ /* leaf */
 		uint8_t ntype = 0;
 		MVPFile m2;
@@ -1356,7 +1354,6 @@ MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 		m2.pgsize = m->pgsize;
 		m2.hashdist = hashdist;
         m2.hash_type = m->hash_type;
-
 		/* open new file */
 		char extfile[256];
 		snprintf(extfile, sizeof(extfile),"%s%d.mvp", m->filename, m->nbdbfiles);
@@ -1422,11 +1419,9 @@ MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
         DP *sv1=NULL, *sv2=NULL;
 		if (sv1_pos >= 0){
 			sv1 = points[sv1_pos];
-			fprintf(stderr,"sv1: %s\n", sv1->id);
 		}
 		if (sv2_pos >= 0) {
             sv2 = points[sv2_pos];
-			fprintf(stderr,"sv2: %s\n", sv2->id);
 		}
 		/* if file pos is beyond pg size*/
 		if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,&m2) > m->pgsize)
@@ -1532,9 +1527,6 @@ leafcleanup:
 		ph_selectvantagepoints(m, points, nbpoints,sv1_pos,sv2_pos,max_distance,min_distance);
 		DP *sv1 = points[sv1_pos]; 
 		DP *sv2 = points[sv2_pos];
-
-		if (sv1) fprintf(stderr,"sv1: %s\n", sv1->id);
-		if (sv2) fprintf(stderr,"sv2: %s\n", sv2->id);
 
 		/* save sv1, sv2 */
 		ph_save_datapoint(sv1, m);
