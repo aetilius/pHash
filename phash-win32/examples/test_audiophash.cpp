@@ -96,42 +96,12 @@ int main(int argc, char **argv){
          tmpbuf = ph_readaudio(files1[i], sr, channels, buf, buflen1);
          if (!tmpbuf) continue;
          buf  = tmpbuf;
-
-         hash1 = ph_audiohash(buf, buflen1, hashes+hash_index, hashN, sr, nbframes1);
-         if (!hash1) continue;
-         hash_index += nbframes1;
-
-         HashList1[i].filename = files1[i];
-         HashList1[i].hash = hash1;
-         HashList1[i].length = nbframes1;
-
-          printf("  files2[%d] = %s\n", i, files2[i]);
-          buflen2 = buflen;
-          tmpbuf = ph_readaudio(files2[i], sr, channels, buf, buflen2);
-          if (!tmpbuf) continue;
-          buf = tmpbuf;
-
-          hash2 = ph_audiohash(buf, buflen2, hashes+hash_index, hashN, sr, nbframes2);
-          if (!hash2) continue;
-          hash_index += nbframes2;
-
-
-          dist = ph_audio_distance_ber(hash1, nbframes1, hash2, nbframes2, threshold, bs, Nc);
-		  if (!dist){
-              printf("unable to get conf vector\n");
-              continue;
-		  }
-          double maxC = 0.0;
-		  for (int j=0;j<Nc;j++){
-              if (dist[j] > maxC)
-                  maxC = dist[j];
-		  }
-          printf("cs = %f\n", maxC);
-
-          free(dist);
-
+		 for (int j=0;j<buflen1;j++){
+             printf("buf[%d]=%f\n", j, buf[j]);
+		 }
+        printf("hit any key\n");
+        getchar();  
 	}
-
     printf("hit any key to continue\n");
     getchar();
     printf("inter distances\n");

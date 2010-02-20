@@ -57,12 +57,11 @@ int main(int argc, char **argv){
 
     printf("nb query files = %d\n", nbfiles);
 
-    DP *query = NULL;
-    float radius = 1000.0f;
+    float radius = 700.0f;
     if (argc >= 4) radius = atof(argv[3]);
     int knearest = 20;
     if (argc >= 5) knearest = atoi(argv[4]);
-    float threshold = 400.0f;
+    float threshold = 300.0f;
     if (argc >=6) threshold = atof(argv[5]);
 
     DP **results = (DP**)malloc(knearest * sizeof(DP**));
@@ -72,14 +71,28 @@ int main(int argc, char **argv){
     }
     
 	int nbfound = 0, count = 0, sum_calcs = 0;
-    float *buf;
-    int N = 0;
+    float *buf=NULL;
+    float *sigbuf = (float*)malloc((1<<26)*sizeof(float));
+	if (!sigbuf){
+        printf("mem alloc error\n");
+        exit(1);
+	}
+    int buflen = (1<<26)/sizeof(float);
+    int N;
     uint32_t *hash;
     int hashlen = 0;
+
+    DP *query = ph_malloc_datapoint(mvpfile.hash_type,mvpfile.pathlength);
+	if (!query){
+        printf("could not alloc datapoint\n");
+        exit(1);
+	}
+
     printf("******************************\n");
     for (int i=0;i<nbfiles;i++){
 		printf("file[%d]: %s\n", i, files[i]);
-		buf = ph_readaudio(files[i], sr, nbchannels, NULL, N);
+        N = buflen;
+		buf = ph_readaudio(files[i], sr, nbchannels, sigbuf, N);
 		if (!buf){
 			printf("could not read audio\n");
 			continue;
@@ -90,13 +103,7 @@ int main(int argc, char **argv){
 			free(buf);
 			continue;
 		}
-        query = ph_malloc_datapoint(mvpfile.hash_type,mvpfile.pathlength);
-        if (!query){
-			printf("mem alloc error\n");
-            free(buf);
-			free(hash);
-			break;
-		}
+  
 		query->id = strdup(files[i]);
 		query->hash = hash;
 		query->hash_length = hashlen;
@@ -116,8 +123,8 @@ int main(int argc, char **argv){
 			printf("    %d  %s dist = %f\n", i, results[i]->id, audiohashdistance(results[i], query));
 		}
         printf("******************************************\n");
-		free(query);
-		free(buf);
+
+	    free(query->id);
 		free(hash);
     } 
    float ave_calcs = (float)sum_calcs/(float)count;      
