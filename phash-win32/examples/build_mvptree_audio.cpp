@@ -29,8 +29,6 @@
 
 
 float distancefunc(DP *pa, DP *pb){
-  fprintf(stderr,"  distfunc: pa %s  %p hash length %u\n",pa->id,pa->hash, pa->hash_length);
-  fprintf(stderr,"  distfunc: pb %s  %p hash length %u\n",pb->id,pa->hash, pb->hash_length);
   int Nc;
   float threshold =  0.30f;
   int block_size = 256;
@@ -64,7 +62,7 @@ int main(int argc, char **argv){
     MVPFile mvpfile;
     ph_mvp_init(&mvpfile);
     mvpfile.leafcapacity = 10;
-    mvpfile.pgsize = 1 << 16; /* 131,072 */
+    mvpfile.pgsize = 1 << 17; /* 131,072 */
     mvpfile.filename = strdup(filename);
     mvpfile.hashdist = distancefunc;
     mvpfile.hash_type = UINT32ARRAY;
@@ -85,16 +83,12 @@ int main(int argc, char **argv){
     }
     
     int count = 0;
-    float *sigbuf = new float[1<<27];
-    int buflen = (1<<27)/sizeof(float);
-    printf("sigbuf at %p to %p\n", sigbuf, sigbuf+buflen);
-    printf("length %d\n", buflen);
-
-    uint32_t *hashspace = new uint32_t[1<<20];
-    int hashspacelength = (1<<20)/sizeof(uint32_t);
-    printf("hashspace %p to %p\n\n", hashspace, hashspace+hashspacelength);
-    printf("length %d\n", hashspacelength);
-
+    float *sigbuf = new float[1<<20];
+    int buflen = (1<<20);
+ 
+    uint32_t *hashspace = new uint32_t[1<<18];
+    int hashspacelength = (1<<18);
+ 
     float *buf;
     uint32_t *hash = hashspace;
     int hashspaceleft = hashspacelength;
@@ -104,26 +98,24 @@ int main(int argc, char **argv){
         hashlist[count] = ph_malloc_datapoint(mvpfile.hash_type,mvpfile.pathlength);
 		if (hashlist[count] == NULL){
 			printf("mem alloc error\n");
-			exit(1);
+			continue;
 		}
 		hashlist[count]->id = files[i];
-
-        buflen = (1<<27)/sizeof(float);
+        buflen = (1<<20);
         buf = ph_readaudio(files[i], 8000, 1, sigbuf, buflen);
-		printf("     buf %p to %p\n", buf, buf+buflen);
-        printf("     length %d\n", buflen);
 		if (buf == NULL){
             printf("unable to get signal\n");
-            exit(1);
+            continue;
 		}
+        printf("sig buffer length %d\n", buflen);
+
         hash = ph_audiohash(buf, buflen, hash, hashspaceleft, 8000, nbframes);
-        printf("     hash %p to %p\n", hash, hash+nbframes);
-        printf("     length %d\n\n\n", nbframes);
 		hashlist[count]->hash = hash;
 		if (hashlist[count]->hash == NULL){
 			printf("unable to get hash\n\n");
-			exit(1);
+			continue;
 		}
+        printf("hash length %d\n", nbframes);
 		hashlist[count]->hash_length = (uint16_t)nbframes;
         
         hash += nbframes;

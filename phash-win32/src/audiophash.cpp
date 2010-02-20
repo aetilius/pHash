@@ -168,8 +168,10 @@ float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, i
     
     float *buf; 
 	if ((!sigbuf)||(buflen <= duration)){
-        buf = (float*)av_malloc(duration*sizeof(float)); /* alloc buffer */
-        buflen = (int)duration;
+        //buf = (float*)av_malloc(duration*sizeof(float)); /* alloc buffer */
+        //buflen = (int)duration;
+        buflen = 0; /* buffer too small, bail out */
+        return NULL;
 	}
 	else {
         buf = sigbuf;   /* use buffer handed in param */     
@@ -189,9 +191,9 @@ float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, i
 	    return NULL; // Could not open codec
 	}
 
-	uint8_t *in_buf = (uint8_t*)malloc(AVCODEC_MAX_AUDIO_FRAME_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
+	uint8_t *in_buf = (uint8_t*)av_malloc(AVCODEC_MAX_AUDIO_FRAME_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
     int in_buf_used, numbytesread, buf_size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
-	uint8_t *out_buf = (uint8_t*)malloc(AVCODEC_MAX_AUDIO_FRAME_SIZE);
+	uint8_t *out_buf = (uint8_t*)av_malloc(AVCODEC_MAX_AUDIO_FRAME_SIZE);
     int16_t *out_buf16 = (int16_t*)out_buf;
 
 	ReSampleContext *rs_ctx = audio_resample_init(channels, src_channels, sr, src_sr);
@@ -220,8 +222,8 @@ float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, i
 	}
 
 readaudio_cleanup:
-	free(in_buf);
-	free(out_buf);
+	av_free(in_buf);
+	av_free(out_buf);
 	audio_resample_close(rs_ctx);
 	avcodec_close(pCodecCtx);
 	av_close_input_file(pFormatCtx);
