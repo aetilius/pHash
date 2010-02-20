@@ -167,13 +167,13 @@ float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, i
     int src_channels = pCodecCtx->channels;
     
     float *buf; 
-	if ((!sigbuf)&&(buflen < 0)){
+	if ((!sigbuf)||(buflen <= duration)){
         buf = (float*)av_malloc(duration*sizeof(float)); /* alloc buffer */
         buflen = (int)duration;
 	}
-	else
+	else {
         buf = sigbuf;   /* use buffer handed in param */     
-
+	}
 	AVCodec *pCodec;
 
 	// Find the decoder
@@ -203,28 +203,23 @@ float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, i
 	    in_buf_used = buf_size;
 	    numbytesread = avcodec_decode_audio2(pCodecCtx,(int16_t*)in_buf,&in_buf_used,packet.data,packet.size);  
 	    if (numbytesread <= 0){
-		fprintf(stderr,"error reading from audiostream\n");
 		    continue;
 	    }
 	    int cnt = audio_resample(rs_ctx,(short*)out_buf,(short*)in_buf,(int)(in_buf_used/sizeof(int16_t)));
-			
-	    if (cap + cnt > buflen){
-			float *tmpbuf = (float*)realloc(buf,(buflen + 2*cnt)*sizeof(float));
-			if (!tmpbuf){
-				buflen=0;
-				return NULL;
-			}
-			buf = tmpbuf;
-            buflen += 2*cnt;
-	    }   
-	   for (int i=0;i<cnt;i++){
+		if (index + cnt > buflen){ /*exceeds capacity of buffer, bail out */ 
+            buf = NULL;
+            buflen = 0;
+            goto readaudio_cleanup;
+		}	
+		for (int i=0;i<cnt;i++){
            buf[index+i] = (float)out_buf16[i]/(float)SHRT_MAX;
-	   }
+		}
 
-       cap   += cnt;
-       index += cnt;
+		cap   += cnt;
+		index += cnt;
 	}
 
+readaudio_cleanup:
 	free(in_buf);
 	free(out_buf);
 	audio_resample_close(rs_ctx);
@@ -236,7 +231,7 @@ float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, i
 } 
 
 __declspec(dllexport)
-uint32_t* ph_audiohash(float *buf, int nbbuf, uint32_t *hashbuf, int nbcap, int sr,int &nbframes){
+uint32_t* ph_audiohash(const float *buf, const int nbbuf, uint32_t *hashbuf, const int nbcap, const int sr,int &nbframes){
 
    const int frame_length = 4096;//2^12
    int nfft = frame_length;
@@ -280,10 +275,17 @@ uint32_t* ph_audiohash(float *buf, int nbbuf, uint32_t *hashbuf, int nbcap, int 
        prev_bark[i] = 0.0;
    }
    uint32_t *hash = NULL;
-   if (!hashbuf || (nbframes > nbcap))
-	   hash = (uint32_t*)malloc(nbframes*sizeof(uint32_t)); /*must allocate new buffer */
-   else
+   if (!hashbuf || (nbframes > nbcap)){
+	   //hash = (uint32_t*)malloc(nbframes*sizeof(uint32_t)); /*must allocate new buffer */
+       free(pF);
+       delete [] freqs;
+       delete [] binbarks;
+       nbframes = 0; /*hash buf not big enough, bail out */
+       return NULL;
+   }
+   else {
        hash = hashbuf; /*use buf provided in parameters */
+   }
 
    double lof,hif;
 
@@ -298,7 +300,7 @@ uint32_t* ph_audiohash(float *buf, int nbbuf, uint32_t *hashbuf, int nbcap, int 
    }
    for (int i=0;i<nfilts;i++){
        for (int j=0;j<nfft_half;j++){
-	   wts[i][j] = 0.0;
+		   wts[i][j] = 0.0;
        }
    }
   
@@ -320,46 +322,51 @@ uint32_t* ph_audiohash(float *buf, int nbbuf, uint32_t *hashbuf, int nbcap, int 
        maxF = 0.0;
        maxB = 0.0;
        for (int i = 0;i<frame_length;i++){
-	   frame[i] = window[i]*buf[start+i];
+		   frame[i] = window[i]*buf[start+i];
        }
        fft(frame, frame_length, pF);
 
        for (int i=0; i < nfft_half;i++){
-	   magnF[i] = sqrt(pF[i].re*pF[i].re + pF[i].im*pF[i].im);
-	   if (magnF[i] > maxF)
-	       maxF = magnF[i];
-       }
+		   magnF[i] = sqrt(pF[i].re*pF[i].re + pF[i].im*pF[i].im);
+		   if (magnF[i] > maxF)
+			   maxF = magnF[i];
+	   }
 
        for (int i=0;i<nfilts;i++){
-	   curr_bark[i] = 0;
-	   for (int j=0;j < nfft_half;j++){
-	       curr_bark[i] += wts[i][j]*magnF[j];
+		   curr_bark[i] = 0;
+		   for (int j=0;j < nfft_half;j++){
+			   curr_bark[i] += wts[i][j]*magnF[j];
+		   }
+		   if (curr_bark[i] > maxB)
+			   maxB = curr_bark[i];
 	   }
-           if (curr_bark[i] > maxB)
-	       maxB = curr_bark[i];
-       }
 
        uint32_t curr_hash = 0x00000000u;
        for (int m=0;m<nfilts-1;m++){
-	   double H = curr_bark[m] - curr_bark[m+1] - (prev_bark[m] - prev_bark[m+1]);
-	   curr_hash = curr_hash << 1;
-	   if (H > 0)
-	       curr_hash |= 0x00000001;
-       }
+		   double H = curr_bark[m] - curr_bark[m+1] - (prev_bark[m] - prev_bark[m+1]);
+		   curr_hash = curr_hash << 1;
+		   if (H > 0)
+			   curr_hash |= 0x00000001;
+	   }
 
 
        hash[index] = curr_hash;
        for (int i=0;i<nfilts;i++){
-	   prev_bark[i] = curr_bark[i];
+		   prev_bark[i] = curr_bark[i];
        }
        index += 1;
        start += advance;
        end   += advance;
    }
+
+   free(pF);
+   delete [] freqs;
+   delete [] binbarks;
    for (int i=0;i<nfilts;i++){
        delete [] wts[i];
    }
    delete [] wts;
+
    return hash;
 }
 __declspec(dllexport)
@@ -378,9 +385,9 @@ int ph_bitcount(uint32_t n){
 }
 __declspec(dllexport)
 double ph_compare_blocks(const uint32_t *ptr_blockA,const uint32_t *ptr_blockB, const int block_size){
-    double result = 0;
+    double result = 0.0f;
     for (int i=0;i<block_size;i++){
-	uint32_t xordhash = ptr_blockA[i]^ptr_blockB[i];
+		uint32_t xordhash = ptr_blockA[i]^ptr_blockB[i];
         result += ph_bitcount(xordhash);
     }
     result = result/(32*block_size);
@@ -388,80 +395,67 @@ double ph_compare_blocks(const uint32_t *ptr_blockA,const uint32_t *ptr_blockB, 
 }
 __declspec(dllexport)
 double* ph_audio_distance_ber(uint32_t *hash_a , const int Na, uint32_t *hash_b, const int Nb, const float threshold, const int block_size, int &Nc){
-
     uint32_t *ptrA, *ptrB;
     int N1, N2;
     if (Na <= Nb){
-	ptrA = hash_a;
-	ptrB = hash_b;
-	Nc = Nb - Na + 1;
-	N1 = Na;
+		ptrA = hash_a;
+		ptrB = hash_b;
+		Nc = Nb - Na + 1;
+		N1 = Na;
         N2 = Nb;
     } else {
-	ptrB = hash_a;
-	ptrA = hash_b;
-	Nc = Na - Nb + 1;
-	N1 = Nb;
-	N2 = Na;
-    }
+		ptrB = hash_a;
+		ptrA = hash_b;
+		Nc = Na - Nb + 1;
+		N1 = Nb;
+		N2 = Na;
+	}
 
-    double *pC = new double[Nc];
-    if (!pC)
-	return NULL;
-    int k,M,nb_above, nb_below, hash1_index,hash2_index;
-    double sum_above, sum_below,above_factor, below_factor;
-
-    uint32_t *pha,*phb;
-    double *dist = NULL;
-
+    double *pC=NULL;
+	if ((N1 < block_size) || (N2 < block_size)){
+        Nc = 0;
+        return NULL;
+	} 
+    pC = new double[Nc];
+	if (pC == NULL){
+        Nc = 0;
+        return NULL;
+	}
+    int M = (int)((float)N1/(float)block_size);
+    double *dist = new double[M];
+	if (!dist){
+         delete pC;
+         Nc = 0;
+         return NULL;
+	}
     for (int i=0; i < Nc;i++){
+        uint32_t *pha = ptrA;
+        uint32_t *phb = ptrB + i;
+        int k=0;
+		while (k < M){	
+			dist[k++] = ph_compare_blocks(pha,phb,block_size);
+            pha += block_size;
+            phb += block_size;
+		};
+		double sum_above = 0.0f;
+		double sum_below = 0.0f;
+		int nb_above = 0;
+		int nb_below = 0;
+		for (int n = 0; n < M; n++){
+			if (dist[n] <= threshold){
+				sum_below += 1-dist[n];
+				nb_below++;
+			} else {
+				sum_above += 1-dist[n];
+				nb_above++;
+			}
+		}
+		double above_factor = sum_above/(double)M;
+		double below_factor = sum_below/(double)M;
+		pC[i] = 0.5*(1 + below_factor - above_factor);
 
-	M = (int)floor(float(ph_min(N1,N2-i)/block_size));
-
-        pha = ptrA;
-        phb = ptrB + i;
-
-	double *tmp_dist = (double*)realloc(dist, M*sizeof(double));
-        if (!tmp_dist){
-	    return NULL;
-        }
-        dist = tmp_dist;
-	dist[0] = ph_compare_blocks(pha,phb,block_size);
-
-	k = 1;
-
-	pha += block_size;
-	phb += block_size;
-
-	hash1_index = block_size;
-	hash2_index = i + block_size;
-
-	while ((hash1_index < N1 - block_size)  && (hash2_index < N2 - block_size)){
-	    dist[k++] = ph_compare_blocks(pha,phb,block_size);
-	    hash1_index += block_size;
-	    hash2_index += block_size;
-	    pha += block_size;
-	    phb += block_size;
 	}
-        sum_above = 0;
-	sum_below = 0;
-	nb_above = 0;
-	nb_below = 0;
-	for (int n = 0; n < M; n++){
+    delete [] dist;
 
-	    if (dist[n] <= threshold){
-		sum_below += 1-dist[n];
-		nb_below++;
-	    } else {
-		sum_above += 1-dist[n];
-		nb_above++;
-	    }
-	}
-	above_factor = sum_above/M;
-	below_factor = sum_below/M;
-	pC[i] = 0.5*(1 + below_factor - above_factor);
-    }
-
-    free(dist);
     return pC;
 }

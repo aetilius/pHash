@@ -1,104 +1,153 @@
+/*
+
+    pHash, the open source perceptual hash library
+    Copyright (C) 2009 Aetilius, Inc.
+    All rights reserved.
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+    Evan Klinger - eklinger@phash.org
+    David Starkweather - dstarkweather@phash.org
+
+*/
+
 #include <stdio.h>
 #include <math.h>
 #include "pHash.h"
 #include "audiophash.h"
 
-float audiohashdistance(DP *dpA, DP *dpB){
 
-    uint32_t *hash1 = (uint32_t*)dpA->hash;
-    int N1 = dpA->hash_length;
-    uint32_t *hash2 = (uint32_t*)dpB->hash;
-    int N2 = dpB->hash_length;
+float distancefunc(DP *pa, DP *pb){
+  fprintf(stderr,"  distfunc: pa %s  %p hash length %u\n",pa->id,pa->hash, pa->hash_length);
+  fprintf(stderr,"  distfunc: pb %s  %p hash length %u\n",pb->id,pa->hash, pb->hash_length);
+  int Nc;
+  float threshold =  0.30f;
+  int block_size = 256;
+  double *ptrC = ph_audio_distance_ber((uint32_t*)pa->hash,(int)pa->hash_length,(uint32_t*)pb->hash,(int)pb->hash_length,threshold,block_size,Nc);
 
-    float threshold = 0.30;
-    int blocksize = 256;
-    int Nc=0;
-    double *ptrC = ph_audio_distance_ber(hash1, N1, hash2, N2, threshold,blocksize,Nc);
+  double maxC = 0.0f;
+  for (int i=0;i<Nc;i++){
+	  if (ptrC[i] > maxC){
+          maxC = ptrC[i];
+	  }
+  }  
+  if (ptrC != NULL) 
+	  delete [] ptrC;
 
-    float maxC = 0;
-    for (int i=0;i<Nc;i++){
-	if (ptrC[i] > maxC)
-	    maxC = (float)ptrC[i];
-    }
-    float d = 100*(1-maxC);
-    float res = exp(d)-1;
-    printf("dist %f\n", res);
-    return res;
+  return (float)(1000*(1-maxC));
+
 }
 
 int main(int argc, char **argv){
 	if (argc < 3){
-        printf("not enough input args\n");
-        exit(1);
+       printf("not enough input args\n");
+       return 1;
 	}
+ 
     const char *dir_name = argv[1];/* name of dir to retrieve image files */
     const char *filename = argv[2];/* name of file to save db */
 
+    float alpha = 2.0f;
+    float lvl = 1.0f;
+
     MVPFile mvpfile;
-    mvpfile.branchfactor = 2;
+    ph_mvp_init(&mvpfile);
     mvpfile.leafcapacity = 10;
-    mvpfile.pathlength = 5;
-    mvpfile.pgsize = (1 << 18);
+    mvpfile.pgsize = 1 << 16; /* 131,072 */
     mvpfile.filename = strdup(filename);
-    mvpfile.hashdist = audiohashdistance;
+    mvpfile.hashdist = distancefunc;
     mvpfile.hash_type = UINT32ARRAY;
 
-    int sr = 8000;
-    int nbchannels = 1;
 
     int nbfiles = 0;
     printf("dir name: %s\n", dir_name);
     char **files = ph_readfilenames(dir_name,nbfiles);
     if (!files){
 		printf("mem alloc error\n");
-		exit(1);
+	exit(1);
     }
     printf("nbfiles = %d\n", nbfiles);
-    DP **hashlist = (DP**)malloc(nbfiles*sizeof(DP*));
+    DP **hashlist = new DP*[nbfiles];
     if (!hashlist){
-		printf("mem alloc error\n");
-		exit(1);
+	    printf("mem alloc error\n");
+	    exit(1);
     }
-
+    
     int count = 0;
-    float *buf = NULL;
-    float *sigbuf = (float*)malloc((1<<26)*sizeof(float));
-    int buflen = (1 << 27)/sizeof(float);;
-	if (sigbuf == NULL) { 
-		printf("mem alloc err\n"); exit(1);
-	}
-    printf("signal buffer %p for %d samples\n", sigbuf, buflen);
-    int nbsamples;
-    uint32_t *hash;
-    int hashlen;
+    float *sigbuf = new float[1<<27];
+    int buflen = (1<<27)/sizeof(float);
+    printf("sigbuf at %p to %p\n", sigbuf, sigbuf+buflen);
+    printf("length %d\n", buflen);
+
+    uint32_t *hashspace = new uint32_t[1<<20];
+    int hashspacelength = (1<<20)/sizeof(uint32_t);
+    printf("hashspace %p to %p\n\n", hashspace, hashspace+hashspacelength);
+    printf("length %d\n", hashspacelength);
+
+    float *buf;
+    uint32_t *hash = hashspace;
+    int hashspaceleft = hashspacelength;
+    int nbframes;
     for (int i=0;i<nbfiles;i++){
 		printf("file[%d]: %s\n", i, files[i]);
-        nbsamples = buflen;
-		buf = ph_readaudio(files[i], sr, nbchannels, sigbuf, nbsamples);
-		printf("audio in buf: %p for %d samples\n", buf,nbsamples);
-		if (!buf){
-			printf("unable to read file: %s\n", files[i]);
-            continue;
+        hashlist[count] = ph_malloc_datapoint(mvpfile.hash_type,mvpfile.pathlength);
+		if (hashlist[count] == NULL){
+			printf("mem alloc error\n");
+			exit(1);
 		}
+		hashlist[count]->id = files[i];
+
+        buflen = (1<<27)/sizeof(float);
+        buf = ph_readaudio(files[i], 8000, 1, sigbuf, buflen);
+		printf("     buf %p to %p\n", buf, buf+buflen);
+        printf("     length %d\n", buflen);
+		if (buf == NULL){
+            printf("unable to get signal\n");
+            exit(1);
+		}
+        hash = ph_audiohash(buf, buflen, hash, hashspaceleft, 8000, nbframes);
+        printf("     hash %p to %p\n", hash, hash+nbframes);
+        printf("     length %d\n\n\n", nbframes);
+		hashlist[count]->hash = hash;
+		if (hashlist[count]->hash == NULL){
+			printf("unable to get hash\n\n");
+			exit(1);
+		}
+		hashlist[count]->hash_length = (uint16_t)nbframes;
         
-        hash = ph_audiohash(buf,nbsamples,NULL,0,sr,hashlen);
-		if (!hash){
-            printf("unable to get hash\n");
-            continue;
-		} 
+        hash += nbframes;
+        hashspaceleft -= nbframes;
 
-        hashlist[i] = ph_malloc_datapoint(mvpfile.hash_type,mvpfile.pathlength);
-        hashlist[i]->id = files[i];
-        hashlist[i]->hash = hash;
-        hashlist[i]->hash_length = hashlen;
+        count++;
+    }
+ 
+    MVPRetCode errcode = ph_save_mvptree(&mvpfile, hashlist, count);
+    if (errcode != PH_SUCCESS){
+		printf("unable to save %s, err %d\n", filename, errcode);
+		return 1;
+    }
+    printf("saved files\n");
 
-	}
     
-   MVPRetCode retcode = ph_save_mvptree(&mvpfile, hashlist, nbfiles);
-   if (retcode != PH_SUCCESS){
-       printf("unable to save properly, error code %d\n", retcode);
-       return 0;
-   } 
-   printf("saved: %d\n",retcode);
-   return 0;
+	for (int i=0;i<nbfiles;i++){
+        delete [] files[i];
+        delete hashlist[i];
+	}
+    delete [] files;
+    delete [] hashlist;
+    delete [] sigbuf;
+    delete [] hashspace;
+
+    return 0;
 }

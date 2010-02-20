@@ -478,10 +478,10 @@ int ph_hamming_distance(const ulong64 hash1,const ulong64 hash2){
 
 __declspec(dllexport)
 DP* ph_malloc_datapoint(int hashtype, int pathlength){
-    DP* dp = (DP*)malloc(sizeof(DP));
+    DP* dp = new DP();//(DP*)malloc(sizeof(DP));
     dp->hash = NULL;
     dp->id = NULL;
-    dp->path = (float*)malloc(pathlength*sizeof(float));
+    dp->path = new float[pathlength];
     dp->hash_type = hashtype;
     return dp;
 }
@@ -490,13 +490,10 @@ void ph_free_datapoint(DP *dp){
     if (!dp)
 		return;
     if (dp->path)
-		free(dp->path);
+		delete [] dp->path;
     if (dp->id)
 		free(dp->id);
-    if (dp->hash)
-		free(dp->hash);
-    free(dp);
-    
+    delete dp;
     return;
 }
 
@@ -556,18 +553,19 @@ char** ph_readfilenames(const char *dirname,int &count){
     struct dirent *dir_entry;
     DIR *dir = opendir(dirname);
     if (!dir)
-	exit(1);
+		return NULL;
 
     /*count files */
     while ((dir_entry = readdir(dir)) != NULL){
-	if (strcmp(dir_entry->d_name, ".") && strcmp(dir_entry->d_name,".."))
-	    count++;
+		if (strcmp(dir_entry->d_name, ".") && strcmp(dir_entry->d_name,".."))
+			count++;
     }
     
     /* alloc list of files */
-    char **files = (char**)malloc(count*sizeof(*files));
-    if (!files)
-	return NULL;
+    char **files = new char*[count];//;malloc(count*sizeof(*files));
+	if (!files){
+		return NULL;
+	}
 
     errno = 0;
     int index = 0;
@@ -575,16 +573,16 @@ char** ph_readfilenames(const char *dirname,int &count){
     path[0] = '\0';
     rewinddir(dir);
     while ((dir_entry = readdir(dir)) != 0){
-	if (strcmp(dir_entry->d_name,".") && strcmp(dir_entry->d_name,"..")){
-	    strcat(path, dirname);
-	    strcat(path, "\\");
-	    strcat(path, dir_entry->d_name);
-	    files[index++] = strdup(path);
-	}
+		if (strcmp(dir_entry->d_name,".") && strcmp(dir_entry->d_name,"..")){
+			strcat(path, dirname);
+			strcat(path, "\\");
+			strcat(path, dir_entry->d_name);
+			files[index++] = strdup(path);
+		}
         path[0]='\0';
-    }
+	}
     if (errno)
-	return NULL;
+		return NULL;
     closedir(dir);
     return files;
 }
@@ -701,8 +699,8 @@ int ph_selectvantagepoints(MVPFile *m, DP **points, int N, int &sv1_pos, int &sv
 	if (N > 2){   
 		sv1_pos = 0;
 		sv2_pos = 1;
-		maxdist = 0.0;
-		mindist = INT_MAX;
+		maxdist = 0.0f;
+		mindist = (float)INT_MAX;
 		float d;
 		for (int i=0;i<N;i++){ /* find 2 points furthest apart */
 			for (int j=i+1;j<N;j++){
@@ -712,7 +710,7 @@ int ph_selectvantagepoints(MVPFile *m, DP **points, int N, int &sv1_pos, int &sv
 					sv1_pos = i;
 					sv2_pos = j;
 				}
-				if (m->hashdist(points[i],points[j]) < mindist){
+				if (d < mindist){
 					mindist = d;
 				}
 			}
@@ -1346,7 +1344,9 @@ MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
     DWORD alloc_offset_mask = alloc_size - 1;
     off_t offset_mask = m->pgsize - 1;
     off_t page_mask = ~(m->pgsize - 1);
-    
+
+	fprintf(stderr,"savemvptree: level %d, nbpoints %d\n", level, nbpoints);
+
     if (nbpoints <= LeafCapacity + 2){ /* leaf */
 		uint8_t ntype = 0;
 		MVPFile m2;
@@ -1422,9 +1422,11 @@ MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
         DP *sv1=NULL, *sv2=NULL;
 		if (sv1_pos >= 0){
 			sv1 = points[sv1_pos];
+			fprintf(stderr,"sv1: %s\n", sv1->id);
 		}
 		if (sv2_pos >= 0) {
             sv2 = points[sv2_pos];
+			fprintf(stderr,"sv2: %s\n", sv2->id);
 		}
 		/* if file pos is beyond pg size*/
 		if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,&m2) > m->pgsize)
@@ -1530,13 +1532,17 @@ leafcleanup:
 		ph_selectvantagepoints(m, points, nbpoints,sv1_pos,sv2_pos,max_distance,min_distance);
 		DP *sv1 = points[sv1_pos]; 
 		DP *sv2 = points[sv2_pos];
+
+		if (sv1) fprintf(stderr,"sv1: %s\n", sv1->id);
+		if (sv2) fprintf(stderr,"sv2: %s\n", sv2->id);
+
 		/* save sv1, sv2 */
 		ph_save_datapoint(sv1, m);
 		ph_save_datapoint(sv2, m);
 
 		/* 1st tier pivots, M1, derived from the distance of each point from sv1*/
 		float step = (max_distance - min_distance)/BranchFactor;
-		if (step <= 1.0){
+		if (step <= 0.001){
 			return PH_ERRDISTFUNC;
 		}
 
@@ -1545,7 +1551,6 @@ leafcleanup:
 		float *M1 = (float*)malloc(LengthM1*sizeof(float));
 		float *M2 = (float*)malloc(LengthM2*sizeof(float));
 		if (!M1 || !M2){
-			free(pOffset);
 			return PH_ERRMEMALLOC;
 		}
 
@@ -1561,14 +1566,12 @@ leafcleanup:
           move pointers, not the actual datapoints */
 		DP ***bins = (DP***)malloc(BranchFactor*sizeof(DP***));
 		if (!bins){
-			free(pOffset);
 			free(M1);
 			free(M2);
 			return PH_ERRMEMALLOC;
 		}
 		int *mlens = (int*)calloc(BranchFactor, sizeof(int)); /*no. points in each bin */
 		if (!mlens){
-			free(pOffset);
 			free(M1);
 			free(M2);
 			free(bins);
@@ -1578,7 +1581,6 @@ leafcleanup:
 		for (int i=0;i<BranchFactor;i++){
 			bins[i] = (DP**)malloc(Np*sizeof(DP**)); /*Np should be more than enough */            
 			if (!bins[i]){
-				free(pOffset);
 				free(M1);
 				free(M2);
 				free(bins);
@@ -1623,7 +1625,6 @@ leafcleanup:
 		/* each row from bins to be sorted into bins2, each in turn */
 		DP ***bins2 = (DP***)malloc(BranchFactor*sizeof(DP***));
 		if (!bins2){
-			free(pOffset);
 			free(M1);
 			free(M2);
 			free(bins);
@@ -1632,7 +1633,6 @@ leafcleanup:
 		}
 		int *mlens2 = (int*)calloc(BranchFactor, sizeof(int)); /*number points in each bin */
 		if (!mlens2){
-			free(pOffset);
 			free(M1);
 			free(M2);
 			free(bins);
@@ -1644,7 +1644,6 @@ leafcleanup:
 		for (int i=0;i<BranchFactor;i++){
 			bins2[i] = (DP**)malloc(Np*sizeof(DP**)); /* Np is more than enough */
 			if (!bins2[i]){
-				free(pOffset);
 				free(M1);
 				free(M2);
 				free(bins);
