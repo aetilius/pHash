@@ -763,67 +763,50 @@ uint8_t* ph_mh_imagehash(const char *filename, int &N,float alpha, float lvl){
 
     CImg<uint8_t> src(filename);
     CImg<uint8_t> img;
-<<<<<<< .mine
+
     if (img.spectrum() == 3){
-	img = src.get_RGBtoYCbCr().channel(0).blur(1.0).resize(512,512,1,1,5).get_equalize(256);
-=======
-    if (img.spectrum() == 3){
-	img = src.get_RGBtoYCbCr().channel(0).blur(1.5,1.5,1.5).resize(512,512,1,1,5).get_equalize(256);
->>>>>>> .r308
+		img = src.get_RGBtoYCbCr().channel(0).blur(1.0).resize(512,512,1,1,5).get_equalize(256);
     } else{
-	img = src.channel(0).get_blur(1.0).resize(512,512,1,1,5).get_equalize(256);
+		img = src.channel(0).get_blur(1.0).resize(512,512,1,1,5).get_equalize(256);
     }
     src.clear();
-<<<<<<< .mine
+
     CImg<float> *pkernel = GetMHKernel(alpha,lvl);
-=======
-    int sigma = (int)(4*pow((float)alpha,(float)lvl));
-    float xpos, ypos, A;
-    CImg<float> MHKernel(2*sigma+1,2*sigma+1,1,1,0);
-    cimg_forXY(MHKernel,X,Y){
-	xpos = pow((float)alpha,-lvl)*(X - sigma);
-        ypos = pow((float)alpha,-lvl)*(Y - sigma);
-	A = xpos*xpos + ypos*ypos;
-	MHKernel(X,Y) = (2-A)*exp(-A/2);
-    }
->>>>>>> .r308
-    
     CImg<float> fresp =  img.get_correlate(*pkernel);
     img.clear();
     fresp.normalize(0,1.0);
     CImg<float> blocks(31,31,1,1,0);
     for (int rindex=0;rindex < 31;rindex++){
-	for (int cindex=0;cindex < 31;cindex++){
-	    blocks(rindex,cindex) = fresp.get_crop(rindex*16,cindex*16,rindex*16+16-1,cindex*16+16-1).sum();
-	}
+		for (int cindex=0;cindex < 31;cindex++){
+			blocks(rindex,cindex) = fresp.get_crop(rindex*16,cindex*16,rindex*16+16-1,cindex*16+16-1).sum();
+		}
     }
- 
     int hash_index;
     int nb_ones = 0, nb_zeros = 0;
     int bit_index = 0;
     unsigned char hashbyte = 0;
     for (int rindex=0;rindex < 31-2;rindex+=4){
-	CImg<float> subsec;
-	for (int cindex=0;cindex < 31-2;cindex+=4){
-	    subsec = blocks.get_crop(cindex,rindex, cindex+2, rindex+2).unroll('x');
-	    float ave = subsec.mean();
-	    cimg_forX(subsec, I){
-		hashbyte <<= 1;
-		if (subsec(I) > ave){
-		    hashbyte |= 0x01;
-		    nb_ones++;
-		} else {
-		    nb_zeros++;
+		CImg<float> subsec;
+		for (int cindex=0;cindex < 31-2;cindex+=4){
+			subsec = blocks.get_crop(cindex,rindex, cindex+2, rindex+2).unroll('x');
+			float ave = subsec.mean();
+			cimg_forX(subsec, I){
+				hashbyte <<= 1;
+				if (subsec(I) > ave){
+					hashbyte |= 0x01;
+					nb_ones++;
+				} else {
+					nb_zeros++;
+				}
+				bit_index++;
+				if ((bit_index%8) == 0){
+					hash_index = (int)(bit_index/8) - 1; 
+					hash[hash_index] = hashbyte;
+					hashbyte = 0x00;
+				}
+			}
 		}
-		bit_index++;
-		if ((bit_index%8) == 0){
-		    hash_index = (int)(bit_index/8) - 1; 
-		    hash[hash_index] = hashbyte;
-		    hashbyte = 0x00;
-		}
-	    }
 	}
-    }
 
     return hash;
 }

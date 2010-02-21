@@ -382,7 +382,7 @@ long GetNumberVideoFrames(const char *file)
 	    return nb_frames;
 	}
 	else { // frames must be counted
-	        AVPacket packet;
+	    AVPacket packet;
 		nb_frames = (long)av_index_search_timestamp(str,str->duration, AVSEEK_FLAG_ANY|AVSEEK_FLAG_BACKWARD);
 		// Close the video file
 		av_close_input_file(pFormatCtx); 
