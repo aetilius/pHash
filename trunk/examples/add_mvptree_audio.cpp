@@ -113,11 +113,12 @@ int main(int argc, char **argv){
     }
 
     printf("add %d files to file %s\n", count, filename);
-    int n = ph_add_mvptree(&mvpfile, hashlist, count);
-    if (n <= 0){
-	printf("unable to add points to %s\n", filename);
+    int nbsaved;
+    MVPRetCode ret = ph_add_mvptree(&mvpfile, hashlist, count,nbsaved);
+    if (ret != PH_SUCCESS){
+		printf("unable to add points to %s\n", filename);
     }
-    printf("save %d files out of %d\n", n, count);
+    printf("save %d files out of %d\n", nbsaved, count);
 
     free(hashlist);
 
