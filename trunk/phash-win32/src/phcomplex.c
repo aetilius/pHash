@@ -1,5 +1,3 @@
-#include <math.h>
-#include <stdlib.h>
 #include "phcomplex.h"
 
 Complexd polar_to_complex(const double r, const double theta){

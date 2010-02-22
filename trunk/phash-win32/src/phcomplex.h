@@ -1,3 +1,6 @@
+#include <stdlib.h>
+#include <math.h>
+
 #ifndef _PH_COMPLEX_H
 #define _PH_COMPLEX_H
 

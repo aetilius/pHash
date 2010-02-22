@@ -51,7 +51,7 @@ int main(int argc, char **argv){
     const char *dir_name  = argv[1];     //first directory
     const char *dir_name2 = argv[2];     //second directory
     const float threshold = 0.30;        //ber threshold (0.25-0.35)
-    const int bs = 256;                 //number of frames to compare at a time
+    const int block_size = 256;                 //number of frames to compare at a time
     const int sr = 8000;                 //sample rate to convert the stream
     const int channels = 1;              //number of channels to convert stream
 
@@ -66,28 +66,29 @@ int main(int argc, char **argv){
         printf("unequal number files in both directories\n");
         return -1;
 	}
-    vector<HP> HashList1(N1);
+    vector<HP> HashList(N1);
 
     float *tmpbuf;
-    float *buf = (float*)malloc(1<<27);
-    int buflen = (1<<27)/sizeof(float);
+    float *buf = new float[1<<25];
+    int buflen = (1<<25);
 	if (!buf){
          printf("unable to alloc buffer storage\n");
          return -1;
 	}
     
 
-    int hashN = (1 << 26)/sizeof(uint32_t);
-    uint32_t *hashes = (uint32_t*)malloc(1 << 26);
+    int hashN = (1 << 26);
+    uint32_t *hashes = new uint32_t[1 << 26];
 	if (!hashes){
         printf("unable to alloc storage for hashes\n");
         return -1;
 	}
+    
     int hash_index = 0;
     uint32_t *hash1, *hash2;
     int buflen1, buflen2;
     int nbframes1, nbframes2;
-    double *dist;
+    double *ptrC;
     int Nc;
     printf("intra distances\n");
 	for (int i=0;i<N1;i++){
@@ -96,38 +97,54 @@ int main(int argc, char **argv){
          tmpbuf = ph_readaudio(files1[i], sr, channels, buf, buflen1);
          if (!tmpbuf) continue;
          buf  = tmpbuf;
-		 for (int j=0;j<buflen1;j++){
-             printf("buf[%d]=%f\n", j, buf[j]);
+
+         hash1 = ph_audiohash(buf, buflen1, hashes, hashN, sr, nbframes1);
+         if (!hash1) continue;
+         hashes += nbframes1;
+         hashN -= nbframes1;
+
+         HashList[i].filename = files1[i];
+         HashList[i].hash = hash1;
+         HashList[i].length = nbframes1;
+
+         printf("  files2[%d] = %s\n", i, files2[i]);
+         buflen2 = buflen;
+         tmpbuf = ph_readaudio(files2[i], sr, channels, buf, buflen2);
+         if (!tmpbuf) continue;
+         buf = tmpbuf;
+
+         hash2 = ph_audiohash(buf, buflen2, hashes, hashN, sr, nbframes2);
+         if (!hash2) continue;
+         hashes += nbframes2;
+         hashN -= nbframes2;
+
+         ptrC = ph_audio_distance_ber(hash1, nbframes1, hash2, nbframes2, threshold, block_size, Nc);
+
+         double maxC = 0.0f;
+		 for (int j=0;j<Nc;j++){
+              if (ptrC[j] > maxC)
+                  maxC = ptrC[j];
 		 }
-        printf("hit any key\n");
-        getchar();  
+         printf("distance %f\n", maxC);
+         printf("********************************\n");
+         delete [] ptrC;
 	}
+
     printf("hit any key to continue\n");
     getchar();
-    printf("inter distances\n");
-	for (int i=0;i<(int)HashList1.size();i++){
-		for (int j=i+1;j<(int)HashList1.size();j++){
-			printf("file: %s\n", HashList1[i].filename);
-			printf("file: %s\n", HashList1[j].filename);
-			dist = ph_audio_distance_ber(HashList1[i].hash, HashList1[i].length, HashList1[j].hash, HashList1[j].length, threshold, bs, Nc);               
-            double maxC = 0.0;
+	for (int i=0;i<N1;i++){
+		for (int j=i+1;j<N1;j++){
+            ptrC = ph_audio_distance_ber(HashList[i].hash,HashList[i].length, HashList[j].hash,HashList[j].length, threshold, block_size, Nc);
+            double maxC = 0.0f;
 			for (int k=0;k<Nc;k++){
-                if (dist[k] > maxC)
-                    maxC = dist[k];
+                if (ptrC[k] > maxC)
+                     maxC = ptrC[i];
 			}
-            printf("cs = %f\n", maxC);
-          
-            free(dist);
-
+            printf(" %d %d dist = %f\n", i, j, maxC);
+            getchar();
+            delete [] ptrC;
 		}
 	}
-
-
-
-    free(files1);
-    free(files2);
-    free(hashes);
-    free(buf);
 
     return 0;
 }

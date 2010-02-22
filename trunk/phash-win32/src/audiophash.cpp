@@ -168,10 +168,8 @@ float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, i
     
     float *buf; 
 	if ((!sigbuf)||(buflen <= duration)){
-        //buf = (float*)av_malloc(duration*sizeof(float)); /* alloc buffer */
-        //buflen = (int)duration;
-        buflen = 0; /* buffer too small, bail out */
-        return NULL;
+        buf = (float*)malloc(duration*sizeof(float)); /* alloc buffer */
+        buflen = (int)duration;
 	}
 	else {
         buf = sigbuf;   /* use buffer handed in param */     
@@ -233,7 +231,7 @@ readaudio_cleanup:
 } 
 
 __declspec(dllexport)
-uint32_t* ph_audiohash(const float *buf, const int nbbuf, uint32_t *hashbuf, const int nbcap, const int sr,int &nbframes){
+uint32_t* ph_audiohash(float *buf, int nbbuf, uint32_t *hashbuf, int nbcap, const int sr,int &nbframes){
 
    const int frame_length = 4096;//2^12
    int nfft = frame_length;
@@ -278,12 +276,7 @@ uint32_t* ph_audiohash(const float *buf, const int nbbuf, uint32_t *hashbuf, con
    }
    uint32_t *hash = NULL;
    if (!hashbuf || (nbframes > nbcap)){
-	   //hash = (uint32_t*)malloc(nbframes*sizeof(uint32_t)); /*must allocate new buffer */
-       free(pF);
-       delete [] freqs;
-       delete [] binbarks;
-       nbframes = 0; /*hash buf not big enough, bail out */
-       return NULL;
+	   hash = (uint32_t*)malloc(nbframes*sizeof(uint32_t)); /*must allocate new buffer */
    }
    else {
        hash = hashbuf; /*use buf provided in parameters */
@@ -418,13 +411,13 @@ double* ph_audio_distance_ber(uint32_t *hash_a , const int Na, uint32_t *hash_b,
         Nc = 0;
         return NULL;
 	} 
-    pC = new double[Nc];
+    pC = (double*)malloc(Nc*sizeof(double));
 	if (pC == NULL){
         Nc = 0;
         return NULL;
 	}
     int M = (int)((float)N1/(float)block_size);
-    double *dist = new double[M];
+    double *dist = (double*)malloc(M*sizeof(double));
 	if (!dist){
          delete pC;
          Nc = 0;
@@ -457,7 +450,7 @@ double* ph_audio_distance_ber(uint32_t *hash_a , const int Na, uint32_t *hash_b,
 		pC[i] = 0.5*(1 + below_factor - above_factor);
 
 	}
-    delete [] dist;
+    free(dist);
 
     return pC;
 }

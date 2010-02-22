@@ -41,9 +41,9 @@ float distancefunc(DP *pa, DP *pb){
 	  }
   }  
   if (ptrC != NULL) 
-	  delete [] ptrC;
+	  free(ptrC);
 
-  return (float)(1000*(1-maxC));
+  return (float)1000*(1-maxC);
 
 }
 
@@ -56,8 +56,8 @@ int main(int argc, char **argv){
     const char *dir_name = argv[1];/* name of dir to retrieve image files */
     const char *filename = argv[2];/* name of file to save db */
 
-    float alpha = 2.0f;
-    float lvl = 1.0f;
+    const int sr = 8000;
+    const int nbchannels = 1;
 
     MVPFile mvpfile;
     ph_mvp_init(&mvpfile);
@@ -76,18 +76,18 @@ int main(int argc, char **argv){
 	exit(1);
     }
     printf("nbfiles = %d\n", nbfiles);
-    DP **hashlist = new DP*[nbfiles];
+    DP **hashlist = (DP**)malloc(nbfiles*sizeof(DP*));
     if (!hashlist){
 	    printf("mem alloc error\n");
 	    exit(1);
     }
     
     int count = 0;
-    float *sigbuf = new float[1<<20];
-    int buflen = (1<<20);
+    float *sigbuf = (float*)malloc((1<<28)*sizeof(float));
+    int buflen = (1<<28);
  
-    uint32_t *hashspace = new uint32_t[1<<18];
-    int hashspacelength = (1<<18);
+    uint32_t *hashspace = (uint32_t*)malloc((1<<19)*sizeof(uint32_t));
+    int hashspacelength = (1<<19);
  
     float *buf;
     uint32_t *hash = hashspace;
@@ -101,15 +101,15 @@ int main(int argc, char **argv){
 			continue;
 		}
 		hashlist[count]->id = files[i];
-        buflen = (1<<20);
-        buf = ph_readaudio(files[i], 8000, 1, sigbuf, buflen);
+        buflen = (1<<28);
+        buf = ph_readaudio(files[i], sr, nbchannels, sigbuf, buflen);
 		if (buf == NULL){
             printf("unable to get signal\n");
             continue;
 		}
         printf("sig buffer length %d\n", buflen);
 
-        hash = ph_audiohash(buf, buflen, hash, hashspaceleft, 8000, nbframes);
+        hash = ph_audiohash(buf, buflen, hash, hashspaceleft, sr, nbframes);
 		hashlist[count]->hash = hash;
 		if (hashlist[count]->hash == NULL){
 			printf("unable to get hash\n\n");
