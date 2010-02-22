@@ -68,7 +68,7 @@ float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, i
  * /return uint32 pointer to audio hash, NULL for error
 */
 __declspec(dllexport)
-uint32_t* ph_audiohash(const float *buf, const int nbbuf, uint32_t *hashbuf, const int nbcap, const int sr,int &nbframes);
+uint32_t* ph_audiohash(float *buf, int nbbuf, uint32_t *hashbuf, int nbcap, const int sr,int &nbframes);
 
 
 

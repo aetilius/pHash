@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <math.h>
 #include "pHash.h"
 #include "audiophash.h"
 
@@ -10,19 +9,18 @@ float audiohashdistance(DP *dpA, DP *dpB){
     uint32_t *hash2 = (uint32_t*)dpB->hash;
     int N2 = dpB->hash_length;
 
-    float threshold = 0.30;
+    float threshold = 0.30f;
     int blocksize = 256;
     int Nc=0;
     double *ptrC = ph_audio_distance_ber(hash1, N1, hash2, N2, threshold,blocksize,Nc);
 
-    float maxC = 0.0f;
+    double maxC = 0.0f;
     for (int i=0;i<Nc;i++){
 	if (ptrC[i] > maxC)
-	    maxC = (float)ptrC[i];
+	    maxC = ptrC[i];
     }
-    float d = 10*(1-maxC);
-    float res = exp(d)-1;
-    return res;
+    free(ptrC);
+    return (float)maxC;
 }
  
 int main(int argc, char **argv){
@@ -37,6 +35,7 @@ int main(int argc, char **argv){
     const int nbchannels = 1;
 
     MVPFile mvpfile;
+    ph_mvp_init(&mvpfile);
     mvpfile.filename = strdup(filename);
     mvpfile.hashdist = audiohashdistance;
     mvpfile.hash_type = UINT32ARRAY;
@@ -56,49 +55,47 @@ int main(int argc, char **argv){
     }
 
     int count = 0;
-    float *buf;
-    int N = 0;
+    float *buf = NULL;
+    float *sigbuf = (float*)malloc(1<<28);
+    int buflen = 1<<26;
+    int N;
     uint32_t *hash;
-    int hashlen = 0;
-    DP *dp;
+    int nbframes = 0;
     for (int i=0;i<nbfiles;i++){
-		printf("file[%d]: %s ", i, files[i]);
-		buf = ph_readaudio(files[i], sr, nbchannels, NULL, N);
+		printf("file[%d]: %s\n", i, files[i]);
+        N = buflen;
+		buf = ph_readaudio(files[i], sr, nbchannels, sigbuf, N);
 		if (!buf){
 			printf("unable to read file\n");
 			continue;
 		}
-		printf("N = %d ", N);
-
-		hash = ph_audiohash(buf, N, NULL, 0, sr, hashlen);
+		hash = ph_audiohash(buf, N, NULL, 0, sr, nbframes);
 		if (!hash){
 			printf("unable to get hash\n");
 			free(buf);
 		}
-		printf("nb hashes = %d\n", hashlen);
+		printf("nb hashes = %d\n", nbframes);
 
-        dp = ph_malloc_datapoint(mvpfile.hash_type,mvpfile.pathlength);
-		if (!dp){
+        hashlist[count] = ph_malloc_datapoint(mvpfile.hash_type,mvpfile.pathlength);
+		if (!hashlist[count]){
 			printf("mem alloc error\n");
 			free(buf);
 			free(hash);
+            continue;
 		}
-		dp->id = files[i];
-		dp->hash = (void*)hash;
-		dp->hash_length = hashlen;
-
-		hashlist[count++] = dp;
+		hashlist[count]->id = files[i];
+		hashlist[count]->hash = (void*)hash;
+		hashlist[count]->hash_length = nbframes;
+        count++;
     }
 
     printf("add %d files to file %s\n", count, filename);
     int nbsaved;
     MVPRetCode retcode = ph_add_mvptree(&mvpfile, hashlist, count,nbsaved);
     if (retcode != PH_SUCCESS){
-		printf("unable to add points to %s\n", filename);
+		printf("unable to add points to %s - %d\n", filename,retcode);
     }
     printf("save %d files out of %d\n", nbsaved, count);
-
-    free(hashlist);
 
     return 0;
 }
