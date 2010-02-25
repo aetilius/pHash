@@ -130,6 +130,13 @@ int main(int argc, char **argv){
 		return 1;
     }
     printf("saved files\n");
-
+	
+    for (int i=0;i<nbfiles;i++){
+        free(files[i]);
+        free(hashlist[i]);
+	}
+    free(files);
+    free(hashlist);
+    free(sigbuf);
     return 0;
 }
