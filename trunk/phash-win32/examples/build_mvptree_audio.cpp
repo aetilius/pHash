@@ -55,13 +55,13 @@ int main(int argc, char **argv){
        return 1;
 	}
     const char *dir_name = argv[1];/* name of dir to retrieve image files */
-    const char *filename = argv[2];/* name of file to save db */
+    const char *filename = argv[2];/* name of indexing db, e.g. 'audiodb'  */
 
-    const int sr = 8000;
-    const int nbchannels = 1;
-    const float nbsecs = 45.0f;
+    const int sr = 8000;            /* convert to sr */
+    const int nbchannels = 1;       /* convert to number of channels */
+    const float nbsecs = 45.0f;     /* nb secs of audio to read from each file */
 
-    MVPFile mvpfile;
+    MVPFile mvpfile;                /* mvp tree indexing configuration */ 
     mvpfile.branchfactor = 2;
     mvpfile.pathlength = 5;
     mvpfile.leafcapacity = 44;
@@ -84,11 +84,13 @@ int main(int argc, char **argv){
 	    return 1;
     }
     
+    /* audio buffer to pass to readaudio() */ 
     int count = 0;
     float *sigbuf = (float*)malloc(1<<21);
     int buflen = (1<<21)/sizeof(float);
     int N;
   
+    /*buffer for all hashes */ 
     uint32_t *hashes = (uint32_t*)malloc(1<<21);
     int hashspacelength = (1<<21)/sizeof(uint32_t);
     int hashspaceleft = hashspacelength;
@@ -100,20 +102,22 @@ int main(int argc, char **argv){
         hashlist[count] = ph_malloc_datapoint(mvpfile.hash_type);
 		if (hashlist[count] == NULL){
 			printf("mem alloc error\n");
-			break;
+			continue;
 		}
 		hashlist[count]->id = files[i];
         N = buflen;
         float *buf = ph_readaudio(files[i], sr, nbchannels, sigbuf, N, nbsecs);
 		if (buf == NULL){
             printf("unable to get signal\n");
-            break;
+            ph_free_datapoint(hashlist[count]);
+            continue;
 		}
         printf("nb sampels = %d\n", N);
         uint32_t *hash1 = ph_audiohash(buf, N, hash, hashspaceleft, sr, nbframes);
 		if (hash1 == NULL){
 			printf("unable to get hash\n\n");
-		    break;
+            ph_free_datapoint(hashlist[count]);
+		    continue;
 		}
         printf("nb hashes %d\n", nbframes);
         hash += nbframes;
