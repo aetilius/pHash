@@ -104,8 +104,8 @@ typedef struct ph_datapoint {
     char *id;
     void *hash;
     float *path;
-    uint16_t hash_length;
-    uint8_t hash_type;
+    uint32_t hash_length;
+    HashType hash_type;
 }DP;
 
 /* call back function for mvp tree functions - to performa distance calc.'s*/
@@ -195,7 +195,7 @@ typedef struct ph_match{
  *  allocates path array, does nto set id or path
  */
 __declspec(dllexport)
-DP* ph_malloc_datapoint(int hashtype, int pathlength);
+DP* ph_malloc_datapoint(HashType type);
 
 /** /brief free a datapoint and its path
  *

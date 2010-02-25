@@ -45,13 +45,14 @@ int ph_count_samples(const char *filename, int sr,int channels);
 /* /brief read audio 
  *
  * /param filename - path and name of audio file to read
+ * /param nbsecs - float number of seconds in file to read
  * /param sr - sample rate conversion
  * /param channels - number channel conversion
  * /param N - (out) param for buf length
  * /param float* - float pointer to start of buffer, NULL if error
  */
 __declspec(dllexport)
-float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, int &buflen);
+float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, int &buflen, const float nbsecs = 0);
 
 
 

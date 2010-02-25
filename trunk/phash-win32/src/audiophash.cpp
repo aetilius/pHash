@@ -119,7 +119,7 @@ int ph_count_samples(const char *filename, int sr,int channels){
 }
 
 __declspec(dllexport)
-float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, int &buflen)
+float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, int &buflen, const float nbsecs)
 {
 	int cap = 0;
 
@@ -162,10 +162,11 @@ float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, i
 	// Get a pointer to the codec context for the audio stream
 	pCodecCtx=pFormatCtx->streams[audioStream]->codec;
 
-    int duration = (int)pFormatCtx->streams[audioStream]->duration;
+    int totalduration = (int)pFormatCtx->streams[audioStream]->duration;
 	int src_sr = pCodecCtx->sample_rate;
     int src_channels = pCodecCtx->channels;
-    
+	int duration = (nbsecs > 0.0f) ? (int)(sr*nbsecs) : totalduration;
+	duration = (duration <= totalduration) ? duration : totalduration; 
     float *buf; 
 	if ((!sigbuf)||(buflen <= duration)){
         buf = (float*)malloc(duration*sizeof(float)); /* alloc buffer */
@@ -197,7 +198,7 @@ float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, i
 	ReSampleContext *rs_ctx = audio_resample_init(channels, src_channels, sr, src_sr);
     int index = 0;
 	AVPacket packet;
-	while(av_read_frame(pFormatCtx, &packet)>=0) 
+	while ((av_read_frame(pFormatCtx, &packet)>=0) && (index < duration))
 	{
             
 	    in_buf_used = buf_size;
@@ -289,30 +290,25 @@ uint32_t* ph_audiohash(float *buf, int nbbuf, uint32_t *hashbuf, int nbcap, cons
        binbarks[i] = 6*log(temp + sqrt(temp*temp + 1.0));
        freqs[i] = i*sr/nfft_half;
    }
+   /* calc wts for each filter */
    double **wts = new double*[nfilts];
    for (int i=0;i<nfilts;i++){
       wts[i] = new double[nfft_half];
-   }
-   for (int i=0;i<nfilts;i++){
-       for (int j=0;j<nfft_half;j++){
-		   wts[i][j] = 0.0;
-       }
+      double f_bark_mid = minbark + i*stepbarks;
+	  for (int j=0;j<nb_barks;j++){
+          double barkdiff = binbarks[j] - f_bark_mid;
+          lof = -2.5*(barkdiff/barkwidth - 0.5);
+          hif = barkdiff/barkwidth + 0.5;
+          double m = ph_min(lof,hif);
+          m = ph_min(0.0, m);
+          m = pow(10.0, m); 
+          wts[i][j] = m;
+	  }
+	  for (int j=nb_barks;j<nfft_half;j++){
+          wts[i][j] = 0.0;
+	  }
    }
   
-   //calculate wts for each filter
-   for (int i=0;i<nfilts;i++){
-       double f_bark_mid = minbark + i*stepbarks;
-       for (int j=0;j<nb_barks;j++){
-	   double barkdiff = binbarks[j] - f_bark_mid;
-           lof = -2.5*(barkdiff/barkwidth - 0.5);
-           hif = barkdiff/barkwidth + 0.5;
-           double m = ph_min(lof,hif);
-           m = ph_min(0.0,m);
-           m = pow(10,m);
-           wts[i][j] = m;
-       }
-   }
-
    while (end <= nbbuf){
        maxF = 0.0;
        maxB = 0.0;
@@ -426,25 +422,24 @@ double* ph_audio_distance_ber(uint32_t *hash_a , const int Na, uint32_t *hash_b,
     for (int i=0; i < Nc;i++){
         uint32_t *pha = ptrA;
         uint32_t *phb = ptrB + i;
+
+        double sum_above = 0.0f, sum_below = 0.0f;
+        int nb_above = 0, nb_below = 0;
         int k=0;
 		while (k < M){	
-			dist[k++] = ph_compare_blocks(pha,phb,block_size);
+			dist[k] = ph_compare_blocks(pha,phb,block_size);
+			if (dist[k] <= threshold){
+                sum_below += 1-dist[k];
+                nb_below++;
+			} else {
+                sum_above += 1-dist[k];
+                nb_above++;
+			}
             pha += block_size;
             phb += block_size;
+            k++;
 		};
-		double sum_above = 0.0f;
-		double sum_below = 0.0f;
-		int nb_above = 0;
-		int nb_below = 0;
-		for (int n = 0; n < M; n++){
-			if (dist[n] <= threshold){
-				sum_below += 1-dist[n];
-				nb_below++;
-			} else {
-				sum_above += 1-dist[n];
-				nb_above++;
-			}
-		}
+
 		double above_factor = sum_above/(double)M;
 		double below_factor = sum_below/(double)M;
 		pC[i] = 0.5*(1 + below_factor - above_factor);
