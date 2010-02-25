@@ -31,6 +31,7 @@
 #include <errno.h>
 #include "pHash.h"
 #include "dirent.h"
+#include <utility>
 
 #ifdef HAVE_VIDEO_HASH
 #include "cimgffmpeg.h"
@@ -2455,4 +2456,18 @@ TxtMatch* ph_compare_text_hashes(TxtHashPoint *hash1, int N1, TxtHashPoint *hash
 	}
     }
     return found_matches;
+}
+
+int ph_num_threads()
+{
+    SYSTEM_INFO si;
+    GetSystemInfo(&si);
+    return si.dwNumberOfProcessors;
+}
+void ph_mvp_init(MVPFile *m){
+    m->branchfactor = 2;
+    m->pathlength = 5;
+    m->leafcapacity = 40;
+    m->pgsize = 8192;     /* use host page size */
+    return;
 }

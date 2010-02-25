@@ -449,3 +449,63 @@ double* ph_audio_distance_ber(uint32_t *hash_a , const int Na, uint32_t *hash_b,
 
     return pC;
 }
+
+DWORD WINAPI ph_audio_hash_thread(LPVOID arg) 
+{
+    slice *s = (slice *)arg;
+
+    pair<int,int> *p = (pair<int,int>*)s->hash_params;
+
+    for(int i = 0; i < s->n; ++i)
+    {
+        DP *dp = s->hash_p[i];
+        int len, frameCount;
+        float *buf = ph_readaudio(dp->id, p->first, p->second, NULL, len);
+        uint32_t *hash = ph_audiohash(buf, len, NULL, 0, p->first, frameCount);
+        free(buf);
+        dp->hash = hash;
+        dp->hash_length = frameCount;
+    }
+    return 0;
+
+}
+__declspec(dllexport)
+DP** ph_audio_hashes(char **files, int count, int sr, int channels, int threads)
+{
+
+        
+    DP** dp = (DP**)malloc(count*sizeof(DP*));
+    for(int i = 0; i < count; ++i)
+    {
+        dp[i] = (DP *)malloc(sizeof(DP));
+        dp[i]->id = strdup(files[i]);
+    }
+    
+
+        DWORD num_threads = ph_num_threads();
+        HANDLE *thrds = new HANDLE[num_threads];
+        slice *s = new slice[num_threads];
+        int off = 0;
+        int start = 0;
+        int rem = count % num_threads;
+        for(int i = 0; i < num_threads; ++i)
+        { 
+                off = (int)floor((count/(float)num_threads) + (rem>0?num_threads-(count % num_threads):0));
+                s[i].hash_p = &dp[start];
+                s[i].n = off;
+                s[i].hash_params = new pair<float,float>(sr, channels);
+                start = off;
+                --rem;
+                  
+                thrds[i] = CreateThread(NULL, 0, ph_audio_hash_thread, s, 0, NULL);
+        }
+        for(int i = 0; i < num_threads; ++i)
+        {
+                WaitForMultipleObjects(num_threads, thrds, TRUE, INFINITE);
+                delete (pair<float,float>*)s[i].hash_params;
+        }
+
+        delete[] thrds;
+        delete[] s;
+        return dp;
+}

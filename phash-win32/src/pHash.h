@@ -58,7 +58,7 @@ const int MaxFileSize = (1<<30); /* 1GB file size limit (for mvp files) */
 const off_t HeaderSize = 64;     /* header size for mvp file */
 
 
-__declspec(dllexport) const char *mvptag = "pHashMVPfile2009";
+const char mvptag[] = "pHashMVPfile2009";
 
 typedef enum ph_mvp_retcode {
     PH_SUCCESS = 0,   /* success */
@@ -108,6 +108,13 @@ typedef struct ph_datapoint {
     HashType hash_type;
 }DP;
 
+typedef struct _slice
+{
+    DP **hash_p;
+    int n;
+    void *hash_params;
+} slice;
+
 /* call back function for mvp tree functions - to performa distance calc.'s*/
 typedef float (*hash_compareCB)(DP *pointA, DP *pointB);
 
@@ -141,13 +148,7 @@ typedef struct ph_mvp_file {
 
 /* convenience function to set var's of mvp tree */
 __declspec(dllexport)
-void ph_mvp_init(MVPFile *m){
-    m->branchfactor = 2;
-    m->pathlength = 5;
-    m->leafcapacity = 40;
-    m->pgsize = 8192;     /* use host page size */
-    return;
-}
+void ph_mvp_init(MVPFile *m);
 
 /*! /brief Radon Projection info
  */
@@ -190,6 +191,12 @@ typedef struct ph_match{
     off_t second_index; /* offset into second file */
     uint32_t length;    /*length of match between 2 files */
 } TxtMatch;
+
+__declspec(dllexport)
+int ph_num_threads();
+
+__declspec(dllexport)
+DP** ph_audio_hashes(const char *files[], int count, int sr, int channels, int threads);
 
 /* /brief alloc a single data point
  *  allocates path array, does nto set id or path
@@ -522,7 +529,7 @@ TxtMatch* ph_compare_text_hashes(TxtHashPoint *hash1, int N1, TxtHashPoint *hash
 
 /* random char mapping for textual hash */
 
-ulong64 textkeys[256] = {
+static const ulong64 textkeys[256] = {
     15498727785010036736ULL,
     7275080914684608512ULL,
     14445630958268841984ULL,

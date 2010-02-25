@@ -26,7 +26,8 @@
 #define _AUDIO_PHASH_H
 
 #define ph_min(x,y) ((x < y) ? x : y)
-
+#include "pHash.h"
+#include <utility>
 #include "stdint.h"
 
 /*  /brief count number of samples in file
@@ -74,7 +75,8 @@ float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, i
 __declspec(dllexport)
 uint32_t* ph_audiohash(float *buf, int nbbuf, uint32_t *hashbuf, int nbcap, const int sr,int &nbframes);
 
-
+__declspec(dllexport)
+DP** ph_audio_hashes(char **files, int count, int sr, int channels, int threads = 0);
 
 /* /brief bit count set bits in 32bit variable
  * /param n 
