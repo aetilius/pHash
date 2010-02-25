@@ -473,6 +473,8 @@ __declspec(dllexport)
 DP** ph_audio_hashes(char **files, int count, int sr, int channels, int threads)
 {
 
+    if(threads > count || !files || count <= 0)
+        return NULL;
         
     DP** dp = (DP**)malloc(count*sizeof(DP*));
     for(int i = 0; i < count; ++i)
