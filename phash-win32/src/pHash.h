@@ -94,7 +94,7 @@ typedef enum ph_hashtype {
 }HashType;
 
 typedef struct ph_file_offset {
-    off_t offset;
+	off_t offset;              /* for mvp functions - internal use*/
     uint8_t fileno;
 } FileIndex;
 

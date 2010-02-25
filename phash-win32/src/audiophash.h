@@ -45,11 +45,12 @@ int ph_count_samples(const char *filename, int sr,int channels);
 /* /brief read audio 
  *
  * /param filename - path and name of audio file to read
- * /param nbsecs - float number of seconds in file to read
  * /param sr - sample rate conversion
  * /param channels - number channel conversion
- * /param N - (out) param for buf length
- * /param float* - float pointer to start of buffer, NULL if error
+ * /param sigbuf - float array for the read signal
+ * /param buflen - int value for length of sigbuf, changed to the true length
+ * /param nbsecs - float value for number of seconds of audio to read (0 for complete file)
+ * /return - buf ptr to audio buffer
  */
 __declspec(dllexport)
 float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, int &buflen, const float nbsecs = 0);
@@ -63,7 +64,9 @@ float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, i
  *          computed from temporal and spectral differences on the bark scale.
  * 
  * /param buf - pointer to start of buffer
- * /param N   - length of buffer
+ * /param nbbuf   - length of buffer
+ * /param hashbuf - pointer to start of input buffer (can be null)
+ * /param nbcap - capacity of buffer
  * /param sr  - sample rate on which to base the audiohash
  * /param nb_frames - (out) number of frames in audio buf and length of audiohash buffer returned
  * /return uint32 pointer to audio hash, NULL for error
