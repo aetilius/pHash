@@ -1,10 +1,11 @@
 #include <stdio.h>
+#include <math.h>
 #include "pHash.h"
 #include "audiophash.h"
 
 static int nb_calcs;
 
-float audiohashdistance(DP *dpA, DP *dpB){
+float distfunc(DP *dpA, DP *dpB){
 
     nb_calcs++;
 
@@ -23,9 +24,11 @@ float audiohashdistance(DP *dpA, DP *dpB){
 		if (ptrC[i] > maxC)
 			maxC = (float)ptrC[i];
 	}
-    free(ptrC);
+    if (ptrC) free(ptrC);
 
-    return (float)1000*(1-maxC);
+    double d = 10*(1 - maxC);
+    float res = (float)(exp(d)-1.0);
+    return res;
 }
 
 int main(int argc, char **argv){
@@ -39,11 +42,11 @@ int main(int argc, char **argv){
 
     const int sr = 8000;
     const int nbchannels = 1;
+    const float nbsecs = 45.0f;
 
     MVPFile mvpfile;
-    ph_mvp_init(&mvpfile);
     mvpfile.filename = strdup(filename);
-    mvpfile.hashdist = audiohashdistance;
+    mvpfile.hashdist = distfunc;
     mvpfile.hash_type = UINT32ARRAY;
    
     int nbfiles = 0;
@@ -57,11 +60,11 @@ int main(int argc, char **argv){
 
     printf("nb query files = %d\n", nbfiles);
 
-    float radius = 300.0f;
+    float radius = 1000.0f;
     if (argc >= 4) radius = atof(argv[3]);
     int knearest = 20;
     if (argc >= 5) knearest = atoi(argv[4]);
-    float threshold = 50.0f;
+    float threshold = 500.0f;
     if (argc >=6) threshold = atof(argv[5]);
 
     DP **results = (DP**)malloc(knearest*sizeof(DP*));
@@ -72,17 +75,17 @@ int main(int argc, char **argv){
     
 	int nbfound = 0, count = 0, sum_calcs = 0;
     float *buf=NULL;
-    float *sigbuf = (float*)malloc(1<<28);
+    float *sigbuf = (float*)malloc(1<<20);
 	if (!sigbuf){
         printf("mem alloc error\n");
         exit(1);
 	}
-    int buflen = (1<<28)/sizeof(float);
+    int buflen = (1<<20)/sizeof(float);
     int N;
     uint32_t *hash = NULL;
     int hashlen = 0;
     int nbframes;
-    DP *query = ph_malloc_datapoint(mvpfile.hash_type,mvpfile.pathlength);
+    DP *query = ph_malloc_datapoint(mvpfile.hash_type);
 	if (!query){
         printf("could not alloc datapoint\n");
         exit(1);
@@ -92,24 +95,26 @@ int main(int argc, char **argv){
     for (int i=0;i<nbfiles;i++){
 		printf("file[%d]: %s\n", i, files[i]);
         N = buflen;
-		buf = ph_readaudio(files[i], sr, nbchannels, sigbuf, N);
+		buf = ph_readaudio(files[i], sr, nbchannels, sigbuf, N,nbsecs);
 		if (!buf){
 			printf("could not read audio\n");
 			continue;
 		}
+        printf("sig length %d\n", N);
 		hash = ph_audiohash(buf,N,hash, hashlen, sr,nbframes);
 		if (!hash){
 			printf("could not get hash\n");
 			continue;
 		}
-  
+        printf("hash length %d\n", nbframes);
 		query->id = files[i];
 		query->hash = hash;
 		query->hash_length = nbframes;
 
-		count++;
+        count++;
 		nb_calcs = 0;
 		nbfound = 0;
+        printf("do query ...\n");
 		MVPRetCode ret = ph_query_mvptree(&mvpfile,query,knearest,radius,threshold, results,&nbfound);
 		if (ret != PH_SUCCESS){
 			printf("could not complete query - %d\n",ret);
@@ -119,7 +124,7 @@ int main(int argc, char **argv){
 
 		printf(" %d found, %d distance calcs\n", nbfound,nb_calcs);
 		for (int i=0;i<nbfound;i++){
-			printf("    %d  %s dist = %f\n", i, results[i]->id, audiohashdistance(results[i], query));
+			printf("    %d  %s dist = %f\n", i, results[i]->id, distfunc(results[i], query));
 		}
         printf("******************************************\n");
 

@@ -1,8 +1,9 @@
 #include <stdio.h>
+#include <math.h>
 #include "pHash.h"
 #include "audiophash.h"
 
-float audiohashdistance(DP *dpA, DP *dpB){
+float distfunc(DP *dpA, DP *dpB){
 
     uint32_t *hash1 = (uint32_t*)dpA->hash;
     int N1 = dpA->hash_length;
@@ -19,8 +20,11 @@ float audiohashdistance(DP *dpA, DP *dpB){
 	if (ptrC[i] > maxC)
 	    maxC = ptrC[i];
     }
-    free(ptrC);
-    return (float)maxC;
+    if (ptrC) free(ptrC);
+    double d = 10*(1-maxC);
+    float res = (float)(exp(d)-1.0);
+
+    return res;
 }
  
 int main(int argc, char **argv){
@@ -33,11 +37,11 @@ int main(int argc, char **argv){
 
     const int sr = 8000;
     const int nbchannels = 1;
+    const float nbsecs = 45.0f;
 
     MVPFile mvpfile;
-    ph_mvp_init(&mvpfile);
     mvpfile.filename = strdup(filename);
-    mvpfile.hashdist = audiohashdistance;
+    mvpfile.hashdist = distfunc;
     mvpfile.hash_type = UINT32ARRAY;
 
     int nbfiles = 0;
@@ -56,35 +60,40 @@ int main(int argc, char **argv){
 
     int count = 0;
     float *buf = NULL;
-    float *sigbuf = (float*)malloc(1<<28);
-    int buflen = 1<<26;
+    float *sigbuf = (float*)malloc(1<<21);
+    int buflen = (1<<21)/sizeof(float);
     int N;
-    uint32_t *hash;
+
+    uint32_t *hashes = (uint32_t*)malloc(1<<21);
+    int hashspacelength = (1<<21)/sizeof(uint32_t);
+    int spaceleft = hashspacelength;
+    uint32_t *hash = hashes;
+    uint32_t *hash1 = NULL;
     int nbframes = 0;
+
     for (int i=0;i<nbfiles;i++){
 		printf("file[%d]: %s\n", i, files[i]);
         N = buflen;
-		buf = ph_readaudio(files[i], sr, nbchannels, sigbuf, N);
+		buf = ph_readaudio(files[i], sr, nbchannels, sigbuf, N, nbsecs);
 		if (!buf){
 			printf("unable to read file\n");
 			continue;
 		}
-		hash = ph_audiohash(buf, N, NULL, 0, sr, nbframes);
-		if (!hash){
+		hash1 = ph_audiohash(buf, N, hash, spaceleft, sr, nbframes);
+		if (!hash1){
 			printf("unable to get hash\n");
 			free(buf);
 		}
-		printf("nb hashes = %d\n", nbframes);
+        hash += nbframes;
+        spaceleft -= nbframes;
 
-        hashlist[count] = ph_malloc_datapoint(mvpfile.hash_type,mvpfile.pathlength);
+        hashlist[count] = ph_malloc_datapoint(mvpfile.hash_type);
 		if (!hashlist[count]){
 			printf("mem alloc error\n");
-			free(buf);
-			free(hash);
-            continue;
+            break;
 		}
 		hashlist[count]->id = files[i];
-		hashlist[count]->hash = (void*)hash;
+		hashlist[count]->hash = hash1;
 		hashlist[count]->hash_length = nbframes;
         count++;
     }
