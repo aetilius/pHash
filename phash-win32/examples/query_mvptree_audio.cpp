@@ -3,7 +3,8 @@
 #include "pHash.h"
 #include "audiophash.h"
 
-static int nb_calcs;
+static int nb_calcs; /* metric to evaluate efficiency */
+                     /* set to 0 before calling build, add, query */  
 
 float distfunc(DP *dpA, DP *dpB){
 
@@ -60,11 +61,11 @@ int main(int argc, char **argv){
 
     printf("nb query files = %d\n", nbfiles);
 
-    float radius = 1000.0f;
+    float radius = 100.0f; /* search radius to traverse the tree */ 
     if (argc >= 4) radius = atof(argv[3]);
-    int knearest = 20;
+    int knearest = 1;      /* max number results to retrieve */ 
     if (argc >= 5) knearest = atoi(argv[4]);
-    float threshold = 500.0f;
+    float threshold = 50.0; /*distance threshold for inclusion into list */ 
     if (argc >=6) threshold = atof(argv[5]);
 
     DP **results = (DP**)malloc(knearest*sizeof(DP*));
@@ -75,12 +76,12 @@ int main(int argc, char **argv){
     
 	int nbfound = 0, count = 0, sum_calcs = 0;
     float *buf=NULL;
-    float *sigbuf = (float*)malloc(1<<20);
+    float *sigbuf = (float*)malloc(1<<21); /* signal buffer */ 
 	if (!sigbuf){
         printf("mem alloc error\n");
         exit(1);
 	}
-    int buflen = (1<<20)/sizeof(float);
+    int buflen = (1<<21)/sizeof(float);
     int N;
     uint32_t *hash = NULL;
     int hashlen = 0;
@@ -116,7 +117,7 @@ int main(int argc, char **argv){
 		nbfound = 0;
         printf("do query ...\n");
 		MVPRetCode ret = ph_query_mvptree(&mvpfile,query,knearest,radius,threshold, results,&nbfound);
-		if (ret != PH_SUCCESS){
+		if (ret != PH_SUCCESS && ret != PH_ERRCAP){
 			printf("could not complete query - %d\n",ret);
 			continue;
 		}
