@@ -66,7 +66,7 @@ int main(int argc, char **argv){
 
     printf("nb query files = %d\n", nbfiles);
 
-    DP *query = ph_malloc_datapoint(mvpfile.hash_type,mvpfile.pathlength);
+    DP *query = ph_malloc_datapoint(mvpfile.hash_type);
 
     float radius = 80.0f;
 	if (argc >= 4){
