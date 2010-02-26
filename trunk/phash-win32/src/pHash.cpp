@@ -1140,6 +1140,9 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,fl
 						m->file_pos += sizeof(off_t);
 						/*save position and remap to new file/position  */
 						MVPFile m2;
+						if ((filenumber == 0) && (child_pos == 0)){
+                            continue;
+						}
                         ret = _ph_map_mvpfile(filenumber,child_pos, m, &m2, 1);
 						if (ret == PH_SUCCESS){
 							ret = ph_query_mvptree(&m2,query,knearest,radius,threshold, results,count,level+2);
@@ -1165,6 +1168,9 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,fl
 					m->file_pos += sizeof(off_t);
 					/*saveposition and remap to new file/position */
 					MVPFile m2;
+					if ((filenumber == 0) && (child_pos == 0)){
+                         continue;
+					}
                     ret = _ph_map_mvpfile(filenumber, child_pos,m,&m2, 1); 
 					if (ret == PH_SUCCESS){
 						ret = ph_query_mvptree(&m2,query,knearest,radius,threshold, results,count,level+2);
@@ -1192,6 +1198,9 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,fl
 					m->file_pos += sizeof(off_t);
 					/*save file position and remap to new filenumber/offset  */
 					MVPFile m2;
+					if ((filenumber == 0) && (child_pos == 0)){
+                         continue;
+					}
                     ret = _ph_map_mvpfile(filenumber, child_pos, m, &m2, 1);
 					if (ret == PH_SUCCESS){
 						ret = ph_query_mvptree(&m2,query,knearest,radius,threshold,results,count,level+2);
@@ -1216,15 +1225,17 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,fl
 				m->file_pos += sizeof(off_t);
 				/* save position and remap to new filenumber/position */
 				MVPFile m2;
-                ret = _ph_map_mvpfile(filenumber, child_pos, m, &m2, 1);
-				if (ret == PH_SUCCESS){
-					ret = ph_query_mvptree(&m2,query,knearest,radius,threshold,results,count,level+2);
-                    if (ret != PH_SUCCESS) return ret;
-					/* return to original and remap to original filenumber/position */
-					ret = _ph_unmap_mvpfile(filenumber, m->file_pos, m, &m2);
-                    if (ret != PH_SUCCESS) return ret;
-				} else {
-                    return ret;
+				if ((filenumber != 0) && (child_pos != 0)){
+					ret = _ph_map_mvpfile(filenumber, child_pos, m, &m2, 1);
+					if (ret == PH_SUCCESS){
+						ret = ph_query_mvptree(&m2,query,knearest,radius,threshold,results,count,level+2);
+						if (ret != PH_SUCCESS) return ret;
+						/* return to original and remap to original filenumber/position */
+						ret = _ph_unmap_mvpfile(filenumber, m->file_pos, m, &m2);
+						if (ret != PH_SUCCESS) return ret;
+					} else {
+						return ret;
+					}
 				}
 			}
 		}
@@ -1348,7 +1359,12 @@ MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
     DWORD alloc_offset_mask = alloc_size - 1;
     off_t offset_mask = m->pgsize - 1;
     off_t page_mask = ~(m->pgsize - 1);
-    if (nbpoints <= LeafCapacity + 2){ /* leaf */
+	if (nbpoints <= 0){
+         pOffset->fileno = 0;
+         pOffset->offset = 0;
+         return PH_SUCCESS;
+	}
+    else if (nbpoints <= LeafCapacity + 2){ /* leaf */
 		uint8_t ntype = 0;
 		MVPFile m2;
 		m2.branchfactor = m->branchfactor;
@@ -2100,21 +2116,30 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 						m->file_pos++;
 						memcpy(&child_pos,&m->buf[m->file_pos & offset_mask], sizeof(off_t));
 						m->file_pos += sizeof(off_t);
-			
-						/* save position and remap to new file/position */
-						MVPFile m2;
-                        retcode = _ph_map_mvpfile(filenumber,child_pos,m, &m2, 0);
-						if (ret == PH_SUCCESS){
-							retcode = ph_add_mvptree(&m2, new_dp, level+2);
-							if (retcode != PH_SUCCESS){
-								return retcode;
+						if ((filenumber == 0) && (child_pos == 0)){
+                            FileIndex child_offset;
+							retcode = ph_save_mvptree(m, &new_dp , 1, 0, level+2, &child_offset);
+							if (retcode == PH_SUCCESS){
+                                 memcpy(&m->buf[curr_pos++ & offset_mask], &(child_offset.fileno), sizeof(uint8_t));
+                                 memcpy(&m->buf[curr_pos & offset_mask], &(child_offset.offset), sizeof(off_t));
 							}
-							retcode = _ph_unmap_mvpfile(filenumber, m->file_pos, m, &m2);
-							if (retcode != PH_SUCCESS){
-                                return retcode;
-							}
+                            goto addcleanup;
 						} else {
-                            return retcode;
+							/* save position and remap to new file/position */
+							MVPFile m2;
+							retcode = _ph_map_mvpfile(filenumber,child_pos,m, &m2, 0);
+							if (ret == PH_SUCCESS){
+								retcode = ph_add_mvptree(&m2, new_dp, level+2);
+								if (retcode != PH_SUCCESS){
+                                    goto addcleanup;
+								}
+								retcode = _ph_unmap_mvpfile(filenumber, m->file_pos, m, &m2);
+								if (retcode != PH_SUCCESS){
+                                    goto addcleanup;
+								}
+							} else {
+                                goto addcleanup;
+							}
 						}
 					}
 				}
@@ -2126,20 +2151,29 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 					m->file_pos++;
 					memcpy(&child_pos,&m->buf[m->file_pos & offset_mask], sizeof(off_t));
 					m->file_pos += sizeof(off_t);
-		    
-					MVPFile m2;
-                    retcode = _ph_map_mvpfile(filenumber, child_pos, m, &m2, 0);
-					if (retcode == PH_SUCCESS){
-						retcode = ph_add_mvptree(&m2, new_dp, level+2);
-						if (retcode != PH_SUCCESS){
-							return retcode;
+					if ((filenumber == 0) && (child_pos == 0)){
+                         FileIndex child_offset;
+                         retcode = ph_save_mvptree(m, &new_dp, 1, 0, level+2, &child_offset);
+						 if (retcode == PH_SUCCESS){
+                              memcpy(&m->buf[curr_pos++ & offset_mask], &(child_offset.fileno), sizeof(uint8_t));
+                              memcpy(&m->buf[curr_pos   & offset_mask], &(child_offset.offset), sizeof(off_t));
+						 }
+                         goto addcleanup;
+					}  else {
+                        MVPFile m2;	    
+						retcode = _ph_map_mvpfile(filenumber, child_pos, m, &m2, 0);
+						if (retcode == PH_SUCCESS){
+							retcode = ph_add_mvptree(&m2, new_dp, level+2);
+							if (retcode != PH_SUCCESS){
+                                 goto addcleanup;
+							}
+							retcode = _ph_unmap_mvpfile(filenumber,m->file_pos, m, &m2);
+							if (retcode != PH_SUCCESS){
+                                 goto addcleanup;
+							}
+						} else {
+                            goto addcleanup;
 						}
-						retcode = _ph_unmap_mvpfile(filenumber,m->file_pos, m, &m2);
-						if (retcode != PH_SUCCESS){
-                            return retcode;
-						}
-					} else {
-						return retcode;
 					}
 				}
 
@@ -2156,19 +2190,29 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 					m->file_pos++;
 					memcpy(&child_pos,&m->buf[m->file_pos & offset_mask], sizeof(off_t));
 					m->file_pos += sizeof(off_t);
-					MVPFile m2;
-                    retcode = _ph_map_mvpfile(filenumber,child_pos,m, &m2, 0);
-					if (retcode == PH_SUCCESS){
-						retcode = ph_add_mvptree(&m2,new_dp,level+2);
-						if (retcode != PH_SUCCESS){
-							return retcode;
-						}
-						retcode = _ph_unmap_mvpfile(filenumber, m->file_pos, m, &m2);
-						if (retcode != PH_SUCCESS){
-                            return retcode;
-						}
+					if ((filenumber == 0) && (child_pos == 0)){
+                         FileIndex child_offset;
+                         retcode = ph_save_mvptree(m, &new_dp, 1, 0, level+2, &child_offset);
+						 if (retcode == PH_SUCCESS){
+                             memcpy(&m->buf[curr_pos++ & offset_mask], &(child_offset.fileno), sizeof(uint8_t));
+                             memcpy(&m->buf[curr_pos   & offset_mask], &(child_offset.offset), sizeof(off_t));
+						 }
+                         goto addcleanup;
 					} else {
-						return retcode;
+						MVPFile m2;
+						retcode = _ph_map_mvpfile(filenumber,child_pos,m, &m2, 0);
+						if (retcode == PH_SUCCESS){
+							retcode = ph_add_mvptree(&m2,new_dp,level+2);
+							if (retcode != PH_SUCCESS){
+                                goto addcleanup;
+							}
+							retcode = _ph_unmap_mvpfile(filenumber, m->file_pos, m, &m2);
+							if (retcode != PH_SUCCESS){
+              					goto addcleanup;
+							}
+						} else {
+                            goto addcleanup;
+						}
 					}
 				}
 			}
@@ -2181,22 +2225,33 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 				m->file_pos++;
 				memcpy(&child_pos, &m->buf[m->file_pos & offset_mask], sizeof(off_t));
 				m->file_pos += sizeof(off_t);
-				MVPFile m2;
-                retcode = _ph_map_mvpfile(filenumber, child_pos, m, &m2, 0);
-				if (retcode == PH_SUCCESS){
-					retcode = ph_add_mvptree(&m2, new_dp, level+2);
-					if (retcode != PH_SUCCESS){
-						return retcode;
-					}
-					retcode = _ph_unmap_mvpfile(filenumber, m->file_pos, m, &m2);
-					if (retcode != PH_SUCCESS){
-                        return retcode;
-					}
+				if ((filenumber == 0) && (child_pos == 0)){
+                     FileIndex child_offset;
+                     retcode = ph_save_mvptree(m, &new_dp, 1, 0, level+2, &child_offset);
+					 if (retcode == PH_SUCCESS){
+                         memcpy(&m->buf[curr_pos++ & offset_mask], &(child_offset.fileno), sizeof(uint8_t));
+                         memcpy(&m->buf[curr_pos   & offset_mask], &(child_offset.offset), sizeof(off_t));
+					 }
+                     goto addcleanup;
 				} else {
-					return retcode;
+					MVPFile m2;
+					retcode = _ph_map_mvpfile(filenumber, child_pos, m, &m2, 0);
+					if (retcode == PH_SUCCESS){
+						retcode = ph_add_mvptree(&m2, new_dp, level+2);
+						if (retcode != PH_SUCCESS){
+                            goto addcleanup;
+						}
+						retcode = _ph_unmap_mvpfile(filenumber, m->file_pos, m, &m2);
+						if (retcode != PH_SUCCESS){
+                            goto addcleanup;
+						}
+					} else {
+                        goto addcleanup;
+					}
 				}
 			}
 		}
+addcleanup:
 		free(M1);
 		free(M2);
 	} else {
