@@ -490,24 +490,26 @@ DP** ph_audio_hashes(char **files, int count, int sr, int channels, int threads,
         int off = 0;
         int start = 0;
         int rem = count % num_threads;
-        HashParams hashparams;
-        hashparams.sr = sr;
-        hashparams.nbchannels = channels;
-        hashparams.nbsecs = nbsecs;
+        HashParams *phashparams;
         for(int i = 0; i < num_threads; ++i)
         { 
                 off = (int)floor((count/(float)num_threads) + (rem>0?num_threads-(count % num_threads):0));
                 s[i].hash_p = &dp[start];
                 s[i].n = off;
-                s[i].hash_params = &hashparams;
+                phashparams = (HashParams*)malloc(sizeof(HashParams));
+                phashparams->sr = sr;
+                phashparams->nbchannels = channels;
+                phashparams->nbsecs = nbsecs;
+                s[i].hash_params = (void*)phashparams;
                 start = off;
                 --rem;
                   
-                thrds[i] = CreateThread(NULL, 0, ph_audio_hash_thread, s, 0, NULL);
+                thrds[i] = CreateThread(NULL, 0, ph_audio_hash_thread, &s[i], 0, NULL);
         }
         for(int i = 0; i < num_threads; ++i)
         {
                 WaitForMultipleObjects(num_threads, thrds, TRUE, INFINITE);
+                free(s[i].hash_params);
         }
 
         delete[] thrds;
