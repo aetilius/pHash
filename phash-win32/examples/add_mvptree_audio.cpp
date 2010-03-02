@@ -21,25 +21,23 @@ float distfunc(DP *dpA, DP *dpB){
 	    maxC = ptrC[i];
     }
     if (ptrC) free(ptrC);
-    double d = 10*(1-maxC);
-    float res = (float)(exp(d)-1.0);
-
-    return res;
+    double res = 1000*(1-maxC);
+    return (float)res;
 }
  
 int main(int argc, char **argv){
 	if (argc < 3){
         printf("not enough input args\n");
-        exit(1);
+        return -1;
 	}
     const char *dir_name = argv[1];/* name of dir to retrieve image files */
     const char *filename = argv[2];/* name of file to save db */
 
-    const int sr = 8000;
-    const int nbchannels = 1;
-    const float nbsecs = 45.0f;
+    const int sr = 8000;          /* sample rate to convert all files */
+    const int nbchannels = 1;     /* number of channels to convert all files*/ 
+    const float nbsecs = 45.0f;   /* first number seconds of each file to read */ 
 
-    MVPFile mvpfile;
+    MVPFile mvpfile;              /* mvp tree configuration settings */ 
     mvpfile.filename = strdup(filename);
     mvpfile.hashdist = distfunc;
     mvpfile.hash_type = UINT32ARRAY;
@@ -49,55 +47,27 @@ int main(int argc, char **argv){
     char **files = ph_readfilenames(dir_name,nbfiles);
     if (!files){
 		printf("mem alloc error\n");
-		exit(1);
+		return -1;
     }
-    printf("nbfiles = %d\n", nbfiles);
-    DP **hashlist = (DP**)malloc(nbfiles*sizeof(DP*));
-    if (!hashlist){
-		printf("mem alloc error\n");
-		exit(1);
-    }
+    printf("number of files %d\n", nbfiles);
 
-    int count = 0;
-    float *buf = NULL;
-    float *sigbuf = (float*)malloc(1<<21);
-    int buflen = (1<<21)/sizeof(float);
-    int N;
+   /* get audio hashes - multithreaded */ 
+   DP **hashlist = ph_audio_hashes(files,nbfiles,sr,nbchannels, 0, nbsecs);
+   if (hashlist == NULL){
+      printf("could not get audiohashes\n");
+      return -1;
+   }
 
-    uint32_t *hashes = (uint32_t*)malloc(1<<21);
-    int hashspacelength = (1<<21)/sizeof(uint32_t);
-    int spaceleft = hashspacelength;
-    uint32_t *hash = hashes;
-    uint32_t *hash1 = NULL;
-    int nbframes = 0;
+   /* if any hashes are null, move list up */ 
+   int count = 0;
+   for (int i=0;i<nbfiles;i++){
+	   if (!(hashlist[i]==NULL || hashlist[i]->hash == NULL)){
+          hashlist[count] = hashlist[i];
+          count++;
+	   }
+   }
 
-    for (int i=0;i<nbfiles;i++){
-		printf("file[%d]: %s\n", i, files[i]);
-        N = buflen;
-		buf = ph_readaudio(files[i], sr, nbchannels, sigbuf, N, nbsecs);
-		if (!buf){
-			printf("unable to read file\n");
-			continue;
-		}
-		hash1 = ph_audiohash(buf, N, hash, spaceleft, sr, nbframes);
-		if (!hash1){
-			printf("unable to get hash\n");
-			free(buf);
-		}
-        hash += nbframes;
-        spaceleft -= nbframes;
-
-        hashlist[count] = ph_malloc_datapoint(mvpfile.hash_type);
-		if (!hashlist[count]){
-			printf("mem alloc error\n");
-            break;
-		}
-		hashlist[count]->id = files[i];
-		hashlist[count]->hash = hash1;
-		hashlist[count]->hash_length = nbframes;
-        count++;
-    }
-
+    /* add each hash to list */ 
     printf("add %d files to file %s\n", count, filename);
     int nbsaved;
     MVPRetCode retcode = ph_add_mvptree(&mvpfile, hashlist, count,nbsaved);
