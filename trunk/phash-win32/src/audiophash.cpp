@@ -454,14 +454,14 @@ DWORD WINAPI ph_audio_hash_thread(LPVOID arg)
 {
     slice *s = (slice *)arg;
 
-    pair<int,int> *p = (pair<int,int>*)s->hash_params;
+    HashParams *p = (HashParams*)s->hash_params;
 
     for(int i = 0; i < s->n; ++i)
     {
         DP *dp = s->hash_p[i];
-        int len, frameCount;
-        float *buf = ph_readaudio(dp->id, p->first, p->second, NULL, len);
-        uint32_t *hash = ph_audiohash(buf, len, NULL, 0, p->first, frameCount);
+        int len = 0, frameCount =  0;
+        float *buf = ph_readaudio(dp->id, p->sr, p->nbchannels, NULL, len,p->nbsecs);
+        uint32_t *hash = ph_audiohash(buf, len, NULL, 0, p->sr, frameCount);
         free(buf);
         dp->hash = hash;
         dp->hash_length = frameCount;
@@ -470,7 +470,7 @@ DWORD WINAPI ph_audio_hash_thread(LPVOID arg)
 
 }
 __declspec(dllexport)
-DP** ph_audio_hashes(char **files, int count, int sr, int channels, int threads)
+DP** ph_audio_hashes(char **files, int count, int sr, int channels, int threads, float nbsecs)
 {
 
     if(threads > count || !files || count <= 0)
@@ -490,12 +490,16 @@ DP** ph_audio_hashes(char **files, int count, int sr, int channels, int threads)
         int off = 0;
         int start = 0;
         int rem = count % num_threads;
+        HashParams hashparams;
+        hashparams.sr = sr;
+        hashparams.nbchannels = channels;
+        hashparams.nbsecs = nbsecs;
         for(int i = 0; i < num_threads; ++i)
         { 
                 off = (int)floor((count/(float)num_threads) + (rem>0?num_threads-(count % num_threads):0));
                 s[i].hash_p = &dp[start];
                 s[i].n = off;
-                s[i].hash_params = new pair<float,float>(sr, channels);
+                s[i].hash_params = &hashparams;
                 start = off;
                 --rem;
                   
@@ -504,7 +508,6 @@ DP** ph_audio_hashes(char **files, int count, int sr, int channels, int threads)
         for(int i = 0; i < num_threads; ++i)
         {
                 WaitForMultipleObjects(num_threads, thrds, TRUE, INFINITE);
-                delete (pair<float,float>*)s[i].hash_params;
         }
 
         delete[] thrds;

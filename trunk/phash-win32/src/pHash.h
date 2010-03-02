@@ -115,6 +115,12 @@ typedef struct _slice
     void *hash_params;
 } slice;
 
+typedef struct hash_params_struct {
+    int sr;
+    int nbchannels;
+    float nbsecs;
+} HashParams;
+
 /* call back function for mvp tree functions - to performa distance calc.'s*/
 typedef float (*hash_compareCB)(DP *pointA, DP *pointB);
 

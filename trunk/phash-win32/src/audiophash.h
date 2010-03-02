@@ -76,7 +76,7 @@ __declspec(dllexport)
 uint32_t* ph_audiohash(float *buf, int nbbuf, uint32_t *hashbuf, int nbcap, const int sr,int &nbframes);
 
 __declspec(dllexport)
-DP** ph_audio_hashes(char **files, int count, int sr, int channels, int threads = 0);
+DP** ph_audio_hashes(char **files, int count, int sr, int channels, int threads = 0, float nbsecs = 0.0f);
 
 /* /brief bit count set bits in 32bit variable
  * /param n 

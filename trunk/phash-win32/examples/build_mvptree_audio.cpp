@@ -43,15 +43,15 @@ float distancefunc(DP *pa, DP *pb){
   if (ptrC) 
 	  free(ptrC);
 
-  double d = 10*(1.0 - maxC);
-  float res = (float)(exp(d) - 1.0);
-  return res;
+  double res = 1000*(1.0 - maxC);
+  return (float)res;
 
 }
 
 int main(int argc, char **argv){
 	if (argc < 3){
        printf("not enough input args\n");
+	   printf("usage: progname directory dbname\n");
        return 1;
 	}
     const char *dir_name = argv[1];/* name of dir to retrieve image files */
@@ -59,17 +59,18 @@ int main(int argc, char **argv){
 
     const int sr = 8000;            /* convert to sr */
     const int nbchannels = 1;       /* convert to number of channels */
-    const float nbsecs = 45.0f;     /* nb secs of audio to read from each file */
+    const float nbsecs = 45.0f;     /* number secs of audio to read from each file */
 
     MVPFile mvpfile;                /* mvp tree indexing configuration */ 
-    mvpfile.branchfactor = 2;
-    mvpfile.pathlength = 5;
-    mvpfile.leafcapacity = 44;
-    mvpfile.pgsize = 1 << 19; /* 2^29=524,288 */
+    mvpfile.branchfactor = 2;       /* number of branches for each node */ 
+    mvpfile.pathlength = 5;         /* length of path to remember distances from each level vantage points */
+    mvpfile.leafcapacity = 44;      /* number of datapoints for each leaf */ 
+	mvpfile.pgsize = 1 << 19;       /* 2^29=524,288 Must be able to fit leafcapacity*sizeof(datapoint) */
     mvpfile.filename = strdup(filename);
-    mvpfile.hashdist = distancefunc;
-    mvpfile.hash_type = UINT32ARRAY;
+    mvpfile.hashdist = distancefunc;    /*distance function to use in the tree */ 
+    mvpfile.hash_type = UINT32ARRAY;    /* bit width of each haash element */ 
 
+    /* read in file names from directory */ 
     int nbfiles = 0;
     printf("dir name: %s\n", dir_name);
     char **files = ph_readfilenames(dir_name,nbfiles);
@@ -77,56 +78,23 @@ int main(int argc, char **argv){
 		printf("mem alloc error\n");
 		return 1;
     }
-    printf("nbfiles = %d\n", nbfiles);
-    DP **hashlist = (DP**)malloc(nbfiles*sizeof(DP*));
-    if (!hashlist){
-	    printf("mem alloc error\n");
-	    return 1;
-    }
-    
-    /* audio buffer to pass to readaudio() */ 
-    int count = 0;
-    float *sigbuf = (float*)malloc(1<<21);
-    int buflen = (1<<21)/sizeof(float);
-    int N;
-  
-    /*buffer for all hashes */ 
-    uint32_t *hashes = (uint32_t*)malloc(1<<21);
-    int hashspacelength = (1<<21)/sizeof(uint32_t);
-    int hashspaceleft = hashspacelength;
-  
-    uint32_t *hash = hashes;
-    int nbframes;
-    for (int i=0;i<nbfiles;i++){
-		printf("file[%d]: %s \n", i, files[i]);
-        hashlist[count] = ph_malloc_datapoint(mvpfile.hash_type);
-		if (hashlist[count] == NULL){
-			printf("mem alloc error\n");
-			continue;
-		}
-		hashlist[count]->id = files[i];
-        N = buflen;
-        float *buf = ph_readaudio(files[i], sr, nbchannels, sigbuf, N, nbsecs);
-		if (buf == NULL){
-            printf("unable to get signal\n");
-            ph_free_datapoint(hashlist[count]);
-            continue;
-		}
-        printf("nb sampels = %d\n", N);
-        uint32_t *hash1 = ph_audiohash(buf, N, hash, hashspaceleft, sr, nbframes);
-		if (hash1 == NULL){
-			printf("unable to get hash\n\n");
-            ph_free_datapoint(hashlist[count]);
-		    continue;
-		}
-        printf("nb hashes %d\n", nbframes);
-        hash += nbframes;
-        hashspaceleft -= nbframes;
+   
+   /* retrieve audio hashes - multithreaded */ 
+   int count = 0;
+   DP** hashlist = ph_audio_hashes(files, nbfiles, sr, nbchannels);  
+   if (hashlist == NULL){
+       printf("unable to get audio hashes\n");
+       return 1;
+   }
+   /* if any datapoints are null, move the list up */
+   for (int i=0;i<nbfiles;i++){
+	   if ( !((hashlist[i] == NULL) || (hashlist[i]->hash == NULL))){
+          hashlist[count] = hashlist[i];
+          count++;
+	   }
+   }
 
-        hashlist[count]->hash = hash1;
-		hashlist[count]->hash_length = nbframes;
-        count++;
-    }
+    /* save tree */ 
     printf("save files into tree ...\n");
     MVPRetCode errcode = ph_save_mvptree(&mvpfile, hashlist, count);
     if (errcode != PH_SUCCESS){
@@ -140,7 +108,5 @@ int main(int argc, char **argv){
         free(hashlist[i]);
 	}
     free(files);
-    free(hashlist);
-    free(sigbuf);
     return 0;
 }
