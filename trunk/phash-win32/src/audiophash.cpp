@@ -479,7 +479,7 @@ DP** ph_audio_hashes(char **files, int count, int sr, int channels, int threads,
     DP** dp = (DP**)malloc(count*sizeof(DP*));
     for(int i = 0; i < count; ++i)
     {
-        dp[i] = (DP *)malloc(sizeof(DP));
+        dp[i] = (DP *)ph_malloc_datapoint(UINT32ARRAY);
         dp[i]->id = strdup(files[i]);
     }
     
@@ -491,12 +491,12 @@ DP** ph_audio_hashes(char **files, int count, int sr, int channels, int threads,
         int start = 0;
         int rem = count % num_threads;
         HashParams *phashparams;
-        for(int i = 0; i < num_threads; ++i)
+        for(DWORD i = 0; i < num_threads; ++i)
         { 
                 off = (int)floor((count/(float)num_threads) + (rem>0?num_threads-(count % num_threads):0));
                 s[i].hash_p = &dp[start];
                 s[i].n = off;
-                phashparams = (HashParams*)malloc(sizeof(HashParams));
+                phashparams = new HashParams();
                 phashparams->sr = sr;
                 phashparams->nbchannels = channels;
                 phashparams->nbsecs = nbsecs;
@@ -506,10 +506,10 @@ DP** ph_audio_hashes(char **files, int count, int sr, int channels, int threads,
                   
                 thrds[i] = CreateThread(NULL, 0, ph_audio_hash_thread, &s[i], 0, NULL);
         }
-        for(int i = 0; i < num_threads; ++i)
+        for(DWORD i = 0; i < num_threads; ++i)
         {
                 WaitForMultipleObjects(num_threads, thrds, TRUE, INFINITE);
-                free(s[i].hash_params);
+                delete s[i].hash_params;
         }
 
         delete[] thrds;
