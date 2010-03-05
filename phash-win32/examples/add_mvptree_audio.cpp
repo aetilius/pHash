@@ -50,22 +50,45 @@ int main(int argc, char **argv){
 		return -1;
     }
     printf("number of files %d\n", nbfiles);
+    DP **hashlist = (DP**)malloc(nbfiles*sizeof(DP*));
+	if (hashlist == NULL){
+       printf("mem alloc error\n");
+       return -1;
+	}
 
-   /* get audio hashes - multithreaded */ 
-   DP **hashlist = ph_audio_hashes(files,nbfiles,sr,nbchannels, 0, nbsecs);
-   if (hashlist == NULL){
-      printf("could not get audiohashes\n");
-      return -1;
-   }
+    float *sigbuf = (float*)malloc(1<<21);
+    int buflen = (1<<21)/sizeof(float);
 
-   /* if any hashes are null, move list up */ 
-   int count = 0;
-   for (int i=0;i<nbfiles;i++){
-	   if (!(hashlist[i]==NULL || hashlist[i]->hash == NULL)){
-          hashlist[count] = hashlist[i];
-          count++;
-	   }
-   }
+ 
+    uint32_t *hashbuf = (uint32_t*)malloc(1<<21);
+    int hashbuflength = (1<<21)/sizeof(uint32_t);
+    uint32_t *hash = hashbuf;
+    int hashbufleft = hashbuflength;
+
+    int count = 0;
+	for (int i=0;i<nbfiles;i++){
+		printf("file[%d]: %s\n", i, files[i]);
+        hashlist[count] = ph_malloc_datapoint(mvpfile.hash_type);
+        int N = buflen;
+        float *buf = ph_readaudio(files[i],sr,nbchannels,sigbuf,N,nbsecs);
+		if (buf == NULL){
+            printf("cannot read file\n");
+            continue;
+		}
+        int nbframes;
+        uint32_t *hasht = ph_audiohash(buf,N,hash,hashbufleft,sr,nbframes);
+		if (hasht == NULL){
+            printf("unable to get hash\n");
+            continue;
+		}
+        hashlist[count]->id = files[i];
+        hashlist[count]->hash = hash;
+        hashlist[count]->hash_length = nbframes;
+        count++;
+
+        hash += nbframes;
+        hashbufleft -= nbframes;
+	}
 
     /* add each hash to list */ 
     printf("add %d files to file %s\n", count, filename);

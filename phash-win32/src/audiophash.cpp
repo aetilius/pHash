@@ -412,7 +412,7 @@ double* ph_audio_distance_ber(uint32_t *hash_a , const int Na, uint32_t *hash_b,
         Nc = 0;
         return NULL;
 	}
-    int M = (int)((float)N1/(float)block_size);
+    int M = N1/block_size;
     double *dist = (double*)malloc(M*sizeof(double));
 	if (!dist){
          delete pC;

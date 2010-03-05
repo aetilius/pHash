@@ -57,46 +57,67 @@ int main(int argc, char **argv){
     char **files = ph_readfilenames(dir_name,nbfiles);
     if (!files){
 		printf("mem alloc error\n");
-		exit(1);
+		return -1;
     }
 
     printf("nb query files = %d\n", nbfiles);
 
-    float radius = 700.0f; /* search radius to traverse the tree */ 
+    /* search radius to traverse the tree */ 
+    /* you will need to play around with this figure to find the optimal value */
+    /* lower values will give you a more efficient search, but may not return the result */ 
+    /* high enough values should definitely return a result, if it is in there, but might not be as efficient */ 
+    float radius = 700.0; /* search radius to traverse the tree */ 
     if (argc >= 4) radius = atof(argv[3]);
-    int rnearest = 1;      /* max number results to retrieve */ 
+    int rnearest = 1;      /* max number results to retrieve - 1 for most efficient searches (if each datapoint is unique */ 
     if (argc >= 5) rnearest = atoi(argv[4]);
-    float threshold = 300.0; /*distance threshold for inclusion into list */ 
+    float threshold = 400.0; /*distance threshold for inclusion into list */ 
     if (argc >=6) threshold = atof(argv[5]);
-
-    /* get hashes for querys - multithreaded */ 
-    DP **querys = ph_audio_hashes(files,nbfiles,sr,nbchannels);
-	if (querys == NULL){
-        printf("unable to get hashes for querys\n");
-        return -1;
-	}
-    /* check for null entries and move up in list */ 
-    int count = 0;   
-	for (int i=0;i<nbfiles;i++){
-		if (!(querys[i] == NULL  || querys[i]->hash == NULL)){
-             querys[count] = querys[i];
-             count++;
-		}
-	}
+    
+    printf("radius %f, knearest %d, threshold %f\n", radius, rnearest, threshold);
+ 
+    DP *query = ph_malloc_datapoint(mvpfile.hash_type);
+     
     DP **results = (DP**)malloc(rnearest*sizeof(DP*));
 	if (results == NULL){
         printf("unable to alloc memory\n");
         return -1;
 	}
 
+    float *sigbuf = (float*)malloc(1<<21);
+    int buflen = (1<<21)/sizeof(float);
+
+    uint32_t *hashbuf = (uint32_t*)malloc(1<<14);
+    int hashbuflength = (1<<14)/sizeof(uint32_t);
+    
     /* perform querys for each */ 
-    int nbfound = 0, sum_calcs = 0;
-    for (int i=0;i<count;i++){
-		printf("file[%d]: %s hash length %d\n", i, querys[i]->id,querys[i]->hash_length);
+    int nbfound = 0, sum_calcs = 0, count = 0;
+    for (int i=0;i<nbfiles;i++){
+		printf("query file[%d]: %s\n", i, files[i]);
+        int N = buflen;
+        float *buf = ph_readaudio(files[i],sr,nbchannels,sigbuf,N,nbsecs);
+		if (buf == NULL){
+            printf("unable to read audio\n");
+            continue;
+		}
+        printf("buf length %d\n", N);
+
+        int nbframes;
+        uint32_t *hasht = ph_audiohash(buf,N,hashbuf,hashbuflength,sr,nbframes);
+		if (hasht == NULL){
+            printf("unable to get hash\n");
+            continue;
+		}
+        printf("hash %p to %p, length %d\n", hasht, hasht+nbframes, nbframes);
+
+        query->id = files[i];
+        query->hash = hasht;
+        query->hash_length = nbframes;
+        
+        count++;
 		nb_calcs = 0;
 		nbfound = 0;
         printf("do query ...\n");
-		MVPRetCode ret = ph_query_mvptree(&mvpfile,querys[i],rnearest,radius,threshold, results,&nbfound);
+		MVPRetCode ret = ph_query_mvptree(&mvpfile,query,rnearest,radius,threshold, results,&nbfound);
 		if (ret != PH_SUCCESS && ret != PH_ERRCAP){
 			printf("could not complete query - %d\n",ret);
 			continue;
@@ -104,7 +125,7 @@ int main(int argc, char **argv){
 		sum_calcs += nb_calcs;
 		printf(" %d found, %d distance calcs\n", nbfound,nb_calcs);
 		for (int j=0;j<nbfound;j++){
-			printf("    %d  %s dist = %f\n", i, results[j]->id, distfunc(results[j], querys[i]));
+			printf("    %d  %s dist = %f\n", i, results[j]->id, distfunc(results[j], query));
 		}
         printf("******************************************\n");
 
@@ -116,10 +137,7 @@ int main(int argc, char **argv){
    float ave_calcs = (float)sum_calcs/(float)count;      
    printf("ave calcs/query: %f\n", ave_calcs);
     
-   for (int j=0;j<count;j++){
-       ph_free_datapoint(querys[j]);
-   }
-   free(querys);
+   ph_free_datapoint(query);
    free(results);
 
     return 0;
