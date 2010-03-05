@@ -54,6 +54,7 @@ int main(int argc, char **argv){
 	   printf("usage: progname directory dbname\n");
        return 1;
 	}
+ 
     const char *dir_name = argv[1];/* name of dir to retrieve image files */
     const char *filename = argv[2];/* name of indexing db, e.g. 'audiodb'  */
 
@@ -78,20 +79,49 @@ int main(int argc, char **argv){
 		printf("mem alloc error\n");
 		return 1;
     }
-   
-   /* retrieve audio hashes - multithreaded */ 
-   int count = 0;
-   DP** hashlist = ph_audio_hashes(files, nbfiles, sr, nbchannels);  
+   printf("number files %d\n", nbfiles);
+   DP **hashlist = (DP**)malloc(nbfiles*sizeof(DP*));
    if (hashlist == NULL){
-       printf("unable to get audio hashes\n");
-       return 1;
+       printf("mem alloc error\n");
+       return -1;
    }
-   /* if any datapoints are null, move the list up */
+   float *sigbuf = (float*)malloc(1<<21);
+   int buflen = (1<<21)/sizeof(float);
+   printf("sigbuf %p to %p\n", sigbuf, sigbuf + buflen);
+
+   uint32_t *hashspace = (uint32_t*)malloc(1<<25); /* 33.5 MB */ 
+   int hashbuflength = (1<<25)/sizeof(uint32_t);
+   uint32_t *hashbuf = hashspace;
+   int hashbufleft = hashbuflength;
+   printf("hashspace %p to %p\n", hashspace, hashspace+hashbuflength);
+
+   int count = 0;
    for (int i=0;i<nbfiles;i++){
-	   if ( !((hashlist[i] == NULL) || (hashlist[i]->hash == NULL))){
-          hashlist[count] = hashlist[i];
-          count++;
+	   printf("file[%d]: %s\n", i, files[i]);
+       hashlist[count] = ph_malloc_datapoint(mvpfile.hash_type);
+       int N = buflen;
+       float *buf = ph_readaudio(files[i],sr,nbchannels,sigbuf,N,nbsecs);
+	   if (buf == NULL){
+          printf("cannot read buf\n");
+          continue;
 	   }
+       printf("sign %p to %p, len %d\n", buf, buf+N, N);
+
+       int nbframes;     
+       uint32_t *hasht = ph_audiohash(buf,N,hashbuf,hashbufleft,sr,nbframes);
+	   if (hasht == NULL){
+          printf("unable to get hash\n");
+          continue;
+	   }
+       printf("hash %p to %p, hashlength %d\n", hasht, hasht+nbframes,nbframes);
+
+       hashlist[count]->id = files[i];
+       hashlist[count]->hash = hasht;
+       hashlist[count]->hash_length = nbframes;
+       count++;
+
+       hashbuf += nbframes;
+       hashbufleft -= nbframes;
    }
 
     /* save tree */ 

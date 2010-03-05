@@ -666,10 +666,16 @@ uint8_t* ph_mh_imagehash(const char *filename, int &N,float alpha, float lvl){
 __declspec(dllexport)
 int ph_bitcount8(uint8_t val){
     int num = 0;
+    /*
     while (val){
-	++num;
-	val &= val - 1;
+        num += val & 1;
+        val >>= 1;
     }
+    */
+	while (val){
+        num++;
+        val &= val - 1;
+	}
     return num;
 }
 
@@ -680,26 +686,24 @@ double ph_hammingdistance2(uint8_t *hashA, int lenA, uint8_t *hashB, int lenB){
 	return -1.0;
     }
     if ((hashA == NULL) || (hashB == NULL) || (lenA <= 0)){
-	return -1.0;
+		return -1.0;
     }
     double dist = 0;
     uint8_t D = 0;
     for (int i=0;i<lenA;i++){
-	D = hashA[i]^hashB[i];
-	dist = dist + (double)ph_bitcount8(D);
+		D = hashA[i]^hashB[i];
+		dist = dist + (double)ph_bitcount8(D);
     }
     double bits = (double)lenA*8;
     return dist/bits;
-
 }
 
 
-int ph_selectvantagepoints(MVPFile *m, DP **points, int N, int &sv1_pos, int &sv2_pos, float &maxdist, float &mindist){
+int ph_selectvantagepoints(MVPFile *m, DP **points, int N, int &sv1_pos, int &sv2_pos){
 	if (N > 2){   
 		sv1_pos = 0;
 		sv2_pos = 1;
-		maxdist = 0.0f;
-		mindist = (float)INT_MAX;
+		float maxdist = 0.0f;
 		float d;
 		for (int i=0;i<N;i++){ /* find 2 points furthest apart */
 			for (int j=i+1;j<N;j++){
@@ -709,28 +713,18 @@ int ph_selectvantagepoints(MVPFile *m, DP **points, int N, int &sv1_pos, int &sv
 					sv1_pos = i;
 					sv2_pos = j;
 				}
-				if (d < mindist){
-					mindist = d;
-				}
 			}
 		}
 	} else if (N > 1){
         sv1_pos = 0;
         sv2_pos = 1;
-        maxdist = m->hashdist(points[sv1_pos],points[sv2_pos]);
-        mindist = maxdist;
 	} else if (N > 0){
         sv1_pos = 0;
         sv2_pos = -1;
-        maxdist = -1;
-        mindist = -1;
 	} else {
         sv1_pos = -1;
         sv2_pos = -1;
-        maxdist  = -1;
-        mindist = -1;
 	}
-
     return 0;
 }
 
@@ -1041,7 +1035,6 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,fl
 						m->file_pos = point_offset;
 						DP *dp = ph_read_datapoint(m);
 						m->file_pos = curr_pos;
-		    
 						/* test each path[] distance and as soon as one does not fit 
 						disclude the point                                        */
 						if (dp){
@@ -1079,6 +1072,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,fl
 		/* read sv1, sv2 */
 		DP *sv1 = ph_read_datapoint(m);
 		DP *sv2 = ph_read_datapoint(m);
+	  
 		/* read 1st and 2nd level pivots */
 		float *M1 = (float*)malloc(LengthM1*sizeof(float));
         if (!M1) return PH_ERRMEMALLOC;
@@ -1102,8 +1096,9 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,fl
 		/* check if sv1 sv2 are close enough to query  */
 		if (d1 <= threshold){
 			results[(*count)++] = sv1;
-			if (*count >= knearest)
+			if (*count >= knearest){
 				return PH_ERRCAP;
+			}
 		} else {
             free(sv1->id);
             free(sv1->hash);
@@ -1146,14 +1141,12 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,fl
                         ret = _ph_map_mvpfile(filenumber,child_pos, m, &m2, 1);
 						if (ret == PH_SUCCESS){
 							ret = ph_query_mvptree(&m2,query,knearest,radius,threshold, results,count,level+2);
-                            if (ret != PH_SUCCESS)
-                               return ret;
+							if (ret != PH_SUCCESS) goto query_cleanup;
 						    /* unmap and remap to the origional file/posion */
 							ret = _ph_unmap_mvpfile(filenumber, m->file_pos, m, &m2);
-                            if (ret != PH_SUCCESS)
-                                return ret;
+                            if (ret != PH_SUCCESS)  goto query_cleanup;
 						} else {
-                             return ret;
+                             goto query_cleanup;
 						}
 					}
 				}
@@ -1174,12 +1167,12 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,fl
                     ret = _ph_map_mvpfile(filenumber, child_pos,m,&m2, 1); 
 					if (ret == PH_SUCCESS){
 						ret = ph_query_mvptree(&m2,query,knearest,radius,threshold, results,count,level+2);
-                        if (ret != PH_SUCCESS) return ret;
+                        if (ret != PH_SUCCESS) goto query_cleanup;
 					    /*unmap and remap to original file/position  */
 						ret = _ph_unmap_mvpfile(filenumber, m->file_pos, m, &m2);
-                        if (ret != PH_SUCCESS) return ret;
+                        if (ret != PH_SUCCESS) goto query_cleanup;
 					} else {
-                        return ret;
+                        goto query_cleanup;
 					}
 				}
 			}
@@ -1204,12 +1197,12 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,fl
                     ret = _ph_map_mvpfile(filenumber, child_pos, m, &m2, 1);
 					if (ret == PH_SUCCESS){
 						ret = ph_query_mvptree(&m2,query,knearest,radius,threshold,results,count,level+2);
-                        if (ret != PH_SUCCESS) return ret;
+                        if (ret != PH_SUCCESS) goto query_cleanup;
 						/* unmap/remap to original filenumber/position */
 						ret = _ph_unmap_mvpfile(filenumber, m->file_pos, m, &m2);
-                        if (ret != PH_SUCCESS) return ret;
+                        if (ret != PH_SUCCESS) goto query_cleanup;
 					} else {
-                        return ret;
+                        goto query_cleanup;
 					}
 				}
 			}
@@ -1225,20 +1218,21 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,fl
 				m->file_pos += sizeof(off_t);
 				/* save position and remap to new filenumber/position */
 				MVPFile m2;
-				if ((filenumber != 0) && (child_pos != 0)){
+				if (!(filenumber == 0 && child_pos == 0)){
 					ret = _ph_map_mvpfile(filenumber, child_pos, m, &m2, 1);
 					if (ret == PH_SUCCESS){
 						ret = ph_query_mvptree(&m2,query,knearest,radius,threshold,results,count,level+2);
-						if (ret != PH_SUCCESS) return ret;
+						if (ret != PH_SUCCESS) goto query_cleanup;
 						/* return to original and remap to original filenumber/position */
 						ret = _ph_unmap_mvpfile(filenumber, m->file_pos, m, &m2);
-						if (ret != PH_SUCCESS) return ret;
+						if (ret != PH_SUCCESS) goto query_cleanup;
 					} else {
-						return ret;
+						goto query_cleanup;
 					}
 				}
 			}
 		}
+query_cleanup:
         free(M1);
         free(M2);
 	} else { /* unrecognized node */
@@ -1433,8 +1427,7 @@ MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 		m2.file_pos++;
 		/* find vantage points, sv1 and sv2 */
 		int sv1_pos, sv2_pos;
-		float max_distance, min_distance;
-		ph_selectvantagepoints(&m2, points, nbpoints, sv1_pos, sv2_pos, max_distance, min_distance);  	   
+		ph_selectvantagepoints(&m2, points, nbpoints, sv1_pos, sv2_pos);  	   
         DP *sv1=NULL, *sv2=NULL;
 		if (sv1_pos >= 0){
 			sv1 = points[sv1_pos];
@@ -1545,14 +1538,26 @@ leafcleanup:
 	
 		/* choose vantage points, sv1, sv2 */
 		int sv1_pos, sv2_pos;
-		float max_distance, min_distance;
-		ph_selectvantagepoints(m, points, nbpoints,sv1_pos,sv2_pos,max_distance,min_distance);
+		float max_distance = 0.0f, min_distance = (float)INT_MAX;
+		ph_selectvantagepoints(m, points, nbpoints,sv1_pos,sv2_pos);
 		DP *sv1 = points[sv1_pos]; 
 		DP *sv2 = points[sv2_pos];
 
 		/* save sv1, sv2 */
 		ph_save_datapoint(sv1, m);
 		ph_save_datapoint(sv2, m);
+
+		for (int i=0;i<nbpoints;i++){
+			if (i != sv1_pos){
+				float d = m->hashdist(points[i],points[sv1_pos]);
+				if (d > max_distance){
+                    max_distance = d;
+				}
+				if (d < min_distance){
+                    min_distance = d;
+				}
+			}
+		}
 
 		/* 1st tier pivots, M1, derived from the distance of each point from sv1*/
 		float step = (max_distance - min_distance)/BranchFactor;
@@ -1568,7 +1573,6 @@ leafcleanup:
 			return PH_ERRMEMALLOC;
 		}
 
-
 		for (int i=0;i<LengthM1;i++){
 			M1[i] = min_distance + incr;
 			incr += step;
@@ -1578,7 +1582,7 @@ leafcleanup:
 
 		/*set up 1st tier sorting bins - contain pointers to DP points[] param so that we only 
           move pointers, not the actual datapoints */
-		DP ***bins = (DP***)malloc(BranchFactor*sizeof(DP***));
+		DP ***bins = (DP***)malloc(BranchFactor*sizeof(DP**));
 		if (!bins){
 			free(M1);
 			free(M2);
@@ -1692,7 +1696,7 @@ leafcleanup:
 
 			/* 2nd tier pivots M2[], for row */
 			max_distance = 0;
-			min_distance = float(INT_MAX);
+			min_distance = 100000000.0f;
 			for (int j=0;j<row_len;j++){
 				distance_vector[j] = hashdist(sv2, bins[i][j]);
 				if ( distance_vector[j] > max_distance)
