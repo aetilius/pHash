@@ -1796,7 +1796,7 @@ cleanup:
 __declspec(dllexport)
 MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints){
 
-	if ((nbpoints < m->leafcapacity + 2) || (!m) || (!points)){
+	if ((!m) || (!points)){
         return PH_ERRARG;
 	}
 
