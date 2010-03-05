@@ -992,7 +992,6 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,fl
                 free(sv1->hash);
 				ph_free_datapoint(sv1);
 			}
-
 			if (sv2){
 				float d2 = hashdist(query,sv2);
 				/* check if distance(sv2,query) <= radius */
