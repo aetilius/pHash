@@ -35,7 +35,7 @@ int main(int argc, char **argv){
 	if (argc < 3){
         printf("not enough input args\n");
 		printf("usage: progname querydirectory dbname searchradius rnearest threshold\n");
-        exit(1);
+        return -1;
 	}
    
     const char *dir_name = argv[1];/* name of files in directory of query images */
@@ -50,6 +50,13 @@ int main(int argc, char **argv){
     mvpfile.hashdist = distfunc;
     mvpfile.hash_type = UINT32ARRAY;
    
+    ULONG fl = 2;
+	if (!HeapSetInformation(GetProcessHeap(),HeapEnableTerminationOnCorruption,&fl,sizeof(ULONG))){
+       printf("unable to set heap information - %d\n", GetLastError());
+       return -1;
+	}
+      
+
     /* get list of filenames in directory */ 
     int nbfiles = 0;
     printf("using db %s\n", filename);
@@ -131,14 +138,27 @@ int main(int argc, char **argv){
 
 
 		for (int j=0;j<nbfound;j++){
+            sfree(results[j]->id);
+            hfree(results[j]->hash);
+            hfree(results[j]->path);
             ph_free_datapoint(results[j]);
+            results[j]=NULL;
 		}
     } 
    float ave_calcs = (float)sum_calcs/(float)count;      
    printf("ave calcs/query: %f\n", ave_calcs);
     
+   
    ph_free_datapoint(query);
    free(results);
 
+   hfree(sigbuf);
+   hfree(hashbuf);
+
+   for (int i=0;i<nbfiles;i++){
+       sfree(files[i]);
+   }
+   hfree(files);
+   sfree(mvpfile.filename);
     return 0;
 }

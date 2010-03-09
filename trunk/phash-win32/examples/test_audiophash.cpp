@@ -48,6 +48,7 @@ int main(int argc, char **argv){
 		printf("no args");
 	    exit(1);
     }
+    const float nbsecs = 45.0f;
     const char *dir_name  = argv[1];     //first directory
     const char *dir_name2 = argv[2];     //second directory
     const float threshold = 0.30;        //ber threshold (0.25-0.35)
@@ -94,7 +95,7 @@ int main(int argc, char **argv){
 	for (int i=0;i<N1;i++){
          printf("  files1[%d] = %s\n", i, files1[i]);
          buflen1 = buflen;
-         tmpbuf = ph_readaudio(files1[i], sr, channels, buf, buflen1);
+         tmpbuf = ph_readaudio(files1[i], sr, channels, buf, buflen1,nbsecs);
          if (!tmpbuf) continue;
          buf  = tmpbuf;
 
@@ -109,7 +110,7 @@ int main(int argc, char **argv){
 
          printf("  files2[%d] = %s\n", i, files2[i]);
          buflen2 = buflen;
-         tmpbuf = ph_readaudio(files2[i], sr, channels, buf, buflen2);
+         tmpbuf = ph_readaudio(files2[i], sr, channels, buf, buflen2,nbsecs);
          if (!tmpbuf) continue;
          buf = tmpbuf;
 
@@ -138,11 +139,10 @@ int main(int argc, char **argv){
             double maxC = 0.0f;
 			for (int k=0;k<Nc;k++){
                 if (ptrC[k] > maxC)
-                     maxC = ptrC[i];
+                     maxC = ptrC[k];
 			}
             printf(" %d %d dist = %f\n", i, j, maxC);
-            getchar();
-            delete [] ptrC;
+            free(ptrC);
 		}
 	}
 

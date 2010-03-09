@@ -89,8 +89,8 @@ int ph_count_samples(const char *filename, int sr,int channels){
 	if(avcodec_open(pCodecCtx, pCodec)<0)
 	  return -1; // Could not open codec
 
-	uint8_t *in_buf = (uint8_t *)malloc(AVCODEC_MAX_AUDIO_FRAME_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
-        uint8_t *out_buf = (uint8_t *)malloc(AVCODEC_MAX_AUDIO_FRAME_SIZE);
+	uint8_t *in_buf = (uint8_t *)av_malloc(AVCODEC_MAX_AUDIO_FRAME_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
+        uint8_t *out_buf = (uint8_t *)av_malloc(AVCODEC_MAX_AUDIO_FRAME_SIZE);
 
         int in_buf_used, numbytesread, buf_size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
 
@@ -109,8 +109,8 @@ int ph_count_samples(const char *filename, int sr,int channels){
 	    }
 	    count += (int)(audio_resample(rs_ctxt,(short*)out_buf ,(short*)in_buf,in_buf_used)/sizeof(int16_t));
 	}
-	free(in_buf);
-	free(out_buf);
+	av_free(in_buf);
+	av_free(out_buf);
 	audio_resample_close(rs_ctxt);
 	avcodec_close(pCodecCtx);
 	av_close_input_file(pFormatCtx);
@@ -258,9 +258,9 @@ uint32_t* ph_audiohash(float *buf, int nbbuf, uint32_t *hashbuf, int nbcap, cons
   
    double minfreq = 300;
    double maxfreq = 3000;
-   double temp = double(minfreq/600.0);
+   double temp = (double)(minfreq/600.0);
    double minbark = 6*log(temp + sqrt(temp*temp + 1.0));  
-   temp = double(maxfreq/600.0);
+   temp = (double)maxfreq/600.0;
    double maxbark = 6*log(temp + sqrt(temp*temp + 1.0));
    double nyqbark = maxbark - minbark;
    const int nfilts = 33;
@@ -268,8 +268,8 @@ uint32_t* ph_audiohash(float *buf, int nbbuf, uint32_t *hashbuf, int nbcap, cons
    int nb_barks = (int)(floor(float(nfft_half/2 + 1)));
    double barkwidth = 1.06;    
 
-   double *freqs = new double[nb_barks];
-   double *binbarks = new double[nb_barks];
+   double *freqs = (double*)malloc(nb_barks*sizeof(double));
+   double *binbarks = (double*)malloc(nb_barks*sizeof(double));
    double curr_bark[nfilts];
    double prev_bark[nfilts];
    for (int i=0;i< nfilts;i++){
@@ -291,9 +291,9 @@ uint32_t* ph_audiohash(float *buf, int nbbuf, uint32_t *hashbuf, int nbcap, cons
        freqs[i] = i*sr/nfft_half;
    }
    /* calc wts for each filter */
-   double **wts = new double*[nfilts];
+   double **wts = (double**)malloc(nfilts*sizeof(double*));
    for (int i=0;i<nfilts;i++){
-      wts[i] = new double[nfft_half];
+      wts[i] = (double*)malloc(nfft_half*sizeof(double));
       double f_bark_mid = minbark + i*stepbarks;
 	  for (int j=0;j<nb_barks;j++){
           double barkdiff = binbarks[j] - f_bark_mid;
@@ -351,12 +351,12 @@ uint32_t* ph_audiohash(float *buf, int nbbuf, uint32_t *hashbuf, int nbcap, cons
    }
 
    free(pF);
-   delete [] freqs;
-   delete [] binbarks;
+   free(freqs);
+   free(binbarks);
    for (int i=0;i<nfilts;i++){
-       delete [] wts[i];
+       free(wts[i]);
    }
-   delete [] wts;
+   free(wts);
 
    return hash;
 }

@@ -110,5 +110,4 @@ double ph_compare_blocks(const uint32_t *ptr_blockA,const uint32_t *ptr_blockB, 
 __declspec(dllexport)
 double* ph_audio_distance_ber(uint32_t *hash_a , const int Na, uint32_t *hash_b, const int Nb, const float threshold, const int block_size, int &Nc);
 
-
 #endif
