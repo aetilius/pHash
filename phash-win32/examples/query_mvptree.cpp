@@ -99,7 +99,7 @@ int main(int argc, char **argv){
 		}
         printf("hash length %d\n", hashlength);
 
-        query->id = strdup(files[i]);
+        query->id = files[i];
         query->hash = hasht;
 		query->hash_length = hashlength;
 	   
@@ -107,35 +107,29 @@ int main(int argc, char **argv){
 		nbfound = 0;
         printf("do query ...\n");
 		int res = ph_query_mvptree(&mvpfile,query,knearest,radius,threshold,results,&nbfound);
-		if (res == PH_ERRCAP){
-            printf("possibly more found\n");
-		} else if (res != PH_SUCCESS){
-			printf("could not complete query - %d\n",res);
-			continue;
+		if (res != PH_SUCCESS && res != PH_ERRCAP){
+           printf("unable to complete query - %d\n", res);
+           continue;
 		}
+        printf(" %d found\n", nbfound);
+
         count++;
 		sum_calcs += nb_calcs;
 
-		nbfound = (nbfound <= knearest) ? nbfound : knearest;
-		printf(" %d files found\n", nbfound);
-         
-		for (int i=0;i<nbfound;i++){
-            float d = distancefunc(query, results[i]);
-			printf("==>  %d  %s dist = %f\n", i, results[i]->id, d);
+		for (int j=0;j<nbfound;j++){
+            float d = distancefunc(query, results[j]);
+			printf("==>file: %s dist = %f\n", results[j]->id, d);
+            hfree(results[j]->id);
+            hfree(results[j]->hash);
+            hfree(results[j]->path);
+            hfree(results[j]);
 		}
 		printf("nb distance calcs: %d\n", nb_calcs);
         printf("**********************\n");
-		for (int j=0;j<nbfound;j++){
-            free(results[j]->id);
-            free(results[j]->hash);
-            ph_free_datapoint(results[j]);
-		}
-        free(query->id);
-		free(query->hash);
+		hfree(query->hash);
    } 
    float ave_calcs = (float)sum_calcs/(float)count;      
    printf("ave calcs/query: %f\n", ave_calcs);
     
-
    return 0;
 }

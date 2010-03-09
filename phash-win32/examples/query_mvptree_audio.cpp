@@ -25,7 +25,7 @@ float distfunc(DP *dpA, DP *dpB){
 		if (ptrC[i] > maxC)
 			maxC = (float)ptrC[i];
 	}
-    if (ptrC) free(ptrC);
+    if (ptrC) hfree(ptrC);
 
     double res = 1000*(1 - maxC);
     return res;
