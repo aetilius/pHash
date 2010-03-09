@@ -29,8 +29,15 @@
 #define cimg_display 0
 
 #ifdef WIN32
-#define snprintf sprintf_s
+#include "windows.h"
 #include <share.h>
+
+#define malloc(x)  HeapAlloc(GetProcessHeap(),NULL,x)
+#define hfree(x)   HeapFree(GetProcessHeap(), NULL, x)
+#define sfree(x)   free(x)
+#define strdup _strdup
+#define snprintf sprintf_s
+
 #endif
 
 #include "CImg.h"
@@ -125,7 +132,7 @@ typedef struct hash_params_struct {
 typedef float (*hash_compareCB)(DP *pointA, DP *pointB);
 
 typedef struct ph_mvp_file {
-    const char *filename;   /* name of db to use */
+    char *filename;   /* name of db to use */
     char *buf;
     off_t file_pos;
     int fd;

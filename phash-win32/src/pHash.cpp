@@ -490,9 +490,7 @@ __declspec(dllexport)
 void ph_free_datapoint(DP *dp){
     if (!dp)
 		return;
-    if (dp->path)
-        free(dp->path);
-    free(dp);
+    hfree(dp);
     return;
 }
 
@@ -561,27 +559,22 @@ char** ph_readfilenames(const char *dirname,int &count){
     }
     
     /* alloc list of files */
-    char **files = (char**)malloc(count*sizeof(*files));
+    char **files = (char**)malloc(count*sizeof(char*));
 	if (!files){
 		return NULL;
 	}
 
-    errno = 0;
     int index = 0;
-    char path[1024];
+    char path[512];
     path[0] = '\0';
     rewinddir(dir);
     while ((dir_entry = readdir(dir)) != 0){
 		if (strcmp(dir_entry->d_name,".") && strcmp(dir_entry->d_name,"..")){
-			strcat(path, dirname);
-			strcat(path, "\\");
-			strcat(path, dir_entry->d_name);
+            snprintf(path,sizeof(path),"%s\\%s",dirname,dir_entry->d_name);
 			files[index++] = strdup(path);
 		}
-        path[0]='\0';
 	}
-    if (errno)
-		return NULL;
+    count = index;
     closedir(dir);
     return files;
 }
@@ -606,7 +599,7 @@ uint8_t* ph_mh_imagehash(const char *filename, int &N,float alpha, float lvl){
     if (filename == NULL){
 		return NULL;
     }
-    uint8_t *hash = (unsigned char*)malloc(72*sizeof(uint8_t));
+    uint8_t *hash = (uint8_t*)malloc(72*sizeof(uint8_t));
 	if (!hash){
         return NULL;
 	}
@@ -638,28 +631,27 @@ uint8_t* ph_mh_imagehash(const char *filename, int &N,float alpha, float lvl){
     int bit_index = 0;
     unsigned char hashbyte = 0;
     for (int rindex=0;rindex < 31-2;rindex+=4){
-	CImg<float> subsec;
-	for (int cindex=0;cindex < 31-2;cindex+=4){
-	    subsec = blocks.get_crop(cindex,rindex, cindex+2, rindex+2).unroll('x');
-	    float ave = subsec.mean();
-	    cimg_forX(subsec, I){
-		hashbyte <<= 1;
-		if (subsec(I) > ave){
-		    hashbyte |= 0x01;
-		    nb_ones++;
-		} else {
-		    nb_zeros++;
+		CImg<float> subsec;
+		for (int cindex=0;cindex < 31-2;cindex+=4){
+			subsec = blocks.get_crop(cindex,rindex, cindex+2, rindex+2).unroll('x');
+			float ave = subsec.mean();
+			cimg_forX(subsec, I){
+				hashbyte <<= 1;
+				if (subsec(I) > ave){
+					hashbyte |= 0x01;
+					nb_ones++;
+				} else {
+					nb_zeros++;
+				}
+				bit_index++;
+				if ((bit_index%8) == 0){
+					hash_index = (int)(bit_index/8) - 1; 
+					hash[hash_index] = hashbyte;
+					hashbyte = 0x00;
+				}
+			}
 		}
-		bit_index++;
-		if ((bit_index%8) == 0){
-		    hash_index = (int)(bit_index/8) - 1; 
-		    hash[hash_index] = hashbyte;
-		    hashbyte = 0x00;
-		}
-	    }
 	}
-    }
-
     return hash;
 }
 
@@ -746,6 +738,7 @@ DP* ph_read_datapoint(MVPFile *m){
     if ((active == 0) ||(byte_len == 0)){
 		return dp;
     }
+
     dp = ph_malloc_datapoint(m->hash_type);
     dp->path = (float*)malloc(PathLength*sizeof(float));
 
@@ -763,7 +756,6 @@ DP* ph_read_datapoint(MVPFile *m){
     dp->hash = malloc(hash_len*type);
     memcpy(dp->hash, &(m->buf[file_pos & offset_mask]), hash_len*type);
     file_pos += hash_len*type;
-    
     memcpy(dp->path, &(m->buf[file_pos & offset_mask]), PathLength*sizeof(float));
     file_pos += PathLength*sizeof(float);
 
@@ -846,16 +838,15 @@ DWORD getregionsize (void) {
 MVPRetCode _ph_map_mvpfile(uint8_t filenumber, off_t offset, MVPFile *m,MVPFile *m2, int use_existing){
     char objname[256];
     char *fm_objname = NULL;
-    char *filename = strdup(m->filename);
+    m2->filename = strdup(m->filename);
 	if (use_existing){
-		snprintf(objname, sizeof(objname), strcat(filename,"%d"), filenumber);
+		snprintf(objname, sizeof(objname), "%s%d", m2->filename, filenumber);
         fm_objname = objname;
 	}
     DWORD alloc_size = getregionsize();
     DWORD alloc_mask = ~(alloc_size - 1);
     DWORD alloc_offset_mask = alloc_size - 1;
     if (filenumber == m->filenumber){ /* in the file denoted by m , must advance to page containing offset */
-        
 		m2->file_pos = offset;
         HANDLE fmhandle = CreateFileMapping(m->fh, NULL,PAGE_READWRITE,0,0,fm_objname);
 		if (fmhandle == NULL){
@@ -868,7 +859,6 @@ MVPRetCode _ph_map_mvpfile(uint8_t filenumber, off_t offset, MVPFile *m,MVPFile 
 		if (m2->buf == NULL){
 			return PH_ERRMMAPVIEW;
 		}
-        m2->filename = strdup(m->filename);
 	    m2->buf += alloc_offset;
         m2->hashdist = m->hashdist;
         m2->fh = m->fh;
@@ -882,7 +872,6 @@ MVPRetCode _ph_map_mvpfile(uint8_t filenumber, off_t offset, MVPFile *m,MVPFile 
     } else { /* open and map to new file denoted by m->filename and filenumber */
         char extfile[256];
 		snprintf(extfile, sizeof(extfile),"%s%d.mvp", m->filename, filenumber);
-        m2->filename = strdup(m->filename);
         m2->fh = CreateFile(extfile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,NULL);
 		if (m2->fh == INVALID_HANDLE_VALUE){
             return PH_ERRFILEOPEN;
@@ -914,13 +903,7 @@ MVPRetCode _ph_map_mvpfile(uint8_t filenumber, off_t offset, MVPFile *m,MVPFile 
 
 
 MVPRetCode _ph_unmap_mvpfile(uint8_t filenumber, off_t orig_pos, MVPFile *m, MVPFile *m2){
-    char fm_objname[256];
-    char *filename = strdup(m->filename);
-    snprintf(fm_objname, sizeof(fm_objname), strcat(filename, "%d"), filenumber);
- 
-   DWORD alloc_size = getregionsize();
-   DWORD alloc_mask = ~(alloc_size - 1);
-   DWORD alloc_offset_mask = alloc_size - 1;
+    sfree(m2->filename);
    if (filenumber == m->filenumber){ /*remap to same main file  */
 		if (!UnmapViewOfFile(m2->buf)){
              return PH_ERRMMAPUNVIEW;
@@ -988,8 +971,8 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,fl
 				if (*count >= knearest)
 					return PH_ERRCAP;
 			} else {
-                free(sv1->id);
-                free(sv1->hash);
+                hfree(sv1->id);
+                hfree(sv1->hash);
 				ph_free_datapoint(sv1);
 			}
 			if (sv2){
@@ -1001,8 +984,8 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,fl
 						return PH_ERRCAP;
 					}
 				} else {
-                    free(sv2->id);
-                    free(sv2->hash);
+                    hfree(sv2->id);
+                    hfree(sv2->hash);
 					ph_free_datapoint(sv2);
 				}
 				if (level < PathLength){
@@ -1056,8 +1039,8 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,fl
                                     ph_free_datapoint(dp);
 								}
 							} else {
-                                free(dp->id);
-                                free(dp->hash);
+                                hfree(dp->id);
+                                hfree(dp->hash);
                                 ph_free_datapoint(dp);
 							}
 						} 
@@ -1071,7 +1054,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,fl
 		/* read sv1, sv2 */
 		DP *sv1 = ph_read_datapoint(m);
 		DP *sv2 = ph_read_datapoint(m);
-	  
+       
 		/* read 1st and 2nd level pivots */
 		float *M1 = (float*)malloc(LengthM1*sizeof(float));
         if (!M1) return PH_ERRMEMALLOC;
@@ -1099,8 +1082,8 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,fl
 				return PH_ERRCAP;
 			}
 		} else {
-            free(sv1->id);
-            free(sv1->hash);
+            hfree(sv1->id);
+            hfree(sv1->hash);
 			ph_free_datapoint(sv1);
 		}
 
@@ -1109,8 +1092,8 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,fl
 			if (*count >= knearest)
 				return PH_ERRCAP;
 		} else {
-            free(sv2->id);
-            free(sv2->hash);
+            hfree(sv2->id);
+            hfree(sv2->hash);
 			ph_free_datapoint(sv2);
 		}
 		/* based on d1,d2 values, find appropriate child nodes to explore */
@@ -1232,8 +1215,8 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,fl
 			}
 		}
 query_cleanup:
-        free(M1);
-        free(M2);
+        hfree(M1);
+        hfree(M2);
 	} else { /* unrecognized node */
 		ret = PH_ERRNTYPE;
     }
@@ -1245,15 +1228,14 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, f
     /*use host pg size until file pg size used can be determined  */
     m->pgsize = (off_t)getpagesize();
 
-    char mainfile[256];
+    char mainfile[32];
     snprintf(mainfile, sizeof(mainfile),"%s.mvp", m->filename);
     m->fh = CreateFile(mainfile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (m->fh == INVALID_HANDLE_VALUE){
 		return PH_ERRFILEOPEN;
     }
-    char fm_objname[256];
-    char *filename = strdup(m->filename);
-    snprintf(fm_objname, sizeof(fm_objname), strcat(filename, "%d"), 0); 
+    char fm_objname[32];
+    snprintf(fm_objname, sizeof(fm_objname), "%s%d", m->filename,0); 
 
     m->file_pos = 0;
     HANDLE fmhandle = CreateFileMapping(m->fh,NULL,PAGE_READWRITE,0,0,fm_objname);
@@ -1326,6 +1308,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, f
 	if (!CloseHandle(m->fh)){
          res = PH_ERRFILECLOSE;
 	}
+    hfree(query->path);
 
     return res;
 }

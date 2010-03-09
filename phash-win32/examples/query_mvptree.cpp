@@ -41,7 +41,7 @@ float distancefunc(DP *pa, DP *pb){
 int main(int argc, char **argv){
 	if (argc < 3){
        printf("not enough input args\n");
-       exit(1);
+       return -1;
 	}
 
     const char *dir_name = argv[1];/* name of files in directory of query images */
@@ -51,9 +51,9 @@ int main(int argc, char **argv){
     float lvl = 1.0f;
 
     MVPFile mvpfile;
-    ph_mvp_init(&mvpfile);
     mvpfile.filename = strdup(filename);
     mvpfile.hashdist = distancefunc;
+    mvpfile.hash_type = BYTEARRAY;
 
     int nbfiles = 0;
     printf("using db %s\n", filename);
@@ -61,12 +61,10 @@ int main(int argc, char **argv){
     char **files = ph_readfilenames(dir_name,nbfiles);
     if (!files){
 		printf("mem alloc error\n");
-		exit(1);
+		return -1;
     }
 
     printf("nb query files = %d\n", nbfiles);
-
-    DP *query = ph_malloc_datapoint(mvpfile.hash_type);
 
     float radius = 80.0f;
 	if (argc >= 4){
@@ -81,19 +79,33 @@ int main(int argc, char **argv){
         threshold = atof(argv[5]);
 	}
     printf("radius = %f, knearest = %d, threshold = %f\n", radius, knearest,threshold);
+  
+    DP *query = ph_malloc_datapoint(mvpfile.hash_type);
 
     DP **results = (DP**)malloc(knearest*sizeof(DP**));
+	if (results == NULL){
+       printf("unable to allocate memory\n");
+       return -1;
+	}
+
     int nbfound = 0, count = 0, sum_calcs = 0;
     int hashlength;
     for (int i=0;i<nbfiles;i++){
 		printf("query[%d]: %s\n", i, files[i]);
+		uint8_t *hasht = ph_mh_imagehash(files[i],hashlength,alpha,lvl);
+		if (hasht == NULL){
+            printf("unable to get hash\n");
+            continue;
+		}
+        printf("hash length %d\n", hashlength);
 
-		query->id = files[i];
-		query->hash = ph_mh_imagehash(files[i],hashlength,alpha,lvl);
+        query->id = strdup(files[i]);
+        query->hash = hasht;
 		query->hash_length = hashlength;
 	   
 		nb_calcs = 0;
 		nbfound = 0;
+        printf("do query ...\n");
 		int res = ph_query_mvptree(&mvpfile,query,knearest,radius,threshold,results,&nbfound);
 		if (res == PH_ERRCAP){
             printf("possibly more found\n");
@@ -106,13 +118,19 @@ int main(int argc, char **argv){
 
 		nbfound = (nbfound <= knearest) ? nbfound : knearest;
 		printf(" %d files found\n", nbfound);
-        
+         
 		for (int i=0;i<nbfound;i++){
             float d = distancefunc(query, results[i]);
 			printf("==>  %d  %s dist = %f\n", i, results[i]->id, d);
 		}
 		printf("nb distance calcs: %d\n", nb_calcs);
         printf("**********************\n");
+		for (int j=0;j<nbfound;j++){
+            free(results[j]->id);
+            free(results[j]->hash);
+            ph_free_datapoint(results[j]);
+		}
+        free(query->id);
 		free(query->hash);
    } 
    float ave_calcs = (float)sum_calcs/(float)count;      

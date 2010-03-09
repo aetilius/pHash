@@ -50,9 +50,9 @@
 				EnableEnhancedInstructionSet="1"
 				FloatingPointModel="0"
 				UsePrecompiledHeader="0"
-				WarningLevel="3"
+				WarningLevel="4"
 				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="4"
+				DebugInformationFormat="3"
 				ShowIncludes="true"
 			/>
 			<Tool
@@ -69,7 +69,7 @@
 				UseLibraryDependencyInputs="true"
 				AdditionalDependencies="avformat.lib avcodec.lib avutil.lib swscale.lib libfftw3-3.lib libjpeg-static-mt.lib libpng-static-mt.lib zlib-static-mt.lib shell32.lib"
 				ShowProgress="2"
-				LinkIncremental="2"
+				LinkIncremental="1"
 				AdditionalLibraryDirectories="C:\msys\local\bin;&quot;C:\Documents and Settings\dgs\My Documents\fftw-3.2.2.pl1-dll32&quot;;&quot;C:\Documents and Settings\dgs\My Documents\jpeg-6b-msvc90\jpeg-6b-msvc90\lib&quot;;&quot;C:\Documents and Settings\dgs\My Documents\lpng1235-msvc90\lpng1235-msvc90\lib&quot;;&quot;C:\Documents and Settings\dgs\My Documents\zlib123-msvc90\zlib123-msvc90\lib&quot;"
 				GenerateManifest="true"
 				IgnoreAllDefaultLibraries="false"
@@ -81,6 +81,7 @@
 				MapExports="true"
 				SubSystem="2"
 				TargetMachine="1"
+				FixedBaseAddress="1"
 				AllowIsolation="true"
 			/>
 			<Tool
@@ -113,6 +114,7 @@
 			OutputDirectory="Release"
 			IntermediateDirectory="Release"
 			ConfigurationType="2"
+			CharacterSet="0"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -132,14 +134,16 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				UseUnicodeResponseFiles="false"
-				Optimization="0"
+				Optimization="3"
+				FavorSizeOrSpeed="1"
+				WholeProgramOptimization="true"
 				AdditionalIncludeDirectories="C:\msys\local\include;&quot;C:\Documents and Settings\dgs\My Documents\zlib123-msvc90\zlib123-msvc90\include&quot;;&quot;C:\Documents and Settings\dgs\My Documents\lpng1235-msvc90\lpng1235-msvc90\include&quot;;&quot;C:\Documents and Settings\dgs\My Documents\jpeg-6b-msvc90\jpeg-6b-msvc90\include&quot;;&quot;C:\Documents and Settings\dgs\My Documents\CImg-1.3.2&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;PHASH_EXPORTS;HAVE_IMAGE_HASH;HAVE_VIDEO_HASH;cimg_use_jpeg;cimg_use_png"
 				RuntimeLibrary="2"
 				StructMemberAlignment="5"
-				FloatingPointModel="1"
+				FloatingPointModel="0"
 				UsePrecompiledHeader="0"
-				WarningLevel="0"
+				WarningLevel="3"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="0"
 			/>
@@ -157,9 +161,10 @@
 				IgnoreImportLibrary="false"
 				AdditionalDependencies="avformat-52.lib avcodec-52.lib avutil-50.lib swscale-0.lib libpng-static-mt.lib libjpeg-static-mt.lib zlib-static-mt.lib shell32.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;C:\Documents and Settings\dgs\My Documents\zlib123-msvc90\zlib123-msvc90\lib&quot;;&quot;C:\Documents and Settings\dgs\My Documents\jpeg-6b-msvc90\jpeg-6b-msvc90\lib&quot;;&quot;C:\Documents and Settings\dgs\My Documents\lpng1235-msvc90\lpng1235-msvc90\lib&quot;;C:\msys\local\bin"
+				AdditionalLibraryDirectories="&quot;C:\Documents and Settings\dgs\My Documents\zlib123-msvc90\zlib123-msvc90\lib&quot;;&quot;C:\Documents and Settings\dgs\My Documents\jpeg-6b-msvc90\jpeg-6b-msvc90\lib&quot;;&quot;C:\Documents and Settings\dgs\My Documents\lpng1235-msvc90\lpng1235-msvc90\lib&quot;;C:\msys\local\bin;C:\cygwin\lib"
 				IgnoreAllDefaultLibraries="false"
 				IgnoreDefaultLibraryNames="LIBCMT"
+				GenerateDebugInformation="true"
 				GenerateMapFile="true"
 				SubSystem="2"
 				SwapRunFromCD="true"
