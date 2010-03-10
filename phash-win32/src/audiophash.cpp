@@ -156,21 +156,21 @@ float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, i
 	}
 	if(audioStream==-1){
 	     buflen = 0;
-	     return NULL; //no video stream
+	     return NULL; //no audio stream
 	}
     
 	// Get a pointer to the codec context for the audio stream
 	pCodecCtx=pFormatCtx->streams[audioStream]->codec;
 
-    int totalduration = (int)pFormatCtx->streams[audioStream]->duration;
+    int64_t totalduration = pFormatCtx->streams[audioStream]->duration;
 	int src_sr = pCodecCtx->sample_rate;
     int src_channels = pCodecCtx->channels;
-	int duration = (nbsecs > 0.0f) ? (int)(sr*nbsecs) : totalduration;
+	int64_t duration = (nbsecs > 0.0f) ? (int64_t)(sr*nbsecs) : totalduration;
 	duration = (duration <= totalduration) ? duration : totalduration; 
     float *buf; 
 	if ((!sigbuf)||(buflen <= duration)){
         buf = (float*)malloc(duration*sizeof(float)); /* alloc buffer */
-        buflen = (int)duration;
+        buflen = duration;
 	}
 	else {
         buf = sigbuf;   /* use buffer handed in param */     
@@ -208,8 +208,6 @@ float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, i
 	    }
 	    int cnt = audio_resample(rs_ctx,(short*)out_buf,(short*)in_buf,(int)(in_buf_used/sizeof(int16_t)));
 		if (index + cnt > buflen){ /*exceeds capacity of buffer, bail out */ 
-            buf = NULL;
-            buflen = 0;
             goto readaudio_cleanup;
 		}	
 		for (int i=0;i<cnt;i++){
