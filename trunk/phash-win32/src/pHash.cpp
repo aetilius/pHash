@@ -1310,6 +1310,10 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, f
 	}
     hfree(query->path);
 
+	for (int i=0;i < *count;i++){
+        hfree(results[i]->path);
+	}
+
     return res;
 }
 
@@ -1372,8 +1376,7 @@ MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_fl
 		}
 
         char fm_objname[256];
-        char *filename = strdup(m->filename);
-        snprintf(fm_objname,sizeof(fm_objname), strcat(filename,"%d"),m->nbdbfiles);
+        snprintf(fm_objname,sizeof(fm_objname), "%s%d",m->filename, m->nbdbfiles);
 
         m2.file_pos = fsize;
 		off_t end_pos = fsize + m->pgsize;
@@ -1485,8 +1488,7 @@ leafcleanup:
 		off_t orig_pos = m->file_pos;
         off_t end_pos = orig_pos + m->pgsize;
         char fm_objname[256];
-        char *filename = strdup(m->filename);
-        snprintf(fm_objname, sizeof(fm_objname), strcat(filename,"%d"), 0);
+        snprintf(fm_objname, sizeof(fm_objname), "%s%d", m->filename, 0);
         HANDLE fmhandle;
         char *buf = m->buf;
         if ((level > 0) && (saveall_flag == 1)){ /* append new page to mainfile, unmap/map to it */
@@ -1566,25 +1568,25 @@ leafcleanup:
           move pointers, not the actual datapoints */
 		DP ***bins = (DP***)malloc(BranchFactor*sizeof(DP**));
 		if (!bins){
-			free(M1);
-			free(M2);
+			hfree(M1);
+			hfree(M2);
 			return PH_ERRMEMALLOC;
 		}
 		int *mlens = (int*)calloc(BranchFactor, sizeof(int)); /*no. points in each bin */
 		if (!mlens){
-			free(M1);
-			free(M2);
-			free(bins);
+			hfree(M1);
+			hfree(M2);
+			hfree(bins);
 			return PH_ERRMEMALLOC;
 		}
 
 		for (int i=0;i<BranchFactor;i++){
 			bins[i] = (DP**)malloc(Np*sizeof(DP**)); /*Np should be more than enough */            
 			if (!bins[i]){
-				free(M1);
-				free(M2);
-				free(bins);
-				free(mlens);
+				hfree(M1);
+				hfree(M2);
+				hfree(bins);
+				hfree(mlens);
 				return PH_ERRMEMALLOC;
 			}
 		}
@@ -1625,31 +1627,31 @@ leafcleanup:
 		/* each row from bins to be sorted into bins2, each in turn */
 		DP ***bins2 = (DP***)malloc(BranchFactor*sizeof(DP***));
 		if (!bins2){
-			free(M1);
-			free(M2);
-			free(bins);
-			free(mlens);
+			hfree(M1);
+			hfree(M2);
+			hfree(bins);
+			hfree(mlens);
 			return PH_ERRMEMALLOC;
 		}
 		int *mlens2 = (int*)calloc(BranchFactor, sizeof(int)); /*number points in each bin */
 		if (!mlens2){
-			free(M1);
-			free(M2);
-			free(bins);
-			free(bins2);
-			free(mlens);
+			hfree(M1);
+			hfree(M2);
+			hfree(bins);
+			hfree(bins2);
+			hfree(mlens);
 			return PH_ERRMEMALLOC;
 		}
 
 		for (int i=0;i<BranchFactor;i++){
 			bins2[i] = (DP**)malloc(Np*sizeof(DP**)); /* Np is more than enough */
 			if (!bins2[i]){
-				free(M1);
-				free(M2);
-				free(bins);
-				free(mlens);
-				free(bins2);
-				free(mlens2);
+				hfree(M1);
+				hfree(M2);
+				hfree(bins);
+				hfree(mlens);
+				hfree(bins2);
+				hfree(mlens2);
 				return PH_ERRMEMALLOC;
 			}
 		}
@@ -1667,12 +1669,12 @@ leafcleanup:
 			}
 			float *distance_vector = (float*)malloc(row_len*sizeof(float));
 			if (!distance_vector){
-				free(M1);
-				free(M2);
-				free(bins);
-				free(mlens);
-				free(bins2);
-				free(mlens2);
+				hfree(M1);
+				hfree(M2);
+				hfree(bins);
+				hfree(mlens);
+				hfree(bins2);
+				hfree(mlens2);
 				return PH_ERRMEMALLOC;
 			}
 
@@ -1744,7 +1746,7 @@ leafcleanup:
 
 			}
 			m->file_pos = last_pos;
-			free(distance_vector);    
+			hfree(distance_vector);    
 		}
 
         /* remap to orig_pos */
@@ -1765,13 +1767,13 @@ leafcleanup:
 		
 		/* cleanup */
 cleanup:
-		free(bins);
-		free(bins2);
-		free(mlens);
-		free(mlens2);
-		free(distance_vector);
-		free(M1);
-		free(M2);
+		hfree(bins);
+		hfree(bins2);
+		hfree(mlens);
+		hfree(mlens2);
+		hfree(distance_vector);
+		hfree(M1);
+		hfree(M2);
     }
     return ret;
 }
@@ -1819,8 +1821,7 @@ MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints){
         return PH_ERRFILESETEOF;
 	}
     char fm_objname[256];
-    char *filename = strdup(m->filename);
-    snprintf(fm_objname,sizeof(fm_objname),strcat(filename,"%d"), 0);
+    snprintf(fm_objname,sizeof(fm_objname), "%s%d", m->filename, 0);
 
     HANDLE fmhandle = CreateFileMapping(m->fh,NULL,PAGE_READWRITE, 0, 0, fm_objname);
 	if (fmhandle==NULL){
@@ -1981,7 +1982,6 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 					curr_pos += sizeof(float);
 					memcpy(&m->buf[curr_pos & offset_mask],&new_pos, sizeof(off_t));
 					curr_pos += sizeof(off_t);
-		    
 					Np++;
 					memcpy(&m->buf[Np_pos & offset_mask], &Np, sizeof(uint8_t));
 				} else { /* convert to internal node and add leaf nodes */
@@ -2011,21 +2011,21 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
                         free(sv2->hash);
 						ph_free_datapoint(sv2);
 						for (int i=2;i < Np + 2;i++){
-                            free(points[i]->id);
-                            free(points[i]->hash);
-                            free(points[i]);
+                            hfree(points[i]->id);
+                            hfree(points[i]->hash);
+                            hfree(points[i]);
 						}
 						return ret;
 					}
 					for (int i=2;i < Np+2;i++){
-                        free(points[i]->id);
-                        free(points[i]->hash);
-                        free(points[i]);
+                        hfree(points[i]->id);
+                        hfree(points[i]->hash);
+                        ph_free_datapoint(points[i]);
 					}
-					free(points);
+					hfree(points);
 				}
-                free(sv2->id);
-                free(sv2->hash);
+                hfree(sv2->id);
+                hfree(sv2->hash);
                 ph_free_datapoint(sv2);
 			} else { /* put new point into sv2 pos */
 				m->file_pos = start_pos;
@@ -2045,8 +2045,8 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 				memcpy(&m->buf[m->file_pos & offset_mask], &Np, sizeof(uint8_t));
 				m->file_pos++;
            } 
-           free(sv1->id);
-           free(sv1->hash);
+           hfree(sv1->id);
+           hfree(sv1->hash);
 		   ph_free_datapoint(sv1);
 	    }else { /* put new dp in sv1 pos */
 			m->file_pos = start_pos;
@@ -2077,11 +2077,11 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 		if (level+1 < m->pathlength)
 			new_dp->path[level+1] = d2;
 
-        free(sv1->id);
-        free(sv1->hash);
+        hfree(sv1->id);
+        hfree(sv1->hash);
 		ph_free_datapoint(sv1);
-        free(sv2->id);
-        free(sv2->hash);
+        hfree(sv2->id);
+        hfree(sv2->hash);
 		ph_free_datapoint(sv2);
 
 		int pivot1, pivot2;
@@ -2238,8 +2238,8 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 			}
 		}
 addcleanup:
-		free(M1);
-		free(M2);
+		hfree(M1);
+		hfree(M2);
 	} else {
 		return PH_ERRNTYPE;
     }
@@ -2262,8 +2262,7 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP **points, int nbpoints, int &nbsaved){
 		return PH_ERRFILEOPEN;
     }
     char fm_objname[256];
-    char *filename = strdup(m->filename);
-    snprintf(fm_objname, sizeof(fm_objname), strcat(filename, "%d"), 0);
+    snprintf(fm_objname, sizeof(fm_objname), "%s%d", m->filename, 0);
     HANDLE fmhandle = CreateFileMapping(m->fh,NULL, PAGE_READWRITE, 0, 0, fm_objname);
 	if (fmhandle == NULL){
         return PH_ERRMMAPCREATE;

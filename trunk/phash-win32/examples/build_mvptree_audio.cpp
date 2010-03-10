@@ -41,7 +41,7 @@ float distancefunc(DP *pa, DP *pb){
 	  }
   }  
   if (ptrC) 
-	  free(ptrC);
+	  hfree(ptrC);
 
   double res = 1000*(1.0 - maxC);
   return (float)res;
@@ -52,7 +52,7 @@ int main(int argc, char **argv){
 	if (argc < 3){
        printf("not enough input args\n");
 	   printf("usage: progname directory dbname\n");
-       return 1;
+       return -1;
 	}
  
     const char *dir_name = argv[1];/* name of dir to retrieve image files */
@@ -77,43 +77,46 @@ int main(int argc, char **argv){
     char **files = ph_readfilenames(dir_name,nbfiles);
     if (!files){
 		printf("mem alloc error\n");
-		return 1;
+		return -2;
     }
    printf("number files %d\n", nbfiles);
    DP **hashlist = (DP**)malloc(nbfiles*sizeof(DP*));
    if (hashlist == NULL){
        printf("mem alloc error\n");
-       return -1;
+       return -3;
    }
    float *sigbuf = (float*)malloc(1<<21);
    int buflen = (1<<21)/sizeof(float);
-   printf("sigbuf %p to %p\n", sigbuf, sigbuf + buflen);
 
    uint32_t *hashspace = (uint32_t*)malloc(1<<25); /* 33.5 MB */ 
    int hashbuflength = (1<<25)/sizeof(uint32_t);
    uint32_t *hashbuf = hashspace;
    int hashbufleft = hashbuflength;
-   printf("hashspace %p to %p\n", hashspace, hashspace+hashbuflength);
-
+ 
    int count = 0;
    for (int i=0;i<nbfiles;i++){
 	   printf("file[%d]: %s\n", i, files[i]);
        hashlist[count] = ph_malloc_datapoint(mvpfile.hash_type);
+	   if (hashlist[count] == NULL){
+          printf("mem alloc error\n");
+          return -4;
+	   }
        int N = buflen;
        float *buf = ph_readaudio(files[i],sr,nbchannels,sigbuf,N,nbsecs);
 	   if (buf == NULL){
           printf("cannot read buf\n");
+          ph_free_datapoint(hashlist[count]);
           continue;
 	   }
-       printf("sign %p to %p, len %d\n", buf, buf+N, N);
+       printf("buf length %d\n", N);
 
-       int nbframes;     
+       int nbframes = 0;     
        uint32_t *hasht = ph_audiohash(buf,N,hashbuf,hashbufleft,sr,nbframes);
-	   if (hasht == NULL){
+	   if (hasht == NULL || nbframes == 0){
           printf("unable to get hash\n");
           continue;
 	   }
-       printf("hash %p to %p, hashlength %d\n", hasht, hasht+nbframes,nbframes);
+       printf("hash length %d\n", nbframes);
 
        hashlist[count]->id = files[i];
        hashlist[count]->hash = hasht;
