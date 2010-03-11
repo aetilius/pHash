@@ -1049,7 +1049,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,fl
 		/* read sv1, sv2 */
 		DP *sv1 = ph_read_datapoint(m);
 		DP *sv2 = ph_read_datapoint(m);
-       
+
 		/* read 1st and 2nd level pivots */
 		float *M1 = (float*)malloc(LengthM1*sizeof(float));
         if (!M1) return PH_ERRMEMALLOC;

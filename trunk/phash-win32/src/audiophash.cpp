@@ -348,13 +348,13 @@ uint32_t* ph_audiohash(float *buf, int nbbuf, uint32_t *hashbuf, int nbcap, cons
        end   += advance;
    }
 
-   free(pF);
-   free(freqs);
-   free(binbarks);
+   hfree(pF);
+   hfree(freqs);
+   hfree(binbarks);
    for (int i=0;i<nfilts;i++){
-       free(wts[i]);
+       hfree(wts[i]);
    }
-   free(wts);
+   hfree(wts);
 
    return hash;
 }
@@ -443,7 +443,7 @@ double* ph_audio_distance_ber(uint32_t *hash_a , const int Na, uint32_t *hash_b,
 		pC[i] = 0.5*(1 + below_factor - above_factor);
 
 	}
-    free(dist);
+    hfree(dist);
 
     return pC;
 }

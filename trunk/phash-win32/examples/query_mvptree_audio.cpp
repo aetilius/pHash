@@ -136,14 +136,12 @@ int main(int argc, char **argv){
 		}
         printf("******************************************\n");
 
-
 		for (int j=0;j<nbfound;j++){
-            sfree(results[j]->id);
+            hfree(results[j]->id);
             hfree(results[j]->hash);
-            hfree(results[j]->path);
             ph_free_datapoint(results[j]);
-            results[j]=NULL;
 		}
+
     } 
    float ave_calcs = (float)sum_calcs/(float)count;      
    printf("ave calcs/query: %f\n", ave_calcs);

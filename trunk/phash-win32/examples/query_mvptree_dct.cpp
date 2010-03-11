@@ -67,8 +67,8 @@ int main(int argc, char **argv){
         printf("mem alloc error\n");
         return -3;
 	}
-    query->hash = malloc(sizeof(ulong64));
-	if (query->hash == NULL){
+    ulong64 *ptmphash = (ulong64*)malloc(sizeof(ulong64));
+	if (ptmphash == NULL){
         printf("mem alloc error\n");
         return -4;
 	}
@@ -89,17 +89,16 @@ int main(int argc, char **argv){
 	}
 
     int nbfound = 0, count = 0, sum_calcs = 0;
-    ulong64 tmphash;
     for (int i=0;i<nbfiles;i++){
 		printf("query[%d]: %s\n", i, files[i]);
 
-		if (ph_dct_imagehash(files[i],tmphash)<0){
+		if (ph_dct_imagehash(files[i],*ptmphash)<0){
            printf("unable to get hash\n");
            continue;
 		}
 
         query->id = files[i];
-		*((ulong64*)query->hash) = tmphash;
+		query->hash = (void*)ptmphash;
 		query->hash_length = 1;
 
 		nb_calcs = 0;
