@@ -73,7 +73,7 @@ int main(int argc, char **argv){
         return -4;
 	}
 
-    float radius = 100.0f;
+    float radius = 200.0f;
     if (argc >= 4) radius = atof(argv[3]);
     int knearest = 20;
     if (argc >=5) knearest = atoi(argv[4]);
@@ -113,8 +113,13 @@ int main(int argc, char **argv){
 		sum_calcs += nb_calcs;
 
 		printf(" %d files found in %d distance calculations\n", nbfound,nb_calcs);
+
+		nbfound = (nbfound < knearest) ? nbfound : knearest;
 		for (int j=0;j<nbfound;j++){
 			printf(" =====> result[%d] %s distance = %f\n", j, results[j]->id, distancefunc(results[j],query));
+            hfree(results[j]->id);
+            hfree(results[j]->hash);
+            ph_free_datapoint(results[j]);
 	    }
         
         printf("\n\n");

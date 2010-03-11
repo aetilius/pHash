@@ -47,12 +47,14 @@
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="3"
 				StructMemberAlignment="5"
-				EnableEnhancedInstructionSet="1"
+				EnableFunctionLevelLinking="true"
+				EnableEnhancedInstructionSet="0"
 				FloatingPointModel="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
 				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="3"
+				DebugInformationFormat="4"
+				CallingConvention="0"
 				ShowIncludes="true"
 			/>
 			<Tool

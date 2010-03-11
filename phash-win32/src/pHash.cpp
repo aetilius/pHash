@@ -968,8 +968,9 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,fl
 			/* check if distance(sv1,query) <= radius  */
 			if (d1 <= threshold){
 				results[(*count)++] = sv1;
-				if (*count >= knearest)
+				if (*count >= knearest){
 					return PH_ERRCAP;
+				}
 			} else {
                 hfree(sv1->id);
                 hfree(sv1->hash);
@@ -1027,21 +1028,15 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,fl
                                     break;
 								}
 							}
-							if (include){
-								if (hashdist(query,dp) <= threshold){
+							if ((include) && (hashdist(query,dp) <= threshold)){
 									results[(*count)++] = dp;
-									if (*count >= knearest){
-										return PH_ERRCAP;
-								    }
-								} else {
-                                    free(dp->id);
-                                    free(dp->hash);
-                                    ph_free_datapoint(dp);
-								}
 							} else {
                                 hfree(dp->id);
                                 hfree(dp->hash);
                                 ph_free_datapoint(dp);
+							}
+							if (*count >= knearest){
+                                return PH_ERRCAP;
 							}
 						} 
 					} else {
@@ -1089,8 +1084,9 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,fl
 
 		if (d2 <= threshold){
 			results[(*count)++] = sv2;
-			if (*count >= knearest)
+			if (*count >= knearest){
 				return PH_ERRCAP;
+			}
 		} else {
             hfree(sv2->id);
             hfree(sv2->hash);
