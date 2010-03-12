@@ -46,7 +46,8 @@ int main(int argc, char **argv){
 
     if (argc < 3){
 		printf("no args");
-	    exit(1);
+		printf("usage: %s dir1 dir2\n", argv[0]);
+	    return -1;
     }
     const float nbsecs = 45.0f;
     const char *dir_name  = argv[1];     //first directory
