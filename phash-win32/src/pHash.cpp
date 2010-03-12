@@ -839,8 +839,12 @@ MVPRetCode _ph_map_mvpfile(uint8_t filenumber, off_t offset, MVPFile *m,MVPFile 
     char objname[256];
     char *fm_objname = NULL;
     m2->filename = strdup(m->filename);
+    char *filename = strrchr(m->filename,'\\');
+	if (filename == NULL){
+        filename = m->filename;
+	}
 	if (use_existing){
-		snprintf(objname, sizeof(objname), "%s%d", m2->filename, filenumber);
+		snprintf(objname, sizeof(objname), "%s%d", filename , filenumber);
         fm_objname = objname;
 	}
     DWORD alloc_size = getregionsize();
@@ -1224,14 +1228,18 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, f
     /*use host pg size until file pg size used can be determined  */
     m->pgsize = (off_t)getpagesize();
 
-    char mainfile[32];
+    char mainfile[MAX_PATH];
     snprintf(mainfile, sizeof(mainfile),"%s.mvp", m->filename);
     m->fh = CreateFile(mainfile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (m->fh == INVALID_HANDLE_VALUE){
 		return PH_ERRFILEOPEN;
     }
+    char *filename = strrchr(m->filename,'\\');
+	if (filename == NULL){
+        filename = m->filename;
+	}
     char fm_objname[32];
-    snprintf(fm_objname, sizeof(fm_objname), "%s%d", m->filename,0); 
+    snprintf(fm_objname, sizeof(fm_objname), "%s%d", filename ,0); 
 
     m->file_pos = 0;
     HANDLE fmhandle = CreateFileMapping(m->fh,NULL,PAGE_READWRITE,0,0,fm_objname);
@@ -1582,7 +1590,7 @@ leafcleanup:
 				hfree(M1);
 				hfree(M2);
 				hfree(bins);
-				hfree(mlens);
+				cfree(mlens);
 				return PH_ERRMEMALLOC;
 			}
 		}
@@ -1626,7 +1634,7 @@ leafcleanup:
 			hfree(M1);
 			hfree(M2);
 			hfree(bins);
-			hfree(mlens);
+			cfree(mlens);
 			return PH_ERRMEMALLOC;
 		}
 		int *mlens2 = (int*)calloc(BranchFactor, sizeof(int)); /*number points in each bin */
@@ -1635,7 +1643,7 @@ leafcleanup:
 			hfree(M2);
 			hfree(bins);
 			hfree(bins2);
-			hfree(mlens);
+			cfree(mlens);
 			return PH_ERRMEMALLOC;
 		}
 
@@ -1645,9 +1653,9 @@ leafcleanup:
 				hfree(M1);
 				hfree(M2);
 				hfree(bins);
-				hfree(mlens);
+				cfree(mlens);
 				hfree(bins2);
-				hfree(mlens2);
+				cfree(mlens2);
 				return PH_ERRMEMALLOC;
 			}
 		}
@@ -1668,9 +1676,9 @@ leafcleanup:
 				hfree(M1);
 				hfree(M2);
 				hfree(bins);
-				hfree(mlens);
+				cfree(mlens);
 				hfree(bins2);
-				hfree(mlens2);
+				cfree(mlens2);
 				return PH_ERRMEMALLOC;
 			}
 
@@ -1765,8 +1773,8 @@ leafcleanup:
 cleanup:
 		hfree(bins);
 		hfree(bins2);
-		hfree(mlens);
-		hfree(mlens2);
+		cfree(mlens);
+		cfree(mlens2);
 		hfree(distance_vector);
 		hfree(M1);
 		hfree(M2);
@@ -1802,7 +1810,7 @@ MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints){
         points[i]->path = (float*)malloc((m->pathlength)*sizeof(float));
 	}
     /* open main file */
-    char mainfile[256];
+    char mainfile[MAX_PATH];
     snprintf(mainfile, sizeof(mainfile),"%s.mvp", m->filename);
     m->fh = CreateFile(mainfile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_WRITE|FILE_SHARE_READ|FILE_SHARE_DELETE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (m->fh == INVALID_HANDLE_VALUE){
@@ -1816,8 +1824,12 @@ MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints){
 	if (!SetEndOfFile(m->fh)){
         return PH_ERRFILESETEOF;
 	}
-    char fm_objname[256];
-    snprintf(fm_objname,sizeof(fm_objname), "%s%d", m->filename, 0);
+	char *filename = strrchr(m->filename, '\\');
+	if (filename == NULL){
+        filename = m->filename;
+	}
+    char fm_objname[32];
+    snprintf(fm_objname,sizeof(fm_objname), "%s%d", filename, 0);
 
     HANDLE fmhandle = CreateFileMapping(m->fh,NULL,PAGE_READWRITE, 0, 0, fm_objname);
 	if (fmhandle==NULL){
@@ -2250,15 +2262,19 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP **points, int nbpoints, int &nbsaved){
         return PH_ERRARG;
 	}
     /* open main file */
-    char mainfile[256];
+    char mainfile[MAX_PATH];
     snprintf(mainfile, sizeof(mainfile),"%s.mvp", m->filename);
 
     m->fh = CreateFile(mainfile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (m->fh == INVALID_HANDLE_VALUE){
 		return PH_ERRFILEOPEN;
     }
-    char fm_objname[256];
-    snprintf(fm_objname, sizeof(fm_objname), "%s%d", m->filename, 0);
+    char *filename = strrchr(m->filename,'\\');
+	if (filename == NULL){
+       filename = m->filename;
+	}
+    char fm_objname[32];
+    snprintf(fm_objname, sizeof(fm_objname), "%s%d", filename, 0);
     HANDLE fmhandle = CreateFileMapping(m->fh,NULL, PAGE_READWRITE, 0, 0, fm_objname);
 	if (fmhandle == NULL){
         return PH_ERRMMAPCREATE;

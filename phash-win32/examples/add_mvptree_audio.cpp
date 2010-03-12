@@ -28,6 +28,7 @@ float distfunc(DP *dpA, DP *dpB){
 int main(int argc, char **argv){
 	if (argc < 3){
         printf("not enough input args\n");
+		printf("usage: %s directory dbname nbsecs\n",argv[0]);
         return -1;
 	}
     const char *dir_name = argv[1];/* name of dir to retrieve image files */
@@ -35,7 +36,10 @@ int main(int argc, char **argv){
 
     const int sr = 8000;          /* sample rate to convert all files */
     const int nbchannels = 1;     /* number of channels to convert all files*/ 
-    const float nbsecs = 45.0f;   /* first number seconds of each file to read */ 
+    float nbsecs = 45.0f;   /* first number seconds of each file to read */ 
+	if (argc >= 4){
+        nbsecs = atof(argv[3]);
+	}
 
     MVPFile mvpfile;              /* mvp tree configuration settings */ 
     mvpfile.filename = strdup(filename);
