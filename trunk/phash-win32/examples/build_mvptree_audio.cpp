@@ -51,16 +51,21 @@ float distancefunc(DP *pa, DP *pb){
 int main(int argc, char **argv){
 	if (argc < 3){
        printf("not enough input args\n");
-	   printf("usage: progname directory dbname\n");
+	   printf("usage: progname directory dbname nbsecs\n");
        return -1;
 	}
- 
+
     const char *dir_name = argv[1];/* name of dir to retrieve image files */
     const char *filename = argv[2];/* name of indexing db, e.g. 'audiodb'  */
+    float nbsecs = 45.0f;
+	if (argc >= 4){
+        nbsecs = atof(argv[3]);
+	}
+    printf("use dir %s\n", dir_name);
+    printf("db name %s\n", filename);
 
     const int sr = 8000;            /* convert to sr */
     const int nbchannels = 1;       /* convert to number of channels */
-    const float nbsecs = 45.0f;     /* number secs of audio to read from each file */
 
     MVPFile mvpfile;                /* mvp tree indexing configuration */ 
     mvpfile.branchfactor = 2;       /* number of branches for each node */ 

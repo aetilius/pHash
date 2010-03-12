@@ -33,8 +33,10 @@
 #include <share.h>
 
 #define malloc(x)  HeapAlloc(GetProcessHeap(),NULL,x)
+#define calloc(x,y)  HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,(x)*(y))
 #define hfree(x)   HeapFree(GetProcessHeap(), NULL, x); x=NULL
 #define sfree(x)   free(x); x=NULL
+#define cfree(x)   HeapFree(GetProcessHeap(), NULL, x); x=NULL
 #define strdup _strdup
 #define snprintf sprintf_s
 

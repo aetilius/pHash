@@ -66,11 +66,11 @@ int main(int argc, char **argv){
 
     printf("nb query files = %d\n", nbfiles);
 
-    float radius = 150.0f;
+    float radius = 200.0f;
 	if (argc >= 4){
         radius = atof(argv[3]);
 	}
-    int knearest = 20;
+    int knearest = 2;
 	if (argc >= 5){
         knearest = atoi(argv[4]);
 	}

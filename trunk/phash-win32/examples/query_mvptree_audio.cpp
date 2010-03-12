@@ -34,7 +34,7 @@ float distfunc(DP *dpA, DP *dpB){
 int main(int argc, char **argv){
 	if (argc < 3){
         printf("not enough input args\n");
-		printf("usage: progname querydirectory dbname searchradius rnearest threshold\n");
+		printf("usage: progname querydirectory dbname searchradius rnearest threshold nbsecs\n");
         return -1;
 	}
    
@@ -43,7 +43,6 @@ int main(int argc, char **argv){
 
     const int sr = 8000;        /* sample to convert all files */ 
     const int nbchannels = 1;   /* number channels to convert all files */ 
-    const float nbsecs = 45.0f; /* first number seconds to take of query file */ 
 
     MVPFile mvpfile;            /* mvp configuration */ 
     mvpfile.filename = strdup(filename);
@@ -79,8 +78,10 @@ int main(int argc, char **argv){
     if (argc >= 5) rnearest = atoi(argv[4]);
     float threshold = 400.0; /*distance threshold for inclusion into list */ 
     if (argc >=6) threshold = atof(argv[5]);
-    
-    printf("radius %f, knearest %d, threshold %f\n", radius, rnearest, threshold);
+    float nbsecs = 45.0;     /* number of seconds to read from audio file starting from beginning  of track*/ 
+    if (argc >=7) nbsecs = atof(argv[6]);
+
+    printf("radius %f, knearest %d, threshold %f, nb secs %f\n", radius, rnearest, threshold, nbsecs);
  
     DP *query = ph_malloc_datapoint(mvpfile.hash_type);
      
