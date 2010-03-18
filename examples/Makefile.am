@@ -36,7 +36,6 @@ if HAVE_IMAGE_HASH
 bin_PROGRAMS += test_image test_mhimagehash
 test_image_SOURCES = test_imagephash.cpp
 test_image_LDADD = $(top_srcdir)/src/libpHash.la
-
 test_mhimagehash_SOURCES = test_mhimagehash.cpp
 test_mhimagehash_LDADD = $(top_srcdir)/src/libpHash.la
 endif
@@ -45,6 +44,5 @@ if HAVE_VIDEO_HASH
 bin_PROGRAMS += test_video
 test_video_SOURCES = test_dctvideohash.cpp
 test_video_LDADD = $(top_srcdir)/src/libpHash.la
-
 endif
 

@@ -32,8 +32,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = build_mvptree$(EXEEXT) add_mvptree$(EXEEXT) \
-	query_mvptree$(EXEEXT) test_texthash$(EXEEXT) \
+bin_PROGRAMS = buildmvptreedct$(EXEEXT) addmvptreedct$(EXEEXT) \
+	querymvptreedct$(EXEEXT) test_texthash$(EXEEXT) \
 	test_texthash2$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2) \
 	$(am__EXEEXT_3)
 @HAVE_AUDIO_HASH_TRUE@am__append_1 = test_audio build_mvptree_audio add_mvptree_audio query_mvptree_audio
@@ -58,33 +58,33 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
-am_add_mvptree_OBJECTS = add_mvptree.$(OBJEXT)
-add_mvptree_OBJECTS = $(am_add_mvptree_OBJECTS)
-add_mvptree_DEPENDENCIES = $(top_srcdir)/src/libpHash.la
 am__add_mvptree_audio_SOURCES_DIST = add_mvptree_audio.cpp
 @HAVE_AUDIO_HASH_TRUE@am_add_mvptree_audio_OBJECTS =  \
 @HAVE_AUDIO_HASH_TRUE@	add_mvptree_audio.$(OBJEXT)
 add_mvptree_audio_OBJECTS = $(am_add_mvptree_audio_OBJECTS)
 @HAVE_AUDIO_HASH_TRUE@add_mvptree_audio_DEPENDENCIES =  \
 @HAVE_AUDIO_HASH_TRUE@	$(top_srcdir)/src/libpHash.la
-am_build_mvptree_OBJECTS = build_mvptree.$(OBJEXT)
-build_mvptree_OBJECTS = $(am_build_mvptree_OBJECTS)
-build_mvptree_DEPENDENCIES = $(top_srcdir)/src/libpHash.la
+am_addmvptreedct_OBJECTS = add_mvptree_dct.$(OBJEXT)
+addmvptreedct_OBJECTS = $(am_addmvptreedct_OBJECTS)
+addmvptreedct_DEPENDENCIES = $(top_srcdir)/src/libpHash.la
 am__build_mvptree_audio_SOURCES_DIST = build_mvptree_audio.cpp
 @HAVE_AUDIO_HASH_TRUE@am_build_mvptree_audio_OBJECTS =  \
 @HAVE_AUDIO_HASH_TRUE@	build_mvptree_audio.$(OBJEXT)
 build_mvptree_audio_OBJECTS = $(am_build_mvptree_audio_OBJECTS)
 @HAVE_AUDIO_HASH_TRUE@build_mvptree_audio_DEPENDENCIES =  \
 @HAVE_AUDIO_HASH_TRUE@	$(top_srcdir)/src/libpHash.la
-am_query_mvptree_OBJECTS = query_mvptree.$(OBJEXT)
-query_mvptree_OBJECTS = $(am_query_mvptree_OBJECTS)
-query_mvptree_DEPENDENCIES = $(top_srcdir)/src/libpHash.la
+am_buildmvptreedct_OBJECTS = buildmvptree_dctimage.$(OBJEXT)
+buildmvptreedct_OBJECTS = $(am_buildmvptreedct_OBJECTS)
+buildmvptreedct_DEPENDENCIES = $(top_srcdir)/src/libpHash.la
 am__query_mvptree_audio_SOURCES_DIST = query_mvptree_audio.cpp
 @HAVE_AUDIO_HASH_TRUE@am_query_mvptree_audio_OBJECTS =  \
 @HAVE_AUDIO_HASH_TRUE@	query_mvptree_audio.$(OBJEXT)
 query_mvptree_audio_OBJECTS = $(am_query_mvptree_audio_OBJECTS)
 @HAVE_AUDIO_HASH_TRUE@query_mvptree_audio_DEPENDENCIES =  \
 @HAVE_AUDIO_HASH_TRUE@	$(top_srcdir)/src/libpHash.la
+am_querymvptreedct_OBJECTS = query_mvptree_dct.$(OBJEXT)
+querymvptreedct_OBJECTS = $(am_querymvptreedct_OBJECTS)
+querymvptreedct_DEPENDENCIES = $(top_srcdir)/src/libpHash.la
 am__test_audio_SOURCES_DIST = test_audiophash.cpp
 @HAVE_AUDIO_HASH_TRUE@am_test_audio_OBJECTS =  \
 @HAVE_AUDIO_HASH_TRUE@	test_audiophash.$(OBJEXT)
@@ -127,18 +127,19 @@ CXXLD = $(CXX)
 CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(add_mvptree_SOURCES) $(add_mvptree_audio_SOURCES) \
-	$(build_mvptree_SOURCES) $(build_mvptree_audio_SOURCES) \
-	$(query_mvptree_SOURCES) $(query_mvptree_audio_SOURCES) \
+SOURCES = $(add_mvptree_audio_SOURCES) $(addmvptreedct_SOURCES) \
+	$(build_mvptree_audio_SOURCES) $(buildmvptreedct_SOURCES) \
+	$(query_mvptree_audio_SOURCES) $(querymvptreedct_SOURCES) \
 	$(test_audio_SOURCES) $(test_image_SOURCES) \
 	$(test_mhimagehash_SOURCES) $(test_texthash_SOURCES) \
 	$(test_texthash2_SOURCES) $(test_video_SOURCES)
-DIST_SOURCES = $(add_mvptree_SOURCES) \
-	$(am__add_mvptree_audio_SOURCES_DIST) $(build_mvptree_SOURCES) \
+DIST_SOURCES = $(am__add_mvptree_audio_SOURCES_DIST) \
+	$(addmvptreedct_SOURCES) \
 	$(am__build_mvptree_audio_SOURCES_DIST) \
-	$(query_mvptree_SOURCES) \
+	$(buildmvptreedct_SOURCES) \
 	$(am__query_mvptree_audio_SOURCES_DIST) \
-	$(am__test_audio_SOURCES_DIST) $(am__test_image_SOURCES_DIST) \
+	$(querymvptreedct_SOURCES) $(am__test_audio_SOURCES_DIST) \
+	$(am__test_image_SOURCES_DIST) \
 	$(am__test_mhimagehash_SOURCES_DIST) $(test_texthash_SOURCES) \
 	$(test_texthash2_SOURCES) $(am__test_video_SOURCES_DIST)
 ETAGS = etags
@@ -254,12 +255,12 @@ target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 INCLUDES = -I$(top_srcdir)/src
-build_mvptree_SOURCES = build_mvptree.cpp
-build_mvptree_LDADD = $(top_srcdir)/src/libpHash.la
-add_mvptree_SOURCES = add_mvptree.cpp
-add_mvptree_LDADD = $(top_srcdir)/src/libpHash.la
-query_mvptree_SOURCES = query_mvptree.cpp
-query_mvptree_LDADD = $(top_srcdir)/src/libpHash.la
+buildmvptreedct_SOURCES = buildmvptree_dctimage.cpp
+buildmvptreedct_LDADD = $(top_srcdir)/src/libpHash.la
+addmvptreedct_SOURCES = add_mvptree_dct.cpp
+addmvptreedct_LDADD = $(top_srcdir)/src/libpHash.la
+querymvptreedct_SOURCES = query_mvptree_dct.cpp
+querymvptreedct_LDADD = $(top_srcdir)/src/libpHash.la
 test_texthash_SOURCES = test_texthash.cpp
 test_texthash_LDADD = $(top_srcdir)/src/libpHash.la
 test_texthash2_SOURCES = test_texthash2.cpp
@@ -339,24 +340,24 @@ clean-binPROGRAMS:
 	  echo " rm -f $$p $$f"; \
 	  rm -f $$p $$f ; \
 	done
-add_mvptree$(EXEEXT): $(add_mvptree_OBJECTS) $(add_mvptree_DEPENDENCIES) 
-	@rm -f add_mvptree$(EXEEXT)
-	$(CXXLINK) $(add_mvptree_OBJECTS) $(add_mvptree_LDADD) $(LIBS)
 add_mvptree_audio$(EXEEXT): $(add_mvptree_audio_OBJECTS) $(add_mvptree_audio_DEPENDENCIES) 
 	@rm -f add_mvptree_audio$(EXEEXT)
 	$(CXXLINK) $(add_mvptree_audio_OBJECTS) $(add_mvptree_audio_LDADD) $(LIBS)
-build_mvptree$(EXEEXT): $(build_mvptree_OBJECTS) $(build_mvptree_DEPENDENCIES) 
-	@rm -f build_mvptree$(EXEEXT)
-	$(CXXLINK) $(build_mvptree_OBJECTS) $(build_mvptree_LDADD) $(LIBS)
+addmvptreedct$(EXEEXT): $(addmvptreedct_OBJECTS) $(addmvptreedct_DEPENDENCIES) 
+	@rm -f addmvptreedct$(EXEEXT)
+	$(CXXLINK) $(addmvptreedct_OBJECTS) $(addmvptreedct_LDADD) $(LIBS)
 build_mvptree_audio$(EXEEXT): $(build_mvptree_audio_OBJECTS) $(build_mvptree_audio_DEPENDENCIES) 
 	@rm -f build_mvptree_audio$(EXEEXT)
 	$(CXXLINK) $(build_mvptree_audio_OBJECTS) $(build_mvptree_audio_LDADD) $(LIBS)
-query_mvptree$(EXEEXT): $(query_mvptree_OBJECTS) $(query_mvptree_DEPENDENCIES) 
-	@rm -f query_mvptree$(EXEEXT)
-	$(CXXLINK) $(query_mvptree_OBJECTS) $(query_mvptree_LDADD) $(LIBS)
+buildmvptreedct$(EXEEXT): $(buildmvptreedct_OBJECTS) $(buildmvptreedct_DEPENDENCIES) 
+	@rm -f buildmvptreedct$(EXEEXT)
+	$(CXXLINK) $(buildmvptreedct_OBJECTS) $(buildmvptreedct_LDADD) $(LIBS)
 query_mvptree_audio$(EXEEXT): $(query_mvptree_audio_OBJECTS) $(query_mvptree_audio_DEPENDENCIES) 
 	@rm -f query_mvptree_audio$(EXEEXT)
 	$(CXXLINK) $(query_mvptree_audio_OBJECTS) $(query_mvptree_audio_LDADD) $(LIBS)
+querymvptreedct$(EXEEXT): $(querymvptreedct_OBJECTS) $(querymvptreedct_DEPENDENCIES) 
+	@rm -f querymvptreedct$(EXEEXT)
+	$(CXXLINK) $(querymvptreedct_OBJECTS) $(querymvptreedct_LDADD) $(LIBS)
 test_audio$(EXEEXT): $(test_audio_OBJECTS) $(test_audio_DEPENDENCIES) 
 	@rm -f test_audio$(EXEEXT)
 	$(CXXLINK) $(test_audio_OBJECTS) $(test_audio_LDADD) $(LIBS)
@@ -382,12 +383,12 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/add_mvptree.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/add_mvptree_audio.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/build_mvptree.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/add_mvptree_dct.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/build_mvptree_audio.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/query_mvptree.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/buildmvptree_dctimage.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/query_mvptree_audio.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/query_mvptree_dct.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_audiophash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_dctvideohash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_imagephash.Po@am__quote@
