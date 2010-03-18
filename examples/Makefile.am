@@ -1,14 +1,14 @@
 INCLUDES = -I$(top_srcdir)/src
-bin_PROGRAMS = build_mvptree add_mvptree query_mvptree test_texthash test_texthash2
+bin_PROGRAMS = buildmvptreedct addmvptreedct querymvptreedct test_texthash test_texthash2
 
-build_mvptree_SOURCES = build_mvptree.cpp
-build_mvptree_LDADD = $(top_srcdir)/src/libpHash.la
+buildmvptreedct_SOURCES = buildmvptree_dctimage.cpp
+buildmvptreedct_LDADD = $(top_srcdir)/src/libpHash.la
 
-add_mvptree_SOURCES = add_mvptree.cpp
-add_mvptree_LDADD = $(top_srcdir)/src/libpHash.la
+addmvptreedct_SOURCES = add_mvptree_dct.cpp
+addmvptreedct_LDADD = $(top_srcdir)/src/libpHash.la
 
-query_mvptree_SOURCES = query_mvptree.cpp
-query_mvptree_LDADD = $(top_srcdir)/src/libpHash.la
+querymvptreedct_SOURCES = query_mvptree_dct.cpp
+querymvptreedct_LDADD = $(top_srcdir)/src/libpHash.la
 
 test_texthash_SOURCES = test_texthash.cpp
 test_texthash_LDADD = $(top_srcdir)/src/libpHash.la
