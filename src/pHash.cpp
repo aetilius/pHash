@@ -626,26 +626,19 @@ int ph_hamming_distance(const ulong64 hash1,const ulong64 hash2){
     return (x * h01)>>56;
 }
 
-DP* ph_malloc_datapoint(int hashtype, int pathlength){
+DP* ph_malloc_datapoint(int hashtype){
     DP* dp = (DP*)malloc(sizeof(DP));
     dp->hash = NULL;
     dp->id = NULL;
-    dp->path = (float*)calloc(pathlength,sizeof(float));
     dp->hash_type = hashtype;
-
     return dp;
 }
 void ph_free_datapoint(DP *dp){
-    if (!dp)
+    if (!dp){
 	return;
-    if (dp->path)
-	free(dp->path);
-    if (dp->id)
-	free(dp->id);
-    if (dp->hash)
-	free(dp->hash);
+    }
     free(dp);
-    
+    dp=NULL;
     return;
 }
 
@@ -686,7 +679,7 @@ DP** ph_read_imagehashes(const char *dirname,int pathlength, int &count){
 	    strcat(path, dir_entry->d_name);
 	    if (ph_dct_imagehash(path, tmphash) < 0)  //calculate the hash
 		continue;
-	    dp = ph_malloc_datapoint(UINT64ARRAY,pathlength);
+	    dp = ph_malloc_datapoint(UINT64ARRAY);
 	    dp->id = strdup(path);
 	    dp->hash = (void*)&tmphash;
 	    dp->hash_length = 1;
@@ -765,9 +758,9 @@ uint8_t* ph_mh_imagehash(const char *filename, int &N,float alpha, float lvl){
     CImg<uint8_t> img;
 
     if (img.spectrum() == 3){
-		img = src.get_RGBtoYCbCr().channel(0).blur(1.0).resize(512,512,1,1,5).get_equalize(256);
+	img = src.get_RGBtoYCbCr().channel(0).blur(1.0).resize(512,512,1,1,5).get_equalize(256);
     } else{
-		img = src.channel(0).get_blur(1.0).resize(512,512,1,1,5).get_equalize(256);
+	img = src.channel(0).get_blur(1.0).resize(512,512,1,1,5).get_equalize(256);
     }
     src.clear();
 
@@ -841,12 +834,11 @@ double ph_hammingdistance2(uint8_t *hashA, int lenA, uint8_t *hashB, int lenB){
 
 }
 
-int ph_selectvantagepoints(MVPFile *m, DP **points, int N, int &sv1_pos, int &sv2_pos, float &maxdist, float &mindist){
+int ph_selectvantagepoints(MVPFile *m, DP **points, int N, int &sv1_pos, int &sv2_pos){
     if (N > 2){
 	sv1_pos = 0;
-	sv2_pos = 0;
-	maxdist = 0.0;
-	mindist = INT_MAX;
+	sv2_pos = 1;
+	float maxdist = 0.0f;
 	float d;
 	for (int i=0;i<N;i++){ /* find 2 points furthest apart */
 	    for (int j=i+1;j<N;j++){
@@ -856,21 +848,17 @@ int ph_selectvantagepoints(MVPFile *m, DP **points, int N, int &sv1_pos, int &sv
 		    sv1_pos = i;
 		    sv2_pos = j;
 		}
-		if (m->hashdist(points[i],points[j]) < mindist){
-		    mindist = d;
-		}
 	    }
 	}
     } else if (N > 1){
 	sv1_pos = 0;
         sv2_pos = 1;
-        maxdist = m->hashdist(points[sv1_pos],points[sv2_pos]);
-        mindist = maxdist;
     } else if (N > 0){
         sv1_pos = 0;
         sv2_pos = -1;
-        maxdist = -1;
-        mindist = -1;
+    } else {
+	sv1_pos = -1;
+        sv2_pos = -1;
     }
     return 0;
 }
@@ -880,49 +868,48 @@ DP* ph_read_datapoint(MVPFile *m){
     uint8_t active;
     uint16_t byte_len;
     uint16_t id_len;
-    uint16_t hash_len;
-    int type = m->hash_type;
-    int PathLength = m->pathlength;
-    off_t file_pos = m->file_pos;
+    uint32_t hash_len;
     off_t offset_mask = m->pgsize - 1; 
 
-    memcpy(&active, &(m->buf[file_pos & offset_mask]), sizeof(uint8_t));
-    file_pos++;
+    memcpy(&active, &(m->buf[m->file_pos & offset_mask]), sizeof(uint8_t));
+    m->file_pos++;
 
-    memcpy(&byte_len,&(m->buf[file_pos & offset_mask]), sizeof(uint16_t));
-    file_pos += sizeof(uint16_t);
+    memcpy(&byte_len,&(m->buf[m->file_pos & offset_mask]), sizeof(uint16_t));
+    m->file_pos += sizeof(uint16_t);
 
     if ((active == 0) ||(byte_len == 0)){
 	return dp;
     }
-    dp = ph_malloc_datapoint(type,PathLength);
+    dp = ph_malloc_datapoint(m->hash_type);
+    dp->path = (float*)malloc((m->pathlength)*sizeof(float));
 
-    memcpy(&id_len,&(m->buf[file_pos & offset_mask]), sizeof(uint16_t));
-    file_pos += sizeof(uint16_t);
+    memcpy(&id_len,&(m->buf[m->file_pos & offset_mask]), sizeof(uint16_t));
+    m->file_pos += sizeof(uint16_t);
 
     dp->id = (char*)malloc((id_len+1)*sizeof(uint8_t));
-    memcpy(dp->id, &(m->buf[file_pos & offset_mask]), id_len);
+    memcpy(dp->id, &(m->buf[m->file_pos & offset_mask]), id_len);
     dp->id[id_len] = '\0';
-    file_pos += id_len;
+    m->file_pos += id_len;
 
-    memcpy(&hash_len, &(m->buf[file_pos & offset_mask]), sizeof(uint16_t));
+    memcpy(&hash_len, &(m->buf[m->file_pos & offset_mask]), sizeof(uint32_t));
     dp->hash_length = hash_len;
-    file_pos += sizeof(uint16_t);
+    m->file_pos += sizeof(uint32_t);
 
-    dp->hash = malloc(hash_len*type);
-    memcpy(dp->hash, &(m->buf[file_pos & offset_mask]), hash_len*type);
-    file_pos += hash_len*type;
+    dp->hash = malloc(hash_len*(m->hash_type));
+    memcpy(dp->hash, &(m->buf[m->file_pos & offset_mask]), hash_len*(m->hash_type));
+    m->file_pos += hash_len*(m->hash_type);
     
-    memcpy(dp->path, &(m->buf[file_pos & offset_mask]), PathLength*sizeof(float));
-    file_pos += PathLength*sizeof(float);
-
-    m->file_pos = file_pos;
+    memcpy(dp->path, &(m->buf[m->file_pos & offset_mask]), (m->pathlength)*sizeof(float));
+    m->file_pos += (m->pathlength)*sizeof(float);
 
     return dp;
 }
 
 int ph_sizeof_dp(DP *dp,MVPFile *m){
-    return (strlen(dp->id) + 4 + (dp->hash_length)*(m->hash_type) + (m->pathlength)*sizeof(float));
+    if (dp == NULL){
+	return 3; /* for byte_len(uint16_t)  and active (uint8_t) flags */ 
+    }
+    return (strlen(dp->id) + 9 + (dp->hash_length)*(m->hash_type) + (m->pathlength)*sizeof(float));
 }
 
 off_t ph_save_datapoint(DP *dp, MVPFile *m){
@@ -941,8 +928,8 @@ off_t ph_save_datapoint(DP *dp, MVPFile *m){
     int type = m->hash_type;
     int PathLength = m->pathlength;
     uint16_t id_len = strlen(dp->id);
-    uint16_t hash_len = dp->hash_length;
-    byte_len = id_len + 4 + hash_len*(m->hash_type) + PathLength*sizeof(float);
+    uint32_t hash_len = dp->hash_length;
+    byte_len = id_len + 6 + hash_len*(m->hash_type) + PathLength*sizeof(float);
 
     memcpy(&(m->buf[m->file_pos & offset_mask]), &active, 1);
     m->file_pos++;
@@ -956,8 +943,8 @@ off_t ph_save_datapoint(DP *dp, MVPFile *m){
     memcpy(&(m->buf[m->file_pos & offset_mask]), (dp->id), id_len);
     m->file_pos += id_len;
 
-    memcpy(&(m->buf[m->file_pos & offset_mask]), &hash_len, sizeof(uint16_t));
-    m->file_pos += sizeof(uint16_t);
+    memcpy(&(m->buf[m->file_pos & offset_mask]), &hash_len, sizeof(uint32_t));
+    m->file_pos += sizeof(uint32_t);
 
     memcpy(&(m->buf[m->file_pos & offset_mask]), (dp->hash), hash_len*type);
     m->file_pos += hash_len*type;
@@ -1011,6 +998,7 @@ MVPRetCode _ph_map_mvpfile(uint8_t filenumber, off_t offset, MVPFile *m,MVPFile 
 
 
 MVPRetCode _ph_unmap_mvpfile(uint8_t filenumber, off_t orig_pos, MVPFile *m, MVPFile *m2){
+    free(m2->filename);
     msync(m2->buf,m2->pgsize,MS_SYNC);
     munmap(m2->buf,m2->pgsize);
     if (m->filenumber != m2->filenumber){
@@ -1038,14 +1026,11 @@ float hammingdistance(DP *pntA, DP *pntB){
 
 
 MVPRetCode _ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, float threshold,
-                                              DP **results, int *count, int level){
-    int BranchFactor = m->branchfactor;
-    int LengthM1 = BranchFactor-1;
-    int LengthM2 = BranchFactor*LengthM1;
-    int PathLength = m->pathlength;
+                                              DP **results, int &nbfound, int level){
     MVPRetCode ret = PH_SUCCESS;
-
-    if ( (!m)||(!query)||(!results)||(!count)||(level < 0) )
+    int LengthM1 = m->branchfactor - 1;
+    int LengthM2 = (m->branchfactor)*(m->branchfactor-1);
+    if ( (!m)||(!query)||(!results)||(level < 0) )
        return PH_ERRNULLARG;
 
     hash_compareCB hashdist = m->hashdist;
@@ -1066,31 +1051,44 @@ MVPRetCode _ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, 
 	DP *sv1 = ph_read_datapoint(m);
 	DP *sv2 = ph_read_datapoint(m);
 	float d1 = hashdist(query,sv1);
-
 	/* check if distance(sv1,query) <= radius  */
 	if (d1 <= threshold){
-	    results[(*count)++] = sv1;
-	    if (*count >= knearest)
+	    results[nbfound++] = sv1;
+	    if ((nbfound) >= knearest){
 		return PH_ERRCAP;
+	    }
 	} else {
+            free(sv1->id);
+            free(sv1->path);
+            free(sv1->hash);
 	    ph_free_datapoint(sv1);
 	}
-
+	
 	if (sv2){
 	    float d2 = hashdist(query,sv2);
 	    /* check if distance(sv2,query) <= radius */
 	    if (d2 <= threshold){
-		results[(*count)++] = sv2;
-		if (*count >= knearest)
+		results[nbfound++] = sv2;
+		if (nbfound >= knearest){
 		    return PH_ERRCAP;
+		}
 	    } else {
+                free(sv2->id);
+                free(sv2->path);
+                free(sv2->hash);
 		ph_free_datapoint(sv2);
 	    }
-
+	    if (level < m->pathlength){
+                query->path[level] = d1;
+	    }
+            if (level+1 < m->pathlength){
+                query->path[level+1] = d2;
+	    }
+	
 	    uint8_t Np;
 	    memcpy(&Np, &m->buf[m->file_pos & offset_mask], sizeof(uint8_t));
 	    m->file_pos += sizeof(uint8_t);
-	    off_t curr_pos;
+	    off_t curr_pos; 
 
 	    /* read in each datapoint in the leaf - only retrieve the point if it 
 	       dist(sv1,dp)=da  and dist(sv2,dp)=db cannot preclude the point */
@@ -1112,9 +1110,9 @@ MVPRetCode _ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, 
 		    
 		    /* test each path[] distance and as soon as one does not fit 
 		       disclude the point                                        */
+
                     if (dp){
-                        int tmppl = PathLength & 0xfffffffe;
-                        int pl = (level <= tmppl) ? level : tmppl;
+                        int pl = (level < m->pathlength) ? level : m->pathlength;
 			for (int j=0;j<pl;j++){
 			    if (!((query->path[j]-radius <= dp->path[j])
 				&&(query->path[j]+radius >= dp->path[j]))){
@@ -1123,15 +1121,19 @@ MVPRetCode _ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, 
 			    }
 			}
 		    } 
-		    if (include){
-                        if (hashdist(query,dp) <= threshold){
-			    results[(*count)++] = dp;
-			    if (*count >= knearest)
-				return PH_ERRCAP;
+		    if (include && (hashdist(query,dp) <= threshold)){
+			results[nbfound++] = dp;
+
+                        if (nbfound >= knearest){
+			    return PH_ERRCAP;
 			}
-		    } else {
+ 		    } else {
+                        free(dp->id);
+                        free(dp->path);
+                        free(dp->hash);
 			ph_free_datapoint(dp);
 		    }
+
 		} else {
 		    m->file_pos += sizeof(off_t);
 		}
@@ -1141,6 +1143,7 @@ MVPRetCode _ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, 
 	/* read sv1, sv2 */
 	DP *sv1 = ph_read_datapoint(m);
 	DP *sv2 = ph_read_datapoint(m);
+
 	/* read 1st and 2nd level pivots */
 	float *M1 = (float*)malloc(LengthM1*sizeof(float));
 	if (!M1){
@@ -1158,27 +1161,35 @@ MVPRetCode _ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, 
 
 	float d1 = hashdist(query, sv1);
 	float d2 = hashdist(query, sv2);
-
+	
 	/* fill in path values in query */
-	if (level < PathLength)
+	if (level < m->pathlength)
 	    query->path[level] = d1;
-	if (level < PathLength - 1)
+	if (level+1 < m->pathlength)
 	    query->path[level+1] = d2;
 
 	/* check if sv1 sv2 are close enough to query  */
 	if (d1 <= threshold){
-	    results[(*count)++] = sv1;
-	    if (*count >= knearest)
+	    results[nbfound++] = sv1;
+	    if (nbfound >= knearest){
 		return PH_ERRCAP;
+	    }
 	} else {
+            free(sv1->id);
+            free(sv1->hash);
+            free(sv1->path);            
 	    ph_free_datapoint(sv1);
 	}
 
 	if (d2 <= threshold){
-	    results[(*count)++] = sv2;
-	    if (*count >= knearest)
+	    results[nbfound++] = sv2;
+	    if (nbfound >= knearest){
 		return PH_ERRCAP;
+	    }
 	} else {
+            free(sv2->id);
+            free(sv2->hash);
+            free(sv2->path);
 	    ph_free_datapoint(sv2);
 	}
 
@@ -1197,23 +1208,24 @@ MVPRetCode _ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, 
 		for (pivot2=0;pivot2<LengthM1;pivot2++){
 		    if (d2 - radius <= M2[pivot2+pivot1*LengthM1]){
 			/*determine pos from which to read filenumber and offset */
-			curr_pos = start_pos + (pivot2+pivot1*BranchFactor)*(sizeof(uint8_t)+sizeof(off_t));
+			curr_pos = start_pos + (pivot2+pivot1*(m->branchfactor))*(sizeof(uint8_t)+sizeof(off_t));
 			m->file_pos = curr_pos;
 			memcpy(&filenumber,&(m->buf[m->file_pos&offset_mask]),sizeof(uint8_t));
                         m->file_pos++;
 			memcpy(&child_pos,&(m->buf[m->file_pos&offset_mask]),sizeof(off_t));
                         m->file_pos += sizeof(off_t);
 
+                        if ((filenumber == 0) && (child_pos == 0)){
+                            continue;
+			}
 			/*save position and remap to new file/position  */
-			orig_pos = m->file_pos;
 			ret = _ph_map_mvpfile(filenumber,child_pos, m, &m2);
 			if (ret == PH_SUCCESS){
-			   ret = _ph_query_mvptree(&m2,query,knearest,radius,threshold,results,count,level+2);
+			   ret = _ph_query_mvptree(&m2,query,knearest,radius,threshold,results,nbfound,level+2);
 			   /* unmap and remap to the origional file/position */
-			   _ph_unmap_mvpfile(filenumber, orig_pos, m, &m2);
+			   ret = _ph_unmap_mvpfile(filenumber, orig_pos, m, &m2);
 			} else {
-                            free(M1);free(M2);
-			    return ret;
+                            goto querycleanup;
 			}
 			
 		    }
@@ -1222,24 +1234,24 @@ MVPRetCode _ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, 
 		if (d2+radius >= M2[LengthM1-1+pivot1*LengthM1]){
 
 		    /*determine position from which to read filenumber and offset */
-		    curr_pos = start_pos + (BranchFactor-1+pivot1*BranchFactor)*(sizeof(uint8_t)+sizeof(off_t));
+		    curr_pos = start_pos + (m->branchfactor-1+pivot1*(m->branchfactor))*(sizeof(uint8_t)+sizeof(off_t));
 		    m->file_pos = curr_pos;
 		    memcpy(&filenumber,&m->buf[m->file_pos&offset_mask],sizeof(uint8_t));
 		    m->file_pos++;
 		    memcpy(&child_pos,&m->buf[m->file_pos&offset_mask],sizeof(off_t));
 		    m->file_pos += sizeof(off_t);
 
-		    /*saveposition and remap to new file/position */
-                    orig_pos = m->file_pos;
+                    if ((filenumber == 0) && (child_pos == 0)){
+                        continue;
+		    }
 
 		    ret = _ph_map_mvpfile(filenumber, child_pos,m, &m2); 
 		    if (ret == PH_SUCCESS){
-			ret = _ph_query_mvptree(&m2,query,knearest,radius,threshold,results,count,level+2);
+			ret = _ph_query_mvptree(&m2,query,knearest,radius,threshold,results,nbfound,level+2);
 		        /*unmap and remap to original file/position  */
 			_ph_unmap_mvpfile(filenumber, orig_pos, m, &m2);
 		    } else {
-                        free(M1);free(M2);
-                        return ret;
+			goto querycleanup;
 		    }
 		}
 	    }
@@ -1252,23 +1264,25 @@ MVPRetCode _ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, 
 		if (d2-radius <= M2[pivot2+LengthM1*LengthM1]){
 
 		    /*determine pos from which to read filenumber and position  */
-		    curr_pos = start_pos + (pivot2+LengthM1*BranchFactor)*(sizeof(uint8_t)+sizeof(off_t));
+		    curr_pos = start_pos + (pivot2+LengthM1*(m->branchfactor))*(sizeof(uint8_t)+sizeof(off_t));
 		    m->file_pos = curr_pos;
 		    memcpy(&filenumber,&m->buf[m->file_pos&offset_mask],sizeof(uint8_t));
 		    m->file_pos++;
 		    memcpy(&child_pos,&m->buf[m->file_pos&offset_mask],sizeof(off_t));
 		    m->file_pos += sizeof(off_t);
 
+
+		    if ((filenumber == 0)&&(child_pos == 0)){
+                        continue;
+		    }
 		    /*save file position and remap to new filenumber/offset  */
-		    orig_pos = m->file_pos;
 		    ret = _ph_map_mvpfile(filenumber, child_pos, m, &m2);
 		    if (ret == PH_SUCCESS){
-			ret = _ph_query_mvptree(&m2,query,knearest,radius,threshold,results,count,level+2);
+			ret = _ph_query_mvptree(&m2,query,knearest,radius,threshold,results,nbfound,level+2);
 		        /* unmap/remap to original filenumber/position */
 			_ph_unmap_mvpfile(filenumber, orig_pos, m, &m2);
 		    } else {
-                        free(M1);free(M2);
-                        return ret;
+                        goto querycleanup;
 		    }
 		}
 	    }
@@ -1277,7 +1291,7 @@ MVPRetCode _ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, 
 	    if (d2+radius >= M2[LengthM1-1+LengthM1*LengthM1]){
 
 		/* determine position from which to read filenumber and child position */
-		curr_pos = start_pos + (BranchFactor-1+LengthM1*BranchFactor)*(sizeof(uint8_t)+sizeof(off_t));
+		curr_pos = start_pos + (m->branchfactor-1+LengthM1*(m->branchfactor))*(sizeof(uint8_t)+sizeof(off_t));
 		m->file_pos = curr_pos;
 		memcpy(&filenumber,&m->buf[m->file_pos&offset_mask],sizeof(uint8_t));
 		m->file_pos += sizeof(uint8_t);
@@ -1285,18 +1299,22 @@ MVPRetCode _ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, 
 		m->file_pos += sizeof(off_t);
 
 		/* save position and remap to new filenumber/position */
-		orig_pos = m->file_pos;
-		ret = _ph_map_mvpfile(filenumber, child_pos, m, &m2);
-		if (ret == PH_SUCCESS){
-		    ret = _ph_query_mvptree(&m2,query,knearest,radius,threshold, results,count,level+2);
-		    /* return to original and remap to original filenumber/position */
-		    _ph_unmap_mvpfile(filenumber, orig_pos, m, &m2);
+                if (!(filenumber == 0 && child_pos == 0)){
+		    ret = _ph_map_mvpfile(filenumber, child_pos, m, &m2);
+		    if (ret == PH_SUCCESS){
+			ret = _ph_query_mvptree(&m2,query,knearest,radius,threshold, results,nbfound,level+2);
+			/* return to original and remap to original filenumber/position */
+			ret = _ph_unmap_mvpfile(filenumber, orig_pos, m, &m2);
+		    } else {
+			goto querycleanup;
+		    }
 		} else {
-                    free(M1);free(M2);
-                    return ret;
+                    goto querycleanup;
 		}
 	    }
 	}
+    
+querycleanup:
         free(M1);
         free(M2);
     } else { /* unrecognized node */
@@ -1308,7 +1326,7 @@ MVPRetCode _ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, 
 
 
 MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, float threshold,
-                                               DP **results, int *count){
+                                               DP **results, int &nbfound){
     /*use host pg size until file pg size used can be determined  */
     m->pgsize = sysconf(_SC_PAGESIZE);
 
@@ -1318,6 +1336,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, f
     if (m->fd < 0){
 	return PH_ERRFILEOPEN;
     }
+
     m->file_pos = 0;
     m->buf=(char*)mmap(NULL,m->pgsize,PROT_READ|PROT_WRITE,MAP_SHARED,m->fd,m->file_pos);
     if (m->buf == MAP_FAILED){
@@ -1353,6 +1372,17 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, f
     
     memcpy(&type, &m->buf[m->file_pos++], 1);
 
+    query->path = (float*)malloc(p*sizeof(float));
+    if (query->path == NULL){
+        return PH_ERRMEMALLOC;
+    }
+    m->branchfactor = bf;
+    m->pathlength = p;
+    m->leafcapacity = k;
+    m->hash_type = (HashType)type;
+    m->nbdbfiles = nbdbfiles;
+   
+    
 #ifdef HAVE_MREMAP
     m->buf = (char*)mremap(m->buf,m->pgsize,int_pgsize,MREMAP_MAYMOVE);
 #else
@@ -1368,16 +1398,22 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, f
     m->file_pos = HeaderSize;
     m->filenumber = 0;
     /* finish the query by calling the recursive auxiliary function */
-    *count = 0;
-    MVPRetCode res = _ph_query_mvptree(m,query,knearest,radius,threshold, results,count,0);
+    nbfound = 0;
+    MVPRetCode res = _ph_query_mvptree(m,query,knearest,radius,threshold, results,nbfound,0);
 
     munmap(m->buf, m->pgsize);
     m->buf = NULL;
 
     close(m->fd);
+    free(query->path);
+
+    for (int i=0;i<nbfound;i++){
+	free(results[i]->path);
+    }
+
     m->fd = 0;
     m->file_pos = 0;
-
+    
     return res;
 }
 
@@ -1391,8 +1427,14 @@ MVPRetCode _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
     int Fanout = BranchFactor*BranchFactor;
     hash_compareCB hashdist = m->hashdist;
 
-    if ((!m) || (!points) || (nbpoints < 0) || (pOffset == NULL)||(hashdist == NULL))
+    if ((!m) || (!points) || (nbpoints < 0) || (hashdist == NULL)){
 	return PH_ERRNULLARG;
+    }
+    if (nbpoints == 0){
+	pOffset->fileno = 0;
+        pOffset->offset = 0;
+        return PH_SUCCESS;
+    }
     MVPRetCode ret = PH_SUCCESS;
     off_t offset_mask = m->pgsize - 1;
     off_t page_mask = ~(m->pgsize - 1);
@@ -1456,8 +1498,7 @@ MVPRetCode _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 
 	/* find vantage points, sv1 and sv2 */
 	int sv1_pos, sv2_pos;
-	float max_distance, min_distance;
-	ph_selectvantagepoints(&m2, points, nbpoints, sv1_pos, sv2_pos,max_distance, min_distance);
+	ph_selectvantagepoints(&m2, points, nbpoints, sv1_pos, sv2_pos);
 	DP *sv1 =  NULL;
 	DP *sv2 =  NULL;
         if (sv1_pos >= 0) sv1 = points[sv1_pos];
@@ -1470,7 +1511,7 @@ MVPRetCode _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 	ph_save_datapoint(sv1, &m2);
  
 	/*if file pos is beyond pg size */
-	if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,&m2) > m->pgsize)
+	if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv2,&m2) > m->pgsize)
 	    return PH_ERRSMPGSIZE;
 
 	ph_save_datapoint(sv2, &m2);
@@ -1489,6 +1530,14 @@ MVPRetCode _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 	    /* write d1, d2 */
 	    d1 = hashdist(sv1, points[i]);
 	    d2 = hashdist(sv2, points[i]);
+
+	    if (level < PathLength){
+                points[i]->path[level] = d1;
+	    }
+            if (level+1 < PathLength){
+                points[i]->path[level+1] = d2;
+	    }
+
             memcpy(&(m2.buf[m2.file_pos & offset_mask]), &d1, sizeof(float));
 	    m2.file_pos += sizeof(float);
             memcpy(&(m2.buf[m2.file_pos & offset_mask]), &d2, sizeof(float));
@@ -1499,7 +1548,7 @@ MVPRetCode _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 	    m2.file_pos = last_pos;
 
 	    /* if file pos is beyond pg size */
-	    if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,&m2) > m->pgsize)
+	    if ((m->file_pos & offset_mask) + ph_sizeof_dp(points[i],&m2) > m->pgsize)
 		return PH_ERRSMPGSIZE;
 	    
 	    dp_pos = ph_save_datapoint(points[i], &m2);
@@ -1511,7 +1560,7 @@ MVPRetCode _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 	}
 
 	if (msync(m2.buf, m->pgsize, MS_SYNC) < 0){
-	    close(m2.fd);
+            close(m2.fd);
 	    return PH_ERRMSYNC;
 	}
 	
@@ -1521,14 +1570,11 @@ MVPRetCode _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 	    close(m2.fd);
 	    return PH_ERRFILETRUNC;
 	}
-
 	close(m2.fd);
     } else { /* internal node */
 	off_t pgsize = m->pgsize;
-
 	pOffset->fileno = 0;
 	pOffset->offset = m->file_pos;
-
 	off_t orig_pos = m->file_pos;
         off_t end_pos;
         char *tmpbuf;
@@ -1553,8 +1599,7 @@ MVPRetCode _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 	
 	/* choose vantage points, sv1, sv2 */
 	int sv1_pos, sv2_pos;
-	float max_distance, min_distance;
-	ph_selectvantagepoints(m, points, nbpoints, sv1_pos, sv2_pos, max_distance, min_distance);
+	ph_selectvantagepoints(m, points, nbpoints, sv1_pos, sv2_pos);
 
 	DP *sv1 = points[sv1_pos]; 
 	DP *sv2 = points[sv2_pos];
@@ -1562,20 +1607,35 @@ MVPRetCode _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 	/* save sv1, sv2 */
 	
 	/* check that file_pos does not exceed pgsize */
-	if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,m) > m->pgsize)
+	if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,m) > m->pgsize){
 	    return PH_ERRSMPGSIZE;
+	}
 
 	ph_save_datapoint(sv1, m);
 
 	/* check the file_os does not exceed pgsize */
-	if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,m) > m->pgsize)
+	if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv2,m) > m->pgsize){
 	    return PH_ERRSMPGSIZE;
+	}
 
 	ph_save_datapoint(sv2, m);
 
+        float max_distance = 0.0f, min_distance = (float)INT_MAX;
+	for (int i=0;i<nbpoints;i++){
+            if (i != sv1_pos){
+		float d = hashdist(sv1,points[i]);
+		if (d > max_distance){
+		    max_distance = d;
+		}
+		if (d < min_distance){
+		    min_distance = d;
+		}
+	    }
+	}
+
 	/* 1st tier pivots, M1, derived from the distance of each point from sv1*/
 	float step = (max_distance - min_distance)/BranchFactor;
-	if (step <= 0.5){
+	if (step <= 0.001){
 	    return PH_ERRDIST;
 	}
 
@@ -1597,7 +1657,7 @@ MVPRetCode _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 
 	/*set up 1st tier sorting bins - contain pointers to DP points[] param so that we only 
           move pointers, not the actual datapoints */
-	DP ***bins = (DP***)malloc(BranchFactor*sizeof(DP***));
+	DP ***bins = (DP***)malloc(BranchFactor*sizeof(DP**));
 	if (!bins){
 	    free(M1);
 	    free(M2);
@@ -1612,7 +1672,7 @@ MVPRetCode _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 	}
 
 	for (int i=0;i<BranchFactor;i++){
-	    bins[i] = (DP**)malloc(Np*sizeof(DP**)); /*Np should be more than enough */            
+	    bins[i] = (DP**)malloc(Np*sizeof(DP*)); /*Np should be more than enough */            
 	    if (!bins[i]){
 		free(M1);
 		free(M2);
@@ -1656,7 +1716,7 @@ MVPRetCode _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 	
 	/* set up 2nd tier sorting bins */
 	/* each row from bins to be sorted into bins2, each in turn */
-	DP ***bins2 = (DP***)malloc(BranchFactor*sizeof(DP***));
+	DP ***bins2 = (DP***)malloc(BranchFactor*sizeof(DP**));
 	if (!bins2){
 	    free(M1);
 	    free(M2);
@@ -1675,7 +1735,7 @@ MVPRetCode _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 	}
 
 	for (int i=0;i<BranchFactor;i++){
-	    bins2[i] = (DP**)malloc(Np*sizeof(DP**)); /* Np is more than enough */
+	    bins2[i] = (DP**)malloc(Np*sizeof(DP*)); /* Np is more than enough */
 	    if (!bins2[i]){
 		free(M1);
 		free(M2);
@@ -1687,7 +1747,7 @@ MVPRetCode _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 	    }
 	}
 	
-	
+	FileIndex ChildIndex;
 	off_t m2_pos = m->file_pos; /* start of M2 pivots */
 	off_t child_pos = m2_pos + LengthM2*sizeof(float); /*pos where child offsets are written*/
 	off_t last_pos = child_pos + Fanout*(sizeof(uint8_t) + sizeof(off_t)); /* last pos in
@@ -1699,21 +1759,14 @@ MVPRetCode _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 	    for (int j=0;j < BranchFactor;j++){ /* reset the lengths to 0 */
 		mlens2[j] = 0;
 	    }
-	    float *dist_temp = (float*)realloc(distance_vector, row_len*sizeof(float));
-	    if (!dist_temp){
-		free(M1);
-		free(M2);
-		free(bins);
-		free(mlens);
-		free(bins2);
-		free(mlens2);
-		return PH_ERRMEMALLOC;
+	    float *distance_vector = (float*)malloc( row_len*sizeof(float));
+	    if (!distance_vector){
+                goto cleanup;
 	    }
-	    distance_vector = dist_temp;
 
 	    /* 2nd tier pivots M2[], for row */
-	    max_distance = 0;
-	    min_distance = INT_MAX;
+	    max_distance = 0.0f;
+	    min_distance = (float)INT_MAX;
 	    for (int j=0;j<row_len;j++){
 		distance_vector[j] = hashdist(sv2, bins[i][j]);
 		if ( distance_vector[j] > max_distance)
@@ -1763,7 +1816,6 @@ MVPRetCode _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 	    */
 
 	    /* save child nodes */
-	    FileIndex ChildIndex;
 	    for (int j=0;j<BranchFactor;j++){
 		m->file_pos = last_pos;
 		ret = _ph_save_mvptree(m, bins2[j], mlens2[j], saveall_flag, level+2, &ChildIndex);
@@ -1777,18 +1829,11 @@ MVPRetCode _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 		    child_pos = m->file_pos;
 		    
 		} else { /* child not saved successfully  */
-		    last_pos = m->file_pos;
-		    m->file_pos = child_pos;
-		    uint8_t emptyfileno = 0xff;
-		    memcpy(&(m->buf[m->file_pos & offset_mask]), &emptyfileno, sizeof(uint8_t));
-		    m->file_pos++;
-		    off_t emptyoffset = 0xffffffff;
-		    memcpy(&(m->buf[m->file_pos & offset_mask]), &emptyoffset, sizeof(off_t)); 
-		    m->file_pos += sizeof(off_t);
-		    child_pos = m->file_pos;
+                    goto cleanup;
 		}
 	    }
 	    m->file_pos = last_pos;
+            free(distance_vector);
 	}
 
         /* remap to orig_pos */
@@ -1804,8 +1849,13 @@ MVPRetCode _ph_save_mvptree(MVPFile *m, DP **points, int nbpoints, int saveall_f
 	}
 	/* cleanup */
 cleanup:
-	free(distance_vector);
+        for (int i=0;i<m->branchfactor;i++){
+	    free(bins[i]);
+	}
 	free(bins);
+        for (int i=0;i<m->branchfactor;i++){
+	    free(bins2[i]);
+	}
 	free(bins2);
 	free(mlens);
 	free(mlens2);
@@ -1832,6 +1882,13 @@ MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints){
 	return PH_ERRPGSIZE;
     if (nbpoints < m->leafcapacity + 2){
 	return PH_ERRARG;
+    }
+
+    for (int i=0;i<nbpoints;i++){
+	points[i]->path = (float*)malloc((m->pathlength)*sizeof(float));
+        if (points[i]->path == NULL){
+            return PH_ERRMEMALLOC;
+	}
     }
 
     /* open main file */
@@ -1897,8 +1954,11 @@ MVPRetCode ph_save_mvptree(MVPFile *m, DP **points, int nbpoints){
     }
 
     munmap(m->buf, m->pgsize);
-      
     close(m->fd);
+
+    for (int i=0;i<nbpoints;i++){
+	free(points[i]->path);
+    }    
 
     return ret;
 
@@ -1940,6 +2000,12 @@ MVPRetCode _ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 		float d1 = hashdist(sv1,new_dp);
 		float d2 = hashdist(sv2,new_dp);
 		
+                if (level < m->pathlength){
+		    new_dp->path[level] = d1;
+		}
+                if (level+1 < m->pathlength){
+                    new_dp->path[level+1] = d2;
+		}
 		off_t curr_pos, new_pos, point_pos;
 		if (Np == 0){ /* add new point into empty leaf */
 		    memcpy(&m->buf[m->file_pos & offset_mask], &d1, sizeof(float));
@@ -1952,7 +2018,7 @@ MVPRetCode _ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 		    m->file_pos = offset_start+(m->leafcapacity)*(2*sizeof(float)+sizeof(off_t));
 
 		    
-		    if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,m) > m->pgsize)
+		    if ((m->file_pos & offset_mask) + ph_sizeof_dp(new_dp,m) > m->pgsize)
 			return PH_ERRSMPGSIZE;
 
 		    new_pos = ph_save_datapoint(new_dp, m);
@@ -1980,7 +2046,7 @@ MVPRetCode _ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 		    m->file_pos += byte_len;
 
 		    
-		    if ((m->file_pos & offset_mask) + ph_sizeof_dp(sv1,m) > m->pgsize)
+		    if ((m->file_pos & offset_mask) + ph_sizeof_dp(new_dp,m) > m->pgsize)
 			return PH_ERRSMPGSIZE;
 
 		    new_pos = ph_save_datapoint(new_dp, m);
@@ -1994,7 +2060,7 @@ MVPRetCode _ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 		    Np++;
 		    memcpy(&m->buf[Np_pos & offset_mask], &Np, sizeof(uint8_t));
 		} else { /* convert leaf node into internal node */
-		    DP **points = (DP**)malloc((Np+3)*sizeof(DP**));
+		    DP **points = (DP**)malloc((Np+3)*sizeof(DP*));
 		    points[0] = sv1;
 		    points[1] = sv2;
 		    
@@ -2012,14 +2078,18 @@ MVPRetCode _ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 		    m->file_pos = start_pos;
                     FileIndex ChildIndex;
 		    ret = _ph_save_mvptree(m, points, Np+3, 0, level+2, &ChildIndex);
- 		    if (ret != PH_SUCCESS){
-                        free(points);
-			free(sv1);
-			free(sv2);
-			return ret;
+		    for (int i=2;i<Np+2;i++){
+                        free(points[i]->id);
+                        free(points[i]->path);
+                        free(points[i]->hash);
+                        ph_free_datapoint(points[i]);
 		    }
-		    free(points);
+                    free(points);
 		}
+                free(sv2->id);
+                free(sv2->path);
+                free(sv2->hash);
+                ph_free_datapoint(sv2);
 	    } else { /* put new point into sv2 pos */
 		m->file_pos = start_pos;
 		ntype = 0;
@@ -2039,8 +2109,10 @@ MVPRetCode _ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 		memcpy(&m->buf[m->file_pos & offset_mask], &Np, sizeof(uint8_t));
 		m->file_pos++;
 	    }
+	    free(sv1->id);
+            free(sv1->path);
+            free(sv1->hash);
             ph_free_datapoint(sv1);
-	    ph_free_datapoint(sv2);
 	}
         else { /* save new dp into sv1 position */
             m->file_pos = start_pos;
@@ -2077,10 +2149,17 @@ MVPRetCode _ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 
 	if (level < m->pathlength)
 	    new_dp->path[level] = d1;
-	if (level < m->pathlength - 1)
+	if (level+1 < m->pathlength)
 	    new_dp->path[level+1] = d2;
 
+	free(sv1->id);
+        free(sv1->path);
+        free(sv1->hash);
 	ph_free_datapoint(sv1);
+
+        free(sv2->id);
+        free(sv2->path);
+        free(sv2->hash);
 	ph_free_datapoint(sv2);
 
 	int pivot1, pivot2;
@@ -2089,7 +2168,6 @@ MVPRetCode _ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 	off_t start_pos = m->file_pos;
 	off_t orig_pos;
         MVPFile m2;
-	MVPRetCode retcode;
 	/* check <= each M1 pivot */
 	for (pivot1=0;pivot1 < LengthM1;pivot1++){
 	    if (d1 <= M1[pivot1]){
@@ -2105,49 +2183,56 @@ MVPRetCode _ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 			memcpy(&child_pos,&m->buf[m->file_pos & offset_mask], sizeof(off_t));
 			m->file_pos += sizeof(off_t);
 			
-			/* save position and remap to new file/position */
-			orig_pos = m->file_pos;
-			retcode = _ph_map_mvpfile(filenumber,child_pos,m,&m2);
-			if (retcode == PH_SUCCESS){
-			    retcode = _ph_add_mvptree(&m2, new_dp, level+2);
-			    if (retcode != PH_SUCCESS){
-                                free(M1);free(M2);
-				return retcode;
+                        if ((filenumber == 0) && (child_pos == 0)){
+                            FileIndex child_offset;
+			    ret = _ph_save_mvptree(m, &new_dp, 1, 0, level+2, &child_offset);
+			    if (ret == PH_SUCCESS){
+				memcpy(&m->buf[curr_pos++ & offset_mask], &(child_offset.fileno), sizeof(uint8_t));
+                                memcpy(&m->buf[curr_pos   & offset_mask], &(child_offset.offset), sizeof(off_t));
 			    }
-                       
-			    _ph_unmap_mvpfile(filenumber, orig_pos, m, &m2);
-			} else {
-                            free(M1);free(M2);
-			    return retcode;
+			}  else {
+			    /* save position and remap to new file/position */
+			    ret = _ph_map_mvpfile(filenumber,child_pos,m,&m2);
+			    if (ret == PH_SUCCESS){
+				ret = _ph_add_mvptree(&m2, new_dp, level+2);
+				if (ret != PH_SUCCESS){
+                                    goto addcleanup;
+				}
+				ret = _ph_unmap_mvpfile(filenumber, orig_pos, m, &m2);
+			    } 
 			}
-			
+                        goto addcleanup;
 		    }
-		}
-		/* check > last M2 pivot */
-		if (d2 > M2[LengthM1-1+pivot1*LengthM1]){
-		    curr_pos = start_pos + (m->branchfactor-1+pivot1*m->branchfactor)*(sizeof(uint8_t)+sizeof(off_t));
-		    m->file_pos = curr_pos;
-		    memcpy(&filenumber,&m->buf[m->file_pos & offset_mask], sizeof(uint8_t));
-		    m->file_pos++;
-		    memcpy(&child_pos,&m->buf[m->file_pos & offset_mask], sizeof(off_t));
-		    m->file_pos += sizeof(off_t);
-		    
-		    orig_pos = m->file_pos;
-                
-		    retcode = _ph_map_mvpfile(filenumber, child_pos, m, &m2);
-		    if (retcode == PH_SUCCESS){
-			retcode = _ph_add_mvptree(&m2, new_dp, level+2);
-			if (retcode != PH_SUCCESS){
-                            free(M1);free(M2);
-			    return retcode;
-			}
-		        _ph_unmap_mvpfile(filenumber,orig_pos, m, &m2);
-		    } else {
-                        free(M1);free(M2);
-                        return retcode;
-		    }
-		}
 
+		    /* check > last M2 pivot */
+		    if (d2 > M2[LengthM1-1+pivot1*LengthM1]){
+			curr_pos = start_pos + (m->branchfactor-1+pivot1*m->branchfactor)*(sizeof(uint8_t)+sizeof(off_t));
+			m->file_pos = curr_pos;
+			memcpy(&filenumber,&m->buf[m->file_pos & offset_mask], sizeof(uint8_t));
+			m->file_pos++;
+			memcpy(&child_pos,&m->buf[m->file_pos & offset_mask], sizeof(off_t));
+			m->file_pos += sizeof(off_t);
+		    
+			if ((filenumber == 0) && (child_pos == 0)){
+			    FileIndex child_offset;
+			    ret = _ph_save_mvptree(m, &new_dp, 1, 0, level+2, &child_offset);
+			    if (ret == PH_SUCCESS){
+				memcpy(&m->buf[curr_pos++ & offset_mask], &child_offset.fileno, sizeof(uint8_t));
+				memcpy(&m->buf[curr_pos & offset_mask], &child_offset.offset, sizeof(off_t));
+			    }
+			} else {
+			    ret = _ph_map_mvpfile(filenumber, child_pos, m, &m2);
+			    if (ret == PH_SUCCESS){
+				ret = _ph_add_mvptree(&m2, new_dp, level+2);
+				if (ret != PH_SUCCESS){
+				    goto addcleanup;
+				}
+				ret = _ph_unmap_mvpfile(filenumber,orig_pos, m, &m2);
+			    } 
+			}
+			goto addcleanup;
+		    }
+		}
 	    }
 	}
 	/* check > last M1 pivot */
@@ -2161,20 +2246,25 @@ MVPRetCode _ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 		    m->file_pos++;
 		    memcpy(&child_pos,&m->buf[m->file_pos & offset_mask], sizeof(off_t));
 		    m->file_pos += sizeof(off_t);
-		    
-		    orig_pos = m->file_pos;
-		    retcode = _ph_map_mvpfile(filenumber,child_pos,m, &m2);
-		    if (retcode == PH_SUCCESS){
-			retcode = _ph_add_mvptree(&m2,new_dp,level+2);
-			if (retcode != PH_SUCCESS){
-                            free(M1);free(M2);
-			    return retcode;
+  
+		    if ((filenumber == 0) && (child_pos == 0)){
+			FileIndex child_offset;
+			ret = _ph_save_mvptree(m, &new_dp, 1, 0, level+2, &child_offset);
+			if (ret == PH_SUCCESS){
+			    memcpy(&m->buf[curr_pos++ & offset_mask],&child_offset.fileno,sizeof(uint8_t));
+			    memcpy(&m->buf[curr_pos & offset_mask],&child_offset.offset,sizeof(off_t));
 			}
-		        _ph_unmap_mvpfile(filenumber, orig_pos, m, &m2);
 		    } else {
-                        free(M1);free(M2);
-                        return retcode;
+			ret = _ph_map_mvpfile(filenumber,child_pos,m, &m2);
+			if (ret == PH_SUCCESS){
+			    ret = _ph_add_mvptree(&m2,new_dp,level+2);
+			    if (ret != PH_SUCCESS){
+				goto addcleanup;
+			    }
+			    ret = _ph_unmap_mvpfile(filenumber, orig_pos, m, &m2);
+			}
 		    }
+		    goto addcleanup;
 		}
 	    }
 	    
@@ -2187,27 +2277,35 @@ MVPRetCode _ph_add_mvptree(MVPFile *m, DP *new_dp, int level){
 		memcpy(&child_pos, &m->buf[m->file_pos & offset_mask], sizeof(off_t));
 		m->file_pos += sizeof(off_t);
 		
-		orig_pos = m->file_pos;
-		retcode = _ph_map_mvpfile(filenumber, child_pos, m, &m2);
-		if (retcode == PH_SUCCESS){
-		    retcode = _ph_add_mvptree(&m2, new_dp, level+2);
-		    if (retcode != PH_SUCCESS){
-                        free(M1);free(M2);
-			return retcode;
+                if ((filenumber == 0)&&(child_pos == 0)){
+		    FileIndex child_offset;
+                    ret = _ph_save_mvptree(m, &new_dp, 1, 0, level+2, &child_offset);
+                    if (ret == PH_SUCCESS){
+			memcpy(&m->buf[curr_pos++ & offset_mask],&child_offset.fileno,sizeof(uint8_t));
+                        memcpy(&m->buf[curr_pos & offset_mask],&child_offset.offset,sizeof(off_t));
 		    }
-		    _ph_unmap_mvpfile(filenumber, orig_pos, m, &m2);
 		} else {
-                    free(M1);free(M2);
-                    return retcode;
+		    ret = _ph_map_mvpfile(filenumber, child_pos, m, &m2);
+		    if (ret == PH_SUCCESS){
+			ret = _ph_add_mvptree(&m2, new_dp, level+2);
+			if (ret != PH_SUCCESS){
+			    goto addcleanup;
+			}
+			ret =  _ph_unmap_mvpfile(filenumber, orig_pos, m, &m2);
+		    }
+		
 		}
+                goto addcleanup;
 	    }
 	}
+
+addcleanup:
 	free(M1);
 	free(M2);
     } else {
-	return PH_ERRNTYPE;
+	ret = PH_ERRNTYPE;
     }
-    return PH_SUCCESS;
+    return ret;
 }
 
 
@@ -2266,8 +2364,15 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP **points, int nbpoints, int &nbsaved){
 
     m->file_pos = HeaderSize;
 
-    m->pgsize = int_pgsize;
     m->filenumber = 0;
+
+    for (int i=0;i < nbpoints;i++){
+	points[i]->path = (float*)malloc((m->pathlength)*sizeof(float));
+        if (points[i]->path == NULL){
+            return PH_ERRMEMALLOC;
+	}
+    }
+
     /* remap to true pg size used in making file */
 #ifdef HAVE_REMAP
     m->buf = (char*)mremap(m->buf, m->pgsize, int_pgsize, MREMAP_MAYMOVE);
@@ -2279,26 +2384,33 @@ MVPRetCode ph_add_mvptree(MVPFile *m, DP **points, int nbpoints, int &nbsaved){
 	return PH_ERRMMAP;
     }
 
+    m->pgsize = int_pgsize;
+
     MVPRetCode retval = PH_SUCCESS;
     for (int i=0;i<nbpoints;i++){
         m->file_pos = HeaderSize;
 	retval = _ph_add_mvptree(m, points[i], 0);
-	if (retval != 0){
+	if (retval != PH_SUCCESS){
+            fprintf(stderr,"unable to add %d, retcode %d\n", i, retval);
 	    continue;
 	}
 	nbsaved++;
     }
 
     /* save new nbdbfiles if new files added */
-    memcpy(&m->buf[m->file_pos++], &m->nbdbfiles, 1);
+    memcpy(&m->buf[nb_pos], &m->nbdbfiles, 1);
 
     if (msync(m->buf, m->pgsize, MS_SYNC) < 0){
 	return PH_ERRMSYNC;
     }
 
     munmap(m->buf, m->pgsize);
-   
     close(m->fd);
+
+    for (int i=0;i<nbpoints;i++){
+	free(points[i]->path);
+    }
+
 
     return retval;
 }

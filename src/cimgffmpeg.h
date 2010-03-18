@@ -33,9 +33,9 @@
 #include "CImg.h"
 
 extern "C" {
-	#include "avformat.h"
-	#include "avcodec.h"
-	#include "swscale.h"
+	#include "./libavformat/avformat.h"
+	#include "./libavcodec/avcodec.h"
+	#include "./libswscale/swscale.h"
 }
 
 using namespace cimg_library;

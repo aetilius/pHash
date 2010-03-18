@@ -67,7 +67,6 @@ extern "C" {
 const int MaxFileSize = (1<<30); /* 1GB file size limit (for mvp files) */
 const off_t HeaderSize = 64;     /* header size for mvp file */
 
-
 const char mvptag[] = "pHashMVPfile2009";
 
 typedef enum ph_mvp_retcode {
@@ -110,7 +109,7 @@ typedef struct ph_datapoint {
     char *id;
     void *hash;
     float *path;
-    uint16_t hash_length;
+    uint32_t hash_length;
     uint8_t hash_type;
 }DP;
 
@@ -118,7 +117,7 @@ typedef struct ph_datapoint {
 typedef float (*hash_compareCB)(DP *pointA, DP *pointB);
 
 typedef struct ph_mvp_file {
-    const char *filename;   /* name of db to use */
+    char *filename;   /* name of db to use */
     char *buf;
     off_t file_pos;
     int fd;
@@ -200,7 +199,7 @@ typedef struct ph_match{
 /* /brief alloc a single data point
  *  allocates path array, does nto set id or path
  */
- DP* ph_malloc_datapoint(int hashtype, int pathlength);
+ DP* ph_malloc_datapoint(int hashtype);
 
 /** /brief free a datapoint and its path
  *
@@ -412,12 +411,12 @@ float hammingdistance(DP *pntA, DP *pntB);
  *  /param knearest - int capacity of results array.
  *  /param radius - float value of radius of values to consider
  *  /param results - DP array of points of result
- *  /param count - int* number of results found (out)
+ *  /param nbfound - int number of results found (out)
  *  /param level - int value to track recursion depth.
  *  /return MVPRetCode
 **/
 static MVPRetCode _ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, 
-                float threshold, DP **results, int *count, int level);
+                float threshold, DP **results, int &nbfound, int level);
 
 /**  /brief query mvptree function
  *   /param m - MVPFile file state info
@@ -425,10 +424,10 @@ static MVPRetCode _ph_query_mvptree(MVPFile *m, DP *query, int knearest, float r
  *   /param knearest - int capacity of results array
  *   /param radius  - float radius to consider in query
  *   /param results - DP** list of pointers to results found
- *   /param count -  int number of results found (out)
+ *   /param nbfound -  int number of results found (out)
  **/
 MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius,
-		float threshold,   DP **results, int *count);
+		float threshold,   DP **results, int &nbfound);
 
 /** /brief save dp points to a file (aux func)
  *  /param m - MVPFile state information of file
@@ -746,4 +745,9 @@ static const ulong64 textkeys[256] = {
 #ifdef __cplusplus
 }
 #endif
+
+#ifdef DMALLOC
+#include "dmalloc.h"
+#endif
+
 #endif
