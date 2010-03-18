@@ -52,7 +52,8 @@ int main(int argc, char **argv){
     float lvl = 1.0f;
 
     MVPFile mvpfile;
-    ph_mvp_init(&mvpfile);
+    mvpfile.branchfactor = 2;
+    mvpfile.pathlength = 5;
     mvpfile.filename = strdup(filename);
     mvpfile.hashdist = distancefunc;
     mvpfile.hash_type = BYTEARRAY;
@@ -76,7 +77,7 @@ int main(int argc, char **argv){
     int count = 0;
     for (int i=0;i<nbfiles;i++){
 	printf("file[%d]: %s\n", i, files[i]);
-        hashlist[count] = ph_malloc_datapoint(mvpfile.hash_type,mvpfile.pathlength);
+        hashlist[count] = ph_malloc_datapoint(mvpfile.hash_type);
 	if (hashlist[count] == NULL){
 	    printf("mem alloc error\n");
 	    exit(1);

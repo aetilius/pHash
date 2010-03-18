@@ -62,7 +62,6 @@ int main(int argc, char **argv){
     const int nbchannels = 1;
 
     MVPFile mvpfile;
-    ph_mvp_init(&mvpfile);
     mvpfile.filename = strdup(filename);
     mvpfile.hashdist = audiohashdistance;
     mvpfile.hash_type = UINT32ARRAY;
@@ -79,8 +78,11 @@ int main(int argc, char **argv){
     printf("nb query files = %d\n", nbfiles);
 
     DP *query = NULL;
-    float radius = 300.0;
+    float radius = 700.0;
     const int knearest = 20;
+    float threshold = 300.0;
+    printf("radius %f, knearest %d, threshold %f\n", radius, knearest, threshold);
+
     DP **results = (DP**)malloc(knearest * sizeof(DP**));
     if (!results){
 	printf("mem alloc error\n");
@@ -103,7 +105,7 @@ int main(int argc, char **argv){
 	    free(buf);
 	    continue;
 	}
-        query = ph_malloc_datapoint(mvpfile.hash_type,mvpfile.pathlength);
+        query = ph_malloc_datapoint(mvpfile.hash_type);
         if (!query){
 	    printf("mem alloc error\n");
             free(buf);
@@ -117,7 +119,7 @@ int main(int argc, char **argv){
 	count++;
 	nb_calcs = 0;
 	nbfound = 0;
-	int res = ph_query_mvptree(&mvpfile,query,knearest,radius,results,&nbfound);
+	int res = ph_query_mvptree(&mvpfile,query,knearest,radius,threshold, results,nbfound);
 	if (res != 0){
 	    printf("could not complete query\n");
 	    continue;

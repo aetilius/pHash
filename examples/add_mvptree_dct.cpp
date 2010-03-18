@@ -28,9 +28,7 @@
 
 
 float distancefunc(DP *pa, DP *pb){
-    uint8_t *hashA = (uint8_t*)pa->hash;
-    uint8_t *hashB = (uint8_t*)pb->hash;
-    float d = 10*ph_hammingdistance2(hashA,pa->hash_length, hashB, pb->hash_length);
+    float d = 10.0f*(float)ph_hamming_distance(*((ulong64*)pa->hash), *((ulong64*)pb->hash))/64.0f;
     float res = exp(d)-1;
     return res;
 }
@@ -38,49 +36,55 @@ float distancefunc(DP *pa, DP *pb){
 int main(int argc, char **argv){
     if (argc < 3){
 	printf("not enough input args\n");
-	return 1;
+        printf("usage: %s directory filename\n", argv[0]);
+	return -1;
     }
 
     const char *dir_name = argv[1];/* name of dir to retrieve image files */
     const char *filename = argv[2];/* name of file to save db */
 
-    float alpha = 2.0f;
-    float lvl  = 1.0f;
-
     MVPFile mvpfile;
     mvpfile.filename = strdup(filename);
     mvpfile.hashdist = distancefunc;
-    mvpfile.hash_type = BYTEARRAY;
+    mvpfile.hash_type = UINT64ARRAY;
 
     int nbfiles = 0;
     printf("dir name: %s\n", dir_name);
     char **files = ph_readfilenames(dir_name,nbfiles);
     if (!files){
 	printf("mem alloc error\n");
-	exit(1);
+	return -2;
     }
     printf("nbfiles = %d\n", nbfiles);
     DP **hashlist = (DP**)malloc(nbfiles*sizeof(DP*));
     if (!hashlist){
 	printf("mem alloc error\n");
-	exit(1);
+	return -3;
     }
-    int hashlength;
+
     int count = 0;
+    ulong64 tmphash = 0;
     for (int i=0;i<nbfiles;i++){
-	printf("file[%d]: %s\n", i, files[i]);
         hashlist[count] = ph_malloc_datapoint(mvpfile.hash_type);
 	if (hashlist[count] == NULL){
 	    printf("mem alloc error\n");
-	    continue;
+	    return -4;
 	}
-	hashlist[count]->id = files[i];
-	hashlist[count]->hash = ph_mh_imagehash(files[i],hashlength,alpha,lvl);
+	hashlist[count]->hash = malloc(sizeof(ulong64));
 	if (hashlist[count]->hash == NULL){
-	    printf("unable to get hash\n");
-	    continue;
+	    printf("mem alloc error\n");
+	    return -5;
 	}
-	hashlist[count]->hash_length = hashlength;
+        printf("file[%d] = %s\n", i, files[i]);        
+        if (ph_dct_imagehash(files[i],tmphash) < 0){
+            printf("unable to get hash\n");
+            free(hashlist[count]->hash);
+            ph_free_datapoint(hashlist[count]);
+            continue;
+	}
+        hashlist[count]->id = files[i];
+        *((ulong64*)hashlist[count]->hash) = tmphash;
+	hashlist[count]->hash_length = 1;
         count++;
     }
 
@@ -88,6 +92,18 @@ int main(int argc, char **argv){
     int nbsaved;
     MVPRetCode ret = ph_add_mvptree(&mvpfile, hashlist, count,nbsaved);
     printf("number saved %d out of %d, ret code %d\n", nbsaved,count,ret);
+
+
+    for (int i=0;i<nbfiles;i++){
+	free(files[i]);
+    }
+    free(files);
+
+    for (int i=0;i<nbfiles;i++){
+	free(hashlist[i]->hash);
+        ph_free_datapoint(hashlist[i]);
+    }
+    free(hashlist);
 
     return 0;
 }
