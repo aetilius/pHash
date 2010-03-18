@@ -18,7 +18,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     Evan Klinger - eklinger@phash.org
-    David Starkweather - dstarkweather@phash.org
+    D Grant Starkweather - dstarkweather@phash.org
 
 */
 
@@ -33,7 +33,7 @@ float distancefunc(DP *pa, DP *pb){
     nb_calcs++;
     uint8_t *hashA = (uint8_t*)pa->hash;
     uint8_t *hashB = (uint8_t*)pb->hash;
-    float d = 10.0f*ph_hammingdistance2(hashA, pa->hash_length, hashB, pb->hash_length)/64.0f;
+    float d = 10.0f*ph_hammingdistance2(hashA, pa->hash_length, hashB, pb->hash_length);
     float result = exp(d)-1;
     return result;
 }
