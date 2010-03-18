@@ -58,7 +58,6 @@ int main(int argc, char **argv){
     const int nbchannels = 1;
 
     MVPFile mvpfile;
-    ph_mvp_init(&mvpfile);
     mvpfile.filename = strdup(filename);
     mvpfile.hashdist = audiohashdistance;
     mvpfile.hash_type = UINT32ARRAY;
@@ -99,7 +98,7 @@ int main(int argc, char **argv){
 	}
 	printf("nb hashes = %d\n", hashlen);
 
-        dp = ph_malloc_datapoint(mvpfile.hash_type,mvpfile.pathlength);
+        dp = ph_malloc_datapoint(mvpfile.hash_type);
 	if (!dp){
 	    printf("mem alloc error\n");
 	    free(buf);
