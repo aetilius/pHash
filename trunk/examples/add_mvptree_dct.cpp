@@ -28,9 +28,8 @@
 
 
 float distancefunc(DP *pa, DP *pb){
-    float d = 10.0f*(float)ph_hamming_distance(*((ulong64*)pa->hash), *((ulong64*)pb->hash))/64.0f;
-    float res = exp(d)-1;
-    return res;
+    float d = ph_hamming_distance(*((ulong64*)pa->hash), *((ulong64*)pb->hash));
+    return d;
 }
 
 int main(int argc, char **argv){

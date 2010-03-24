@@ -27,9 +27,8 @@
 
 
 float distancefunc(DP *pa, DP *pb){
-    float d = 10.0f*(float)ph_hamming_distance(*((ulong64*)pa->hash), *((ulong64*)pb->hash))/64.0f;
-    float res = exp(d)-1;
-    return res;
+    float d = ph_hamming_distance(*((ulong64*)pa->hash), *((ulong64*)pb->hash));
+    return d;
 }
 
 int main(int argc, char **argv){
@@ -45,8 +44,8 @@ int main(int argc, char **argv){
     MVPFile mvpfile;
     mvpfile.branchfactor = 2;
     mvpfile.pathlength = 5;
-    mvpfile.leafcapacity = 25;
-    mvpfile.pgsize = 4096;
+    mvpfile.leafcapacity = 50;
+    mvpfile.pgsize = 8192;
     mvpfile.filename = strdup(filename);
     mvpfile.hashdist = distancefunc;
     mvpfile.hash_type =  UINT64ARRAY;

@@ -49,17 +49,23 @@ float audiohashdistance(DP *dpA, DP *dpB){
 	    maxC = ptrC[i];
     }
     double res = 1000*(1-maxC);
+    free(ptrC);
     return (float)res;
 }
 
 int main(int argc, char **argv){
- 
+    if (argc < 3){
+	printf("not enough input args\n");
+        printf("usage: %s directory dbname radius knearest threshold\n", argv[0]);
+        return -1;
+    } 
  
     const char *dir_name = argv[1];/* name of files in directory of query images */
     const char *filename = argv[2];/* name of file to save db */
 
     const int sr = 8000;
     const int nbchannels = 1;
+    const float nbsecs = 45.0f;
 
     MVPFile mvpfile;
     mvpfile.filename = strdup(filename);
@@ -72,67 +78,81 @@ int main(int argc, char **argv){
     char **files = ph_readfilenames(dir_name,nbfiles);
     if (!files){
 	printf("mem alloc error\n");
-	exit(1);
+	return -2;
     }
+    printf("nb files = %d\n", nbfiles);
 
-    printf("nb query files = %d\n", nbfiles);
-
-    DP *query = NULL;
     float radius = 700.0;
-    const int knearest = 20;
+    if (argc >= 3){
+	radius = atof(argv[3]);
+    }
+    int knearest = 20;
+    if (argc >= 4){
+	knearest = atoi(argv[4]);
+    }
     float threshold = 300.0;
+    if (argc >= 5){
+        threshold = atof(argv[5]);
+    }
     printf("radius %f, knearest %d, threshold %f\n", radius, knearest, threshold);
 
-    DP **results = (DP**)malloc(knearest * sizeof(DP**));
+    DP **results = (DP**)malloc(knearest*sizeof(DP*));
     if (!results){
 	printf("mem alloc error\n");
-	exit(1);
+	return -3;
     }
+    DP *query = ph_malloc_datapoint(mvpfile.hash_type);
+
     int nbfound = 0, count = 0, sum_calcs = 0;
-    float *buf;
-    int N = 0;
-    uint32_t *hash;
-    int hashlen = 0;
+    float *sigbuf = (float*)malloc(1<<21);
+    int buflen = (1<<21)/sizeof(float);
     for (int i=0;i<nbfiles;i++){
-	buf = ph_readaudio(files[i], sr, nbchannels, N);
+        printf("query[%d]: %s\n", i, files[i]);
+        int N = buflen;
+	float *buf = ph_readaudio(files[i], sr, nbchannels, sigbuf, N, nbsecs);
 	if (!buf){
 	    printf("could not read audio\n");
 	    continue;
 	}
-	hash = ph_audiohash(buf,N,sr,hashlen);
+        printf("samples %d\n", N);
+        int nbframes = 0;
+	uint32_t *hash = ph_audiohash(buf,N,sr,nbframes);
 	if (!hash){
 	    printf("could not get hash\n");
-	    free(buf);
 	    continue;
 	}
-        query = ph_malloc_datapoint(mvpfile.hash_type);
-        if (!query){
-	    printf("mem alloc error\n");
-            free(buf);
-	    free(hash);
-	    break;
-	}
-	query->id = strdup(files[i]);
+	printf("number hash frames %d\n\n", nbframes);
+
+	query->id = files[i];
 	query->hash = hash;
-	query->hash_length = hashlen;
+	query->hash_length = nbframes;
 
 	count++;
 	nb_calcs = 0;
 	nbfound = 0;
-	int res = ph_query_mvptree(&mvpfile,query,knearest,radius,threshold, results,nbfound);
-	if (res != 0){
-	    printf("could not complete query\n");
+	int ret = ph_query_mvptree(&mvpfile,query,knearest,radius,threshold, results,nbfound);
+	if (ret != PH_SUCCESS && ret != PH_ERRCAP){
+	    printf("could not complete query - retcode %d\n",ret);
+            free(hash);
 	    continue;
 	}
 	sum_calcs += nb_calcs;
 
-	printf("search: %s nbfound: %d\n", files[i],nbfound);
-	for (int i=0;i<nbfound;i++){
-	    printf("    %d  %s\n", i, results[i]->id);
+	printf("search: %d found,  %d distance calc's\n", nbfound,nb_calcs);
+	for (int j=0;j<nbfound;j++){
+	    float dist = audiohashdistance(query,results[j]);
+	    printf("     %d  %s distance = %f\n", j, results[j]->id,dist);
 	}
-	free(query);
-	free(buf);
-	free(hash);
+        free(hash);
+        if (sigbuf != buf){
+	    free(buf);
+	}
+        for (int j=0;j<nbfound;j++){
+	    free(results[j]->id);
+            free(results[j]->hash);
+            ph_free_datapoint(results[j]);
+	}
+	printf("\n\n**********************************************\n");
     } 
    float ave_calcs = (float)sum_calcs/(float)count;      
    printf("ave calcs/query: %f\n", ave_calcs);
