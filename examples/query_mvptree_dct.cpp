@@ -30,15 +30,14 @@ static int nb_calcs;
 
 float distancefunc(DP *pa, DP *pb){
     nb_calcs++;
-    float d = 10.0f*ph_hamming_distance(*((ulong64*)pa->hash),*((ulong64*)pb->hash))/64.0f;
-    float result = exp(d)-1;
-    return result;
+    float d = ph_hamming_distance(*((ulong64*)pa->hash),*((ulong64*)pb->hash));
+    return d;
 }
 
 int main(int argc, char **argv){
     if (argc < 3){
 	printf("not enough input args\n");
-        printf("usage: %s directory filename\n", argv[0]);
+        printf("usage: %s directory dbname [radius] [knearest] [threshold]\n", argv[0]);
 	return -1;
     }
 
@@ -55,7 +54,7 @@ int main(int argc, char **argv){
     printf("using dir %s for query files\n", dir_name);
     char **files = ph_readfilenames(dir_name,nbfiles);
     if (!files){
-	printf("mem alloc error\n");
+	printf("unable to read files from directory\n");
 	return -2;
     }
 
@@ -66,12 +65,10 @@ int main(int argc, char **argv){
         printf("mem alloc error\n");
         return -3;
     }
-    ulong64 tmphash;
-    query->hash = &tmphash;
 
     float radius = 30.0f;
-    float threshold = 22.0f;
-    int knearest = 5;
+    float threshold = 15.0f;
+    int knearest = 20;
     if (argc >= 4){
 	radius = atof(argv[3]);
     }
@@ -89,15 +86,17 @@ int main(int argc, char **argv){
     if (results == NULL){
         return -3;
     }
+    ulong64 tmphash = 0x0000000000000000;
     int nbfound = 0, count = 0, sum_calcs = 0;
     for (int i=0;i<nbfiles;i++){
-	printf("query[%d]: %s\n", i, files[i]);
+
         if (ph_dct_imagehash(files[i],tmphash) < 0){
 	    printf("unable to get hash\n");
             continue;
 	}
-
+	printf("query[%d]: %s %llx\n", i, files[i], tmphash);
         query->id = files[i];
+        query->hash = &tmphash;
         query->hash_length = 1;
 
 	nb_calcs = 0;
@@ -137,6 +136,7 @@ int main(int argc, char **argv){
 
    ph_free_datapoint(query);
    free(results);
+   free(mvpfile.filename);
 
     return 0;
 }
