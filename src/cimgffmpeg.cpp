@@ -18,7 +18,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     Evan Klinger - eklinger@phash.org
-    David Starkweather - dstarkweather@phash.org
+    D Grant Starkweather - dstarkweather@phash.org
 
 */
 

@@ -18,7 +18,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     Evan Klinger - eklinger@phash.org
-    David Starkweather - dstarkweather@phash.org
+    D Grant Starkweather - dstarkweather@phash.org
 
 */
 
@@ -55,10 +55,12 @@ int ph_count_samples(const char *filename, int sr,int channels);
  * /param filename - path and name of audio file to read
  * /param sr - sample rate conversion
  * /param channels - number channel conversion
- * /param N - (out) param for buf length
- * /param float* - float pointer to start of buffer, NULL if error
+ * /param buf - preallocated buffer 
+ * /param buflen - (in/out) param for buf length
+ * /param nbsecs - float value for duration (in secs) to read from file
+ * /return float* - float pointer to start of buffer, NULL if error
  */
-float* ph_readaudio(const char *filename, int sr, int channels, int &N);
+float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, int &buflen, const float nbsecs);
 
 
 
@@ -74,7 +76,7 @@ float* ph_readaudio(const char *filename, int sr, int channels, int &N);
  * /param nb_frames - (out) number of frames in audio buf and length of audiohash buffer returned
  * /return uint32 pointer to audio hash, NULL for error
 */
-uint32_t* ph_audiohash(float *buf, int N, int sr, int &nb_frames);
+uint32_t* ph_audiohash(float *buf, int nbbuf, const int sr, int &nbframes);
 
 
 
