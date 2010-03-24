@@ -106,26 +106,23 @@ int ph_count_samples(const char *filename, int sr,int channels){
 	return count;
 }
 
-float* ph_readaudio(const char *filename, int sr, int channels, int &N)
+float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, int &buflen, const float nbsecs)
 {
-	N = 500000;
-	int cap = 0;
-	float *buf = (float*)malloc(N*sizeof(float));
-
-    av_log_set_level(AV_LOG_QUIET);
+        av_log_set_level(AV_LOG_QUIET);
 	av_register_all();
 
 	AVFormatContext *pFormatCtx;
 	
 	// Open file
 	if(av_open_input_file(&pFormatCtx, filename, NULL, 0, NULL)!=0){
-	    N=0;
-	  return NULL ; // Couldn't open file
+	    buflen=0;
+	    return NULL ; // Couldn't open file
 	}
 	 
 	// Retrieve stream information
 	if(av_find_stream_info(pFormatCtx)<0){
-	    N=0;
+	    buflen=0;
+            av_close_input_file(pFormatCtx);
 	    return NULL; // Couldn't find stream information
 	}
 	
@@ -146,73 +143,89 @@ float* ph_readaudio(const char *filename, int sr, int channels, int &N)
 	     }
 	}
 	if(audioStream==-1){
-	     N = 0;
+	     buflen = 0;
+             av_close_input_file(pFormatCtx);
 	     return NULL; //no video stream
 	}
 	
 	// Get a pointer to the codec context for the audio stream
 	pCodecCtx=pFormatCtx->streams[audioStream]->codec;
 
+        SampleFormat src_fmt = SAMPLE_FMT_S16;
+        SampleFormat dst_fmt = SAMPLE_FMT_S16;
 	int src_sr = pCodecCtx->sample_rate;
         int src_channels = pCodecCtx->channels;
-
+        int64_t totalduration = pFormatCtx->streams[audioStream]->duration;
+	int64_t duration = (nbsecs > 0.0f) ? (int64_t)(sr*nbsecs) : totalduration;
+        duration = (duration <= totalduration) ? duration : totalduration;
+        float *buf = NULL;
+        if (!sigbuf || buflen <= duration){
+	    buf = (float*)malloc(duration*sizeof(float)); /* alloc new buffer */ 
+            buflen = duration;
+	} else {
+	    buf = sigbuf; /* use buffer handed in param */ 
+	}
 	AVCodec *pCodec;
 
 	// Find the decoder
 	pCodec=avcodec_find_decoder(pCodecCtx->codec_id);
 	if(pCodec==NULL) 
 	{
-	        N=0;
+	        buflen=0;
+                av_close_input_file(pFormatCtx);
 	  	return NULL ; // Codec not found
 	}
 	// Open codec
 	if(avcodec_open(pCodecCtx, pCodec)<0){
-	    N=0;
+	    buflen=0;
+            av_close_input_file(pFormatCtx);
 	    return NULL; // Could not open codec
 	}
 
-	uint8_t *in_buf = (uint8_t*)malloc(AVCODEC_MAX_AUDIO_FRAME_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
+	uint8_t *in_buf = (uint8_t*)av_malloc(AVCODEC_MAX_AUDIO_FRAME_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
         int in_buf_used, numbytesread, buf_size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
-	uint8_t *out_buf = (uint8_t*)malloc(AVCODEC_MAX_AUDIO_FRAME_SIZE);
+	uint8_t *out_buf = (uint8_t*)av_malloc(AVCODEC_MAX_AUDIO_FRAME_SIZE);
         int16_t *out_buf16 = (int16_t*)out_buf;
 
 	ReSampleContext *rs_ctx = audio_resample_init(channels, src_channels, sr, src_sr);
-        int index = 0;
-	AVPacket packet;
-	while(av_read_frame(pFormatCtx, &packet)>=0) 
+        int64_t index = 0;
+	AVPacket *packet = (AVPacket*)malloc(sizeof(AVPacket));
+        av_init_packet(packet);
+	while(av_read_frame(pFormatCtx, packet)>=0 && index < duration) 
 	{
-            
-	    in_buf_used = buf_size;
-	    numbytesread = avcodec_decode_audio2(pCodecCtx,(int16_t*)in_buf,&in_buf_used,packet.data,packet.size);  
-	    if (numbytesread <= 0){
-		continue;
-	    }
-	    int cnt = audio_resample(rs_ctx,(short*)out_buf,(short*)in_buf,(int)(in_buf_used/sizeof(int16_t)));
-			
-	    if (cap + cnt > N){
-		float *tmpbuf = (float*)realloc(buf,(N + 2*cnt)*sizeof(float));
-		if (!tmpbuf){
-		    N=0;
-		    return NULL;
+            while (packet->size > 0){
+		in_buf_used = buf_size;
+		numbytesread = avcodec_decode_audio2(pCodecCtx,(int16_t*)in_buf,&in_buf_used,packet->data,packet->size);  
+		if (numbytesread < 0){
+                    buflen = 0;
+                    if (buf != sigbuf) free(buf);
+                    buf = NULL;
+		    goto audio_cleanup;
 		}
-		buf = tmpbuf;
-                N += 2*cnt;
-	    }   
-	   for (int i=0;i<cnt;i++){
-	       buf[index+i] = ((float)out_buf16[i]/(float)SHRT_MAX);
-
-	   }
-
-           cap   += cnt;
-           index += cnt;
+                if (in_buf_used > 0){
+		    int cnt = audio_resample(rs_ctx,(short*)out_buf,(short*)in_buf,(int)(in_buf_used/sizeof(int16_t)));
+		    if (index + cnt > duration){
+			goto audio_cleanup;
+		    }   
+		    for (int i=0;i<cnt;i++){
+			buf[index+i] = ((float)out_buf16[i]/(float)SHRT_MAX);
+		    }
+		    index += cnt;
+		}
+		packet->size -= numbytesread;
+                packet->data += numbytesread;
+	    }
+            av_destruct_packet_nofree(packet);
 	}
 
-	free(in_buf);
-	free(out_buf);
+ audio_cleanup:
+        free(packet);
+	av_free(in_buf);
+	av_free(out_buf);
 	audio_resample_close(rs_ctx);
 	avcodec_close(pCodecCtx);
 	av_close_input_file(pFormatCtx);
-        N = cap;
+        buflen = (int)index;
 	
 	return buf;
 } 

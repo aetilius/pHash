@@ -18,7 +18,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     Evan Klinger - eklinger@phash.org
-    David Starkweather - dstarkweather@phash.org
+    D Grant Starkweather - dstarkweather@phash.org
 
 */
 
@@ -337,10 +337,15 @@ int ph_dct_imagehash(const char* file,ulong64 &hash){
     }
     CImg<float> meanfilter(7,7,1,1,1);
     CImg<float> img;
-    if (src.spectrum() >= 3){
+    if (src.spectrum() == 3){
         img = src.RGBtoYCbCr().channel(0).get_convolve(meanfilter);
-    } else if (img.spectrum() ==1){
-	img = src.get_convolve(meanfilter);
+    } else if (img.spectrum() == 4){
+	int width = img.width();
+        int height = img.height();
+        int depth = img.depth();
+	img = src.crop(0,0,0,0,width-1,height-1,depth-1,2).RGBtoYCbCr().channel(0).get_convolve(meanfilter);
+    } else {
+	img = src.channel(0).get_convolve(meanfilter);
     }
 
     img.resize(32,32);
@@ -1123,7 +1128,6 @@ MVPRetCode _ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, 
 		    } 
 		    if (include && (hashdist(query,dp) <= threshold)){
 			results[nbfound++] = dp;
-
                         if (nbfound >= knearest){
 			    return PH_ERRCAP;
 			}
