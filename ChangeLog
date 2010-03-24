@@ -1,5 +1,6 @@
 
-03.24.2010 fix mvp functions. (for now?)
+03.24.2010 fix heap corruption error in mvp functions. fix ph_readaudio to read ogg and flac
+	   audio files in addition to .wav and .mp3
 03.18.2010 add example files: build_mvptree_dctimage.cpp , add_mvptree_dct.cpp, query_mvptree_dct.cpp
 
 0.8.2
