@@ -121,8 +121,7 @@ int ph_count_samples(const char *filename, int sr,int channels){
 __declspec(dllexport)
 float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, int &buflen, const float nbsecs)
 {
-	int cap = 0;
-
+    av_log_set_level(AV_LOG_QUIET);
 	av_register_all();
 
 	AVFormatContext *pFormatCtx;
@@ -196,26 +195,31 @@ float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, i
     int16_t *out_buf16 = (int16_t*)out_buf;
 
 	ReSampleContext *rs_ctx = audio_resample_init(channels, src_channels, sr, src_sr);
-    int index = 0;
-	AVPacket packet;
-	while ((av_read_frame(pFormatCtx, &packet)>=0) && (index < duration))
+    int64_t index = 0;
+	AVPacket *packet = (AVPacket*)malloc(sizeof(AVPacket));
+    av_init_packet(packet);
+	while ((av_read_frame(pFormatCtx, packet)>=0) && (index < duration))
 	{
-            
-	    in_buf_used = buf_size;
-	    numbytesread = avcodec_decode_audio2(pCodecCtx,(int16_t*)in_buf,&in_buf_used,packet.data,packet.size);  
-	    if (numbytesread <= 0){
-		    continue;
-	    }
-	    int cnt = audio_resample(rs_ctx,(short*)out_buf,(short*)in_buf,(int)(in_buf_used/sizeof(int16_t)));
-		if (index + cnt > buflen){ /*exceeds capacity of buffer, bail out */ 
-            goto readaudio_cleanup;
-		}	
-		for (int i=0;i<cnt;i++){
-           buf[index+i] = (float)out_buf16[i]/(float)SHRT_MAX;
+		while (packet->size > 0){    
+			in_buf_used = buf_size;
+			numbytesread = avcodec_decode_audio2(pCodecCtx,(int16_t*)in_buf,&in_buf_used,packet->data,packet->size);  
+			if (numbytesread <= 0){
+				goto readaudio_cleanup;
+			}
+			if (in_buf_used > 0){
+				int cnt = audio_resample(rs_ctx,(short*)out_buf,(short*)in_buf,(int)(in_buf_used/sizeof(int16_t)));
+				if (index + cnt > buflen){ /*exceeds capacity of buffer, bail out */ 
+					goto readaudio_cleanup;
+				}	
+				for (int i=0;i<cnt;i++){
+					buf[index+i] = (float)out_buf16[i]/(float)SHRT_MAX;
+				}
+				index += cnt;
+			}
+            packet->size -= numbytesread;
+            packet->data += numbytesread;
 		}
-
-		cap   += cnt;
-		index += cnt;
+		av_destruct_packet_nofree(packet);
 	}
 
 readaudio_cleanup:
@@ -224,7 +228,7 @@ readaudio_cleanup:
 	audio_resample_close(rs_ctx);
 	avcodec_close(pCodecCtx);
 	av_close_input_file(pFormatCtx);
-    buflen = cap;
+    buflen = index;
 	
 	return buf;
 } 

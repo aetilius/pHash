@@ -844,7 +844,7 @@ MVPRetCode _ph_map_mvpfile(uint8_t filenumber, off_t offset, MVPFile *m,MVPFile 
         filename = m->filename;
 	}
 	if (use_existing){
-		snprintf(objname, sizeof(objname), "%s%d", filename , filenumber);
+		snprintf(objname, sizeof(objname), "%s%d", filename+1 , filenumber);
         fm_objname = objname;
 	}
     DWORD alloc_size = getregionsize();
@@ -1239,7 +1239,7 @@ MVPRetCode ph_query_mvptree(MVPFile *m, DP *query, int knearest, float radius, f
         filename = m->filename;
 	}
     char fm_objname[32];
-    snprintf(fm_objname, sizeof(fm_objname), "%s%d", filename ,0); 
+    snprintf(fm_objname, sizeof(fm_objname), "%s%d", filename+1 ,0); 
 
     m->file_pos = 0;
     HANDLE fmhandle = CreateFileMapping(m->fh,NULL,PAGE_READWRITE,0,0,fm_objname);
