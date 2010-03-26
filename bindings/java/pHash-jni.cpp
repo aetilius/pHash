@@ -247,11 +247,12 @@ JNIEXPORT jboolean JNICALL Java_MVPTree_create
 
 	free(hashlist);
 	e->ReleaseStringUTFChars(mvp, mvpfile.filename);
-	return ret == 0 ? JNI_TRUE : JNI_FALSE;
+	return (int)ret;
 }
 
 JNIEXPORT jobjectArray JNICALL Java_MVPTree_query
-  (JNIEnv *e, jobject ob, jobject hashObj, jfloat radius, jint max)
+  (JNIEnv *e, jobject ob, jobject hashObj, jfloat radius, 
+	jfloat thresh, jint max)
 {
 
 	MVPFile mvpfile;
@@ -321,7 +322,8 @@ JNIEXPORT jobjectArray JNICALL Java_MVPTree_query
 			break;
 		}
 	}
-	int res = ph_query_mvptree(&mvpfile, query, max, radius, results, &count);
+	int res = ph_query_mvptree(&mvpfile, query, max, radius, 
+					thresh, results, &count);
 	if(type == AUDIO_HASH)
 		e->ReleaseIntArrayElements(hashList, hash_list, JNI_ABORT);
 	jobjectArray ret;
