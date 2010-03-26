@@ -50,7 +50,7 @@ public class pHash
 					if(result)
 					{
 						System.out.println("Successfully created MVP tree");									
-						Hash[] results = mvp.query(hashes[0], 100, 20);
+						Hash[] results = mvp.query(hashes[0], 100, 20, 30);
 						if(results != null && results.length > 0)
 						{
 						System.out.println("Query found " + results.length + " results");
@@ -64,13 +64,14 @@ public class pHash
 						if(added)
 						{
 							System.out.println("Hashes added successfully.");
-							Hash[] foundHashes = mvp.query(newHashes[0], 100, 20);
+							Hash[] foundHashes = mvp.query(newHashes[0], 100, 20, 30);
 							if(foundHashes != null && foundHashes.length > 0)
 							{
 								System.out.println("Found newly added hash.");
 							}
 						}
-					}
+					} else
+						System.out.println("Creating tree failed");
 				
 			}
 			else if(args[i].equals("-a"))

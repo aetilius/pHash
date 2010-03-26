@@ -2,11 +2,13 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([pHash],[0.8.2],[support@phash.org])
+AC_INIT([pHash],[0.9.0],[support@phash.org])
 AM_INIT_AUTOMAKE($PACKAGE_NAME,$PACKAGE_VERSION)
 AC_CONFIG_SRCDIR([src/pHash.cpp])
 AC_CONFIG_HEADERS([config.h])
 # Checks for programs.
+
+m4_include([m4/ax_pthread.m4])
 
 AC_PROG_CXX
 AC_PROG_CC
@@ -19,6 +21,23 @@ if test -z $DISTRO; then
    AC_CHECK_FILE(/etc/debian_version, [DISTRO="debian"])
    AC_CHECK_FILE(/etc/SuSErelease, [DISTRO="suse"])
 fi
+
+
+AC_ARG_ENABLE(pthread, [AS_HELP_STRING([--disable-pthread],
+[pthread support @<:@default=no@:>@])], 
+	[PTHREAD="$enableval"],
+	[PTHREAD="yes"])
+
+if test "$PTHREAD" = "yes"; then
+	AX_PTHREAD([
+	LIBS="$PTHREAD_LIBS $LIBS"
+	CPPFLAGS="$CLFAGS $PTHREAD_CFLAGS"
+	CC="$PTHREAD_CC"
+	AC_DEFINE([HAVE_PTHREAD], [1], [configure with pthread support])
+	])
+fi
+
+AM_CONDITIONAL([HAVE_PTHREAD], [test "$PTHREAD" = "yes"])
 
 AC_ARG_ENABLE(debug, [AS_HELP_STRING([--enable-debug],
 [compile with debugging support @<:@default=no@:>@])], 
@@ -142,7 +161,9 @@ AS_IF([test x"$image_hash" != x"no"],
 	echo "*** Configuring image hash ***"
 	echo
 	AC_CHECK_CIMG()
-	CPPFLAGS="$CPPFLAGS -DHAVE_IMAGE_HASH=1"])
+	AC_DEFINE([HAVE_IMAGE_HASH], [1], [configure with image hash])
+	])
+
 AM_CONDITIONAL(HAVE_IMAGE_HASH, test x$image_hash != xno)
 
 AC_ARG_ENABLE([video-hash], [AS_HELP_STRING([--enable-video-hash],[include support for perceptual video hashes @<:@default=yes@:>@])],
@@ -158,7 +179,9 @@ AS_IF([test x"$video_hash" != x"no"],
 	if test "$found_cimg" != "y"; then
 		AC_CHECK_CIMG()
 	fi
-	CPPFLAGS="$CPPFLAGS -DHAVE_VIDEO_HASH=1"])
+	AC_DEFINE([HAVE_VIDEO_HASH],[1], [configure with video hash])
+	])
+
 AM_CONDITIONAL(HAVE_VIDEO_HASH, test x$video_hash != xno)
 
 AC_ARG_ENABLE([audio-hash], [AS_HELP_STRING([--enable-audio-hash],[include support for perceptual audio hashes @<:@default=yes@:>@])],
@@ -171,7 +194,8 @@ AS_IF([test x"$audio_hash" != x"no"],
 	if test "$found_ffmpeg" != "y"; then
 		AC_CHECK_FFMPEG() 
 	fi
-	CPPFLAGS="$CPPFLAGS -DHAVE_AUDIO_HASH=1"])
+	AC_DEFINE([HAVE_AUDIO_HASH],[1], [configure with audio hash])
+	])
 
 
 AM_CONDITIONAL(HAVE_AUDIO_HASH, test x$audio_hash != xno)
@@ -192,7 +216,6 @@ fi
 AC_CHECK_LIB([jpeg], [jpeg_read_header], [use_jpeg="y"])
 AC_CHECK_LIB([m], [sqrt])
 AC_CHECK_LIB([png], [png_create_read_struct], [use_png="y"])
-AC_CHECK_LIB([pthread], [pthread_create])
 
 AS_IF([test "$found_fftw" = "y"],
 [

@@ -21,7 +21,7 @@ JNIEXPORT jboolean JNICALL Java_MVPTree_create
  * Signature: (LHash;FI)[LHash;
  */
 JNIEXPORT jobjectArray JNICALL Java_MVPTree_query
-  (JNIEnv *, jobject, jobject, jfloat, jint);
+  (JNIEnv *, jobject, jobject, jfloat, jfloat, jint);
 
 /*
  * Class:     MVPTree

@@ -466,3 +466,75 @@ double* ph_audio_distance_ber(uint32_t *hash_a , const int Na, uint32_t *hash_b,
     free(dist);
     return pC;
 }
+
+void *ph_audio_thread(void *p)
+{
+        slice *s = (slice *)p;
+        for(int i = 0; i < s->n; ++i)
+        {
+                DP *dp = (DP *)s->hash_p[i];
+                int N, count;
+		pair<int,int> *p = (pair<int,int> *)s->hash_params;
+                float *buf = ph_readaudio(dp->id, p->first, p->second, N);
+                uint32_t *hash = ph_audiohash(buf, N, p->first, count);
+                free(buf);
+                buf = NULL;
+                dp->hash = hash;
+                dp->hash_length = count;
+        }
+}
+
+DP** ph_audio_hashes(char *files[], int count, int sr, int channels, int threads)
+{
+        if(!files || count == 0)
+	        return NULL;
+
+        int num_threads;
+        if(threads > count)
+        {
+                num_threads = count;
+        }
+	else if(threads > 0)
+        {
+                num_threads = threads;
+        }
+	else
+	{
+                num_threads = ph_num_threads();
+        }
+
+	DP **hashes = (DP**)malloc(count*sizeof(DP*));
+
+        for(int i = 0; i < count; ++i)
+        {
+                hashes[i] = (DP *)malloc(sizeof(DP));
+                hashes[i]->id = strdup(files[i]);
+        }
+
+	pthread_t thds[num_threads];
+	
+        int rem = count % num_threads;
+        int start = 0;
+        int off = 0;
+        slice *s = new slice[num_threads];
+        for(int n = 0; n < num_threads; ++n)
+        {
+                off = (int)floor((count/(float)num_threads) + (rem>0?num_threads-(count % num_threads):0));
+
+                s[n].hash_p = &hashes[start];
+                s[n].n = off;
+		s[n].hash_params = new pair<int,int>(sr,channels);
+                start = off;
+                --rem;
+                pthread_create(&thds[n], NULL, ph_audio_thread, &s[n]);
+        }
+	for(int i = 0; i < num_threads; ++i)
+        {
+                pthread_join(thds[i], NULL);
+		delete (pair<int,int>*)s[i].hash_params;
+        }
+        delete[] s;
+
+	return hashes;
+
+}
