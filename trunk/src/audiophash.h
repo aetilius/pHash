@@ -61,7 +61,7 @@ int ph_count_samples(const char *filename, int sr,int channels);
  * /param nbsecs - float value for duration (in secs) to read from file
  * /return float* - float pointer to start of buffer, NULL if error
  */
-float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, int &buflen, const float nbsecs);
+float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, int &buflen, const float nbsecs = 0);
 
 
 
@@ -109,10 +109,5 @@ double ph_compare_blocks(const uint32_t *ptr_blockA,const uint32_t *ptr_blockB, 
  * /return double - ptr to confidence score vector
  */
 double* ph_audio_distance_ber(uint32_t *hash_a , const int Na, uint32_t *hash_b, const int Nb, const float threshold, const int block_size, int &Nc);
-
-
-#ifdef DMALLOC
-#include "dmalloc.h"
-#endif
 
 #endif

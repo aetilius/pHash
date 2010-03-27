@@ -113,6 +113,12 @@ typedef struct ph_datapoint {
     uint8_t hash_type;
 }DP;
 
+typedef struct ph_slice {
+    DP **hash_p;
+    int n;
+    void *hash_params;
+} slice;
+
 /* call back function for mvp tree functions - to performa distance calc.'s*/
 typedef float (*hash_compareCB)(DP *pointA, DP *pointB);
 
@@ -145,14 +151,7 @@ typedef struct ph_mvp_file {
 
 
 /* convenience function to set var's of mvp tree */
-void ph_mvp_init(MVPFile *m){
-    m->branchfactor = 2;
-    m->pathlength = 5;
-    m->leafcapacity = 23;
-    m->pgsize = sysconf(_SC_PAGE_SIZE);     /* use host page size */
-    return;
-}
-
+void ph_mvp_init(MVPFile *m);
 
 /*! /brief Radon Projection info
  */
@@ -195,6 +194,10 @@ typedef struct ph_match{
     off_t second_index; /* offset into second file */
     uint32_t length;    /*length of match between 2 files */
 } TxtMatch;
+
+#ifdef HAVE_PTHREAD
+int ph_num_threads();
+#endif
 
 /* /brief alloc a single data point
  *  allocates path array, does nto set id or path
@@ -744,10 +747,6 @@ static const ulong64 textkeys[256] = {
 
 #ifdef __cplusplus
 }
-#endif
-
-#ifdef DMALLOC
-#include "dmalloc.h"
 #endif
 
 #endif

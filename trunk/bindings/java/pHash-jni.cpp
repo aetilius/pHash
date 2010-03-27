@@ -136,7 +136,7 @@ JNIEXPORT jboolean JNICALL Java_MVPTree_create
 	
 	MVPFile mvpfile;
 	ph_mvp_init(&mvpfile);
-	mvpfile.filename = e->GetStringUTFChars(mvp, 0);
+	mvpfile.filename = strdup(e->GetStringUTFChars(mvp, 0));
 	jniHashType type;
 	jobject htype = e->GetObjectArrayElement(hashArray, 0);
 	for(int i = 0; i < sizeof(hashes)/sizeof(hashes[0]); i++)
@@ -156,7 +156,7 @@ JNIEXPORT jboolean JNICALL Java_MVPTree_create
 	{
 		jobject hashObj = e->GetObjectArrayElement(hashArray, i);
 		
-		hashlist[i] = ph_malloc_datapoint(mvpfile.hash_type, mvpfile.pathlength);
+		hashlist[i] = ph_malloc_datapoint(mvpfile.hash_type);
 		if(!hashlist[i])
 		{
 			free(hashlist);
@@ -216,7 +216,7 @@ JNIEXPORT jboolean JNICALL Java_MVPTree_create
 				const int sr = 8000;
 				const int channels = 1;
 				int nbframes, N;
-				float *buf = ph_readaudio(path,sr,channels,N);
+				float *buf = ph_readaudio(path,sr,channels,NULL,N);
 				if(buf)
 				{
 					uint32_t *audioHash = ph_audiohash(buf,N,sr,nbframes);
@@ -247,6 +247,7 @@ JNIEXPORT jboolean JNICALL Java_MVPTree_create
 
 	free(hashlist);
 	e->ReleaseStringUTFChars(mvp, mvpfile.filename);
+	free(mvpfile.filename);
 	return (int)ret;
 }
 
@@ -262,7 +263,7 @@ JNIEXPORT jobjectArray JNICALL Java_MVPTree_query
 	jstring mvp = (jstring)e->GetObjectField(ob, e->GetFieldID(e->FindClass("MVPTree"), "mvpFile",
 										"Ljava/lang/String;"));
 	
-	mvpfile.filename = e->GetStringUTFChars(mvp, 0);
+	mvpfile.filename = strdup(e->GetStringUTFChars(mvp, 0));
 	int i;
 	for(i = 0; i < sizeof(hashes)/sizeof(hashes[0]); i++)
 	{
@@ -275,7 +276,7 @@ JNIEXPORT jobjectArray JNICALL Java_MVPTree_query
 		}
 	}
 	
-	DP *query = ph_malloc_datapoint(mvpfile.hash_type, mvpfile.pathlength);
+	DP *query = ph_malloc_datapoint(mvpfile.hash_type);
 	DP **results = (DP **)malloc(max*sizeof(DP *));
 	const char *hash_file = NULL;
 	jstring hashStr = (jstring)e->GetObjectField(hashObj, hash_filename);
@@ -323,7 +324,7 @@ JNIEXPORT jobjectArray JNICALL Java_MVPTree_query
 		}
 	}
 	int res = ph_query_mvptree(&mvpfile, query, max, radius, 
-					thresh, results, &count);
+					thresh, results, count);
 	if(type == AUDIO_HASH)
 		e->ReleaseIntArrayElements(hashList, hash_list, JNI_ABORT);
 	jobjectArray ret;
@@ -376,6 +377,7 @@ JNIEXPORT jobjectArray JNICALL Java_MVPTree_query
 			ph_free_datapoint(results[i]);
 	}
 	free(results);
+	free(mvpfile.filename);
 	return ret;
 }
 
@@ -393,7 +395,7 @@ JNIEXPORT jboolean JNICALL Java_MVPTree_add
 	jstring mvp = (jstring)e->GetObjectField(ob, e->GetFieldID(e->FindClass("MVPTree"), "mvpFile",
 										"Ljava/lang/String;"));
 	
-	mvpfile.filename = e->GetStringUTFChars(mvp, 0);
+	mvpfile.filename = strdup(e->GetStringUTFChars(mvp, 0));
 	int i;
 	jobject hashObj = e->GetObjectArrayElement(hashArray, 0);
 	for(i = 0; i < sizeof(hashes)/sizeof(hashes[0]); i++)
@@ -415,7 +417,7 @@ JNIEXPORT jboolean JNICALL Java_MVPTree_add
 
 	for(int j = 0; j < len; j++)
 	{
-		newHashes[j] = ph_malloc_datapoint(mvpfile.hash_type, mvpfile.pathlength);
+		newHashes[j] = ph_malloc_datapoint(mvpfile.hash_type);
 		hashObj = e->GetObjectArrayElement(hashArray, j);
 		jstring hashStr = (jstring)e->GetObjectField(hashObj, hash_filename);
 
@@ -467,7 +469,8 @@ JNIEXPORT jboolean JNICALL Java_MVPTree_add
 
 	}
 
-	int res = ph_add_mvptree(&mvpfile, newHashes, len);
+	int nbsaved = 0;
+	int res = ph_add_mvptree(&mvpfile, newHashes, len, nbsaved);
 
 	for(int j = 0; j < len; j++)
 	{
@@ -482,6 +485,7 @@ JNIEXPORT jboolean JNICALL Java_MVPTree_add
 
 	e->ReleaseStringUTFChars(mvp, mvpfile.filename);
 	free(newHashes);
+	free(mvpfile.filename);
 	return JNI_TRUE;
 
 }
@@ -694,7 +698,7 @@ JNIEXPORT jobject JNICALL Java_pHash_audioHash
 	float *buf = NULL;
 	unsigned int *hash = NULL;
 	const char *file = e->GetStringUTFChars(f,0);
-	buf = ph_readaudio(file,sr,channels,N); 
+	buf = ph_readaudio(file,sr,channels,NULL,N); 
 	if(!buf) 
 	{
     		e->ReleaseStringUTFChars(f,file);

@@ -91,7 +91,7 @@ int main(int argc, char **argv){
     printf("***************\n");
     for (index=0;index<nbfiles1;index++){
 	printf("file1: %s\n", files1[index]);
-	buf = ph_readaudio(files1[index], sr, channels, buflen);
+	buf = ph_readaudio(files1[index], sr, channels, NULL, buflen);
 	if (!buf){
 	    printf("unable to read audio\n");
 	    continue;
@@ -106,7 +106,7 @@ int main(int argc, char **argv){
 	free(buf);
 
 	printf("file2: %s\n", files2[index]);
-	buf = ph_readaudio(files2[index], sr, channels, buflen);
+	buf = ph_readaudio(files2[index], sr, channels, NULL, buflen);
 	if (!buf) {
 	    printf("unable to get audio\n");
 	    continue;
