@@ -466,6 +466,7 @@ double* ph_audio_distance_ber(uint32_t *hash_a , const int Na, uint32_t *hash_b,
     free(dist);
     return pC;
 }
+#ifdef HAVE_PTHREAD
 
 void *ph_audio_thread(void *p)
 {
@@ -538,3 +539,4 @@ DP** ph_audio_hashes(char *files[], int count, int sr, int channels, int threads
 	return hashes;
 
 }
+#endif

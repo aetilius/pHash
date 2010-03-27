@@ -910,6 +910,20 @@ DP* ph_read_datapoint(MVPFile *m){
     return dp;
 }
 
+void ph_mvp_init(MVPFile *m)
+{
+	if(!m) return;
+	
+	m->branchfactor = 2;
+    	m->pathlength = 5;
+    	m->leafcapacity = 23;
+    	#ifdef linux
+		m->pgsize = sysconf(_SC_PAGE_SIZE);
+	#else
+		m->pgsize = getpagesize();
+	#endif
+		
+}	
 int ph_sizeof_dp(DP *dp,MVPFile *m){
     if (dp == NULL){
 	return 3; /* for byte_len(uint16_t)  and active (uint8_t) flags */ 
@@ -2555,6 +2569,37 @@ TxtMatch* ph_compare_text_hashes(TxtHashPoint *hash1, int N1, TxtHashPoint *hash
     }
     return found_matches;
 }
+
+#ifdef HAVE_PTHREAD
+int ph_num_threads()
+{
+	int numCPU = 1;
+	#ifdef linux
+		numCPU = sysconf( _SC_NPROCESSORS_ONLN );
+	#else
+		nt mib[4];
+		size_t len; 
+
+		mib[0] = CTL_HW;
+		mib[1] = HW_AVAILCPU;
+
+		sysctl(mib, 2, &numCPU, &len, NULL, 0);
+
+		if( numCPU < 1 ) 
+		{
+     			mib[1] = HW_NCPU;
+     			sysctl( mib, 2, &numCPU, &len, NULL, 0 );
+
+		     	if( numCPU < 1 )
+     			{
+          			numCPU = 1;
+     			}
+		}
+
+	#endif
+	return numCPU;
+}
+#endif
 
 static bool keepStats = false;
 struct ph_stats
