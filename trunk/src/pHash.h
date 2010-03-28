@@ -41,6 +41,10 @@
 #include <stdint.h>
 #include "CImg.h"
 
+#ifdef HAVE_PTHREAD
+#include <pthread.h>
+#endif
+
 using namespace cimg_library;
 using namespace std;
 
