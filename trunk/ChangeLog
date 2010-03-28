@@ -1,4 +1,6 @@
 
+03.27.2010 added multithreaded image, video and audio hash functions to take advantage of
+	   multiple cores/cpus.
 03.24.2010 fix heap corruption error in mvp functions. fix ph_readaudio to read ogg and flac
 	   audio files in addition to .wav and .mp3.
 	   Fix bug in ph_dct_image hash to handle rgba images.

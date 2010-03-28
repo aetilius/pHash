@@ -315,10 +315,14 @@ static CImg<float>* ph_dct_matrix(const int N);
  */
 int ph_dct_imagehash(const char* file,ulong64 &hash);
 
-
+#ifdef HAVE_PTHREAD
+DP** ph_dct_image_hashes(char *files[], int count, int threads = 0);
+#endif
 static CImgList<uint8_t>* ph_getKeyFramesFromVideo(const char *filename);
 
-ulong64* ph_dct_videohash(const char *filename, int &Lenght);
+ulong64* ph_dct_videohash(const char *filename, int &Length);
+
+DP** ph_dct_video_hashes(char *files[], int count, int threads = 0);
 
 double ph_dct_videohash_dist(ulong64 *hashA, int N1, ulong64 *hashB, int N2, int threshold=21);
 
