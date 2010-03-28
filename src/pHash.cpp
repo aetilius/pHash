@@ -339,7 +339,7 @@ int ph_dct_imagehash(const char* file,ulong64 &hash){
     CImg<float> img;
     if (src.spectrum() == 3){
         img = src.RGBtoYCbCr().channel(0).get_convolve(meanfilter);
-    } else if (img.spectrum() == 4){
+    } else if (src.spectrum() == 4){
 	int width = img.width();
         int height = img.height();
         int depth = img.depth();
