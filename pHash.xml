@@ -14,8 +14,8 @@
  </maintainers>
 
  <release>
-  <version>0.7.2</version>
-  <date>2009-12-26</date>
+  <version>0.9.1</version>
+  <date>2010-03-31</date>
 <state>stable</state>
  </release>
 
@@ -172,7 +172,7 @@ struct ph_text_hash
    <code>
 <![CDATA[
 	int n;
-	float *audiobuf = ph_readaudio(file, sample_rate, channels, n);
+	float *audiobuf = ph_readaudio(file, sample_rate, channels, NULL, n);
 	if(audiobuf)
 	{
 		int nb_frames;
