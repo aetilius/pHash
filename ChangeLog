@@ -1,4 +1,5 @@
-
+04.07.2010 change ph_readaudio function to use libsndfile and libresample instead of ffmpeg.
+	
 03.27.2010 added multithreaded image, video and audio hash functions to take advantage of
 	   multiple cores/cpus.
 03.24.2010 fix heap corruption error in mvp functions. fix ph_readaudio to read ogg and flac
