@@ -23,213 +23,123 @@
 */
 
 #include "audiophash.h"
+#include <sndfile.h>
+#include <samplerate.h>
+
 int ph_count_samples(const char *filename, int sr,int channels){
 
-
-    av_log_set_level(AV_LOG_QUIET);
-	av_register_all();
-	avcodec_register_all();
-
-	AVFormatContext *pFormatCtx;
-	
-	// Open file
-	if(av_open_input_file(&pFormatCtx, filename, NULL, 0, NULL)!=0)
-	  return -1 ; // Couldn't open file
-	 
-	// Retrieve stream information
-	if(av_find_stream_info(pFormatCtx)<0)
-	  return -1; // Couldn't find stream information
-	
-	//dump_format(pFormatCtx,0,NULL,0);//debugging function to print infomation about format
-
-	unsigned int i;
-	AVCodecContext *pCodecCtx;
-
-	// Find the video stream
-	int audioStream=-1;
-
-	for(i=0; i<pFormatCtx->nb_streams; i++)
-	{
-	     if(pFormatCtx->streams[i]->codec->codec_type==CODEC_TYPE_AUDIO) 
-	     {
-		    audioStream=i;
-		    break;
-	     }
-	}
-	if(audioStream==-1){
-	     return -1; //no video stream
-	}
-	
-	// Get a pointer to the codec context for the audio stream
-	pCodecCtx=pFormatCtx->streams[audioStream]->codec;
-
-	int src_sr = pCodecCtx->sample_rate;
-        int src_channels = pCodecCtx->channels;
-
-	AVCodec *pCodec;
-
-	// Find the decoder
-	pCodec=avcodec_find_decoder(pCodecCtx->codec_id);
-	if(pCodec==NULL) 
-	{
-	  	return -1 ; // Codec not found
-	}
-	// Open codec
-	if(avcodec_open(pCodecCtx, pCodec)<0)
-	  return -1; // Could not open codec
-
-	uint8_t *in_buf = (uint8_t *)malloc(AVCODEC_MAX_AUDIO_FRAME_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
-        uint8_t *out_buf = (uint8_t *)malloc(AVCODEC_MAX_AUDIO_FRAME_SIZE);
-
-        int in_buf_used, numbytesread, buf_size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
-
-
-	ReSampleContext *rs_ctxt = audio_resample_init(channels, src_channels, sr, src_sr);
-
-	int count = 0;
-	AVPacket packet;
-	while(av_read_frame(pFormatCtx, &packet)>=0) 
-	{
-	    in_buf_used = buf_size;
-	    numbytesread = avcodec_decode_audio2(pCodecCtx,(int16_t*)in_buf,&in_buf_used,packet.data,packet.size);  
-	    if (numbytesread <= 0){
-		continue;
-	    }
-	    count += (int)(audio_resample(rs_ctxt,(short*)out_buf ,(short*)in_buf,in_buf_used)/sizeof(int16_t));
-	}
-	free(in_buf);
-	free(out_buf);
-	audio_resample_close(rs_ctxt);
-	avcodec_close(pCodecCtx);
-	av_close_input_file(pFormatCtx);
-	
-	return count;
+    SF_INFO sf_info;
+    sf_info.format=0;
+    SNDFILE *sndfile = sf_open(filename, SFM_READ, &sf_info);
+    if (sndfile == NULL){
+	return NULL;
+    }
+    int count = sf_info.frames;
+    sf_close(sndfile);
+    return count;
 }
 
 float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, int &buflen, const float nbsecs)
 {
-        av_log_set_level(AV_LOG_QUIET);
-	av_register_all();
+    SF_INFO sf_info;
+    sf_info.format=0;
+    SNDFILE *sndfile = sf_open(filename, SFM_READ, &sf_info);
+    if (sndfile == NULL){
+	return NULL;
+    }    
 
-	AVFormatContext *pFormatCtx;
-	
-	// Open file
-	if(av_open_input_file(&pFormatCtx, filename, NULL, 0, NULL)!=0){
-	    buflen=0;
-	    return NULL ; // Couldn't open file
-	}
-	 
-	// Retrieve stream information
-	if(av_find_stream_info(pFormatCtx)<0){
-	    buflen=0;
-            av_close_input_file(pFormatCtx);
-	    return NULL; // Couldn't find stream information
-	}
-	
-	//dump_format(pFormatCtx,0,NULL,0);//debugging function to print infomation about format
+    sf_command(sndfile, SFC_SET_NORM_FLOAT, NULL, SF_TRUE);
 
-	unsigned int i;
-	AVCodecContext *pCodecCtx;
+    //allocate input buffer for signal
+    int src_frames = (nbsecs <= 0) ? sf_info.frames : (int)(nbsecs*sf_info.samplerate);
+    src_frames = (sf_info.frames < src_frames) ? sf_info.frames : src_frames;
+    float *inbuf = (float*)malloc(src_frames*sf_info.channels*sizeof(float));
+    if (!inbuf){
+	sf_close(sndfile);
+	return NULL;
+    }
 
-	// Find the video stream
-	int audioStream=-1;
+    sf_count_t cnt_frames = sf_readf_float(sndfile, inbuf, src_frames);
+    
+    double sr_ratio = (double)sr/(double)sf_info.samplerate;
+    if (src_is_valid_ratio(sr_ratio) == 0){
+	sf_close(sndfile);
+	free(inbuf);
+	return NULL;
+    }
 
-	for(i=0; i<pFormatCtx->nb_streams; i++)
-	{
-	     if(pFormatCtx->streams[i]->codec->codec_type==CODEC_TYPE_AUDIO) 
-	     {
-		    audioStream=i;
-		    break;
-	     }
-	}
-	if(audioStream==-1){
-	     buflen = 0;
-             av_close_input_file(pFormatCtx);
-	     return NULL; //no video stream
-	}
-	
-	// Get a pointer to the codec context for the audio stream
-	pCodecCtx=pFormatCtx->streams[audioStream]->codec;
+    int inbuflen = cnt_frames*sf_info.channels;   
+    int outbuflen = (int)(sr_ratio*cnt_frames*sf_info.channels);
+    float *outbuf = (float*)malloc(outbuflen*sizeof(float));
+    if (!outbuf){
+	sf_close(sndfile);
+	free(inbuf);
+	return NULL;
+    }
 
-        SampleFormat src_fmt = SAMPLE_FMT_S16;
-        SampleFormat dst_fmt = SAMPLE_FMT_S16;
-	int src_sr = pCodecCtx->sample_rate;
-        int src_channels = pCodecCtx->channels;
-        int64_t totalduration = pFormatCtx->streams[audioStream]->duration;
-	int64_t duration = (nbsecs > 0.0f) ? (int64_t)(sr*nbsecs) : totalduration;
-        duration = (duration <= totalduration) ? duration : totalduration;
-        float *buf = NULL;
-        if (!sigbuf || buflen <= duration){
-	    buf = (float*)malloc(duration*sizeof(float)); /* alloc new buffer */ 
-            buflen = duration;
-	} else {
-	    buf = sigbuf; /* use buffer handed in param */ 
-	}
-	AVCodec *pCodec;
+    int error;
+    SRC_STATE *src_state = src_new(SRC_LINEAR, sf_info.channels, &error);
+    if (!src_state){
+	sf_close(sndfile);
+	free(inbuf);
+	free(outbuf);
+        return NULL;
+    }
 
-	// Find the decoder
-	pCodec=avcodec_find_decoder(pCodecCtx->codec_id);
-	if(pCodec==NULL) 
-	{
-	        buflen=0;
-                av_close_input_file(pFormatCtx);
-	  	return NULL ; // Codec not found
-	}
-	// Open codec
-	if(avcodec_open(pCodecCtx, pCodec)<0){
-	    buflen=0;
-            av_close_input_file(pFormatCtx);
-	    return NULL; // Could not open codec
-	}
+    SRC_DATA src_data;
+    src_data.data_in = inbuf;
+    src_data.data_out = outbuf;
+    src_data.input_frames = cnt_frames;
+    src_data.output_frames = outbuflen/sf_info.channels;
+    src_data.end_of_input = SF_TRUE;
+    src_data.src_ratio = sr_ratio;
 
-	uint8_t *in_buf = (uint8_t*)av_malloc(AVCODEC_MAX_AUDIO_FRAME_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
-        int in_buf_used, numbytesread, buf_size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
-	uint8_t *out_buf = (uint8_t*)av_malloc(AVCODEC_MAX_AUDIO_FRAME_SIZE);
-        int16_t *out_buf16 = (int16_t*)out_buf;
+    if (error = src_process(src_state, &src_data)){
+        sf_close(sndfile);
+	free(inbuf);
+	free(outbuf);
+	src_delete(src_state);
+	return NULL;
+    }
 
-	ReSampleContext *rs_ctx = audio_resample_init(channels, src_channels, sr, src_sr);
-        int64_t index = 0;
-	AVPacket *packet = (AVPacket*)malloc(sizeof(AVPacket));
-        av_init_packet(packet);
-	while(av_read_frame(pFormatCtx, packet)>=0 && index < duration) 
-	{
-            while (packet->size > 0){
-		in_buf_used = buf_size;
-		numbytesread = avcodec_decode_audio2(pCodecCtx,(int16_t*)in_buf,&in_buf_used,packet->data,packet->size);  
-		if (numbytesread < 0){
-                    buflen = 0;
-                    if (buf != sigbuf) free(buf);
-                    buf = NULL;
-		    goto audio_cleanup;
-		}
-                if (in_buf_used > 0){
-		    int cnt = audio_resample(rs_ctx,(short*)out_buf,(short*)in_buf,(int)(in_buf_used/sizeof(int16_t)));
-		    if (index + cnt > duration){
-			goto audio_cleanup;
-		    }   
-		    for (int i=0;i<cnt;i++){
-			buf[index+i] = ((float)out_buf16[i]/(float)SHRT_MAX);
-		    }
-		    index += cnt;
-		}
-		packet->size -= numbytesread;
-                packet->data += numbytesread;
+
+    float *buf = (float*)malloc(src_data.output_frames*channels*sizeof(float));
+    if (!buf){
+	sf_close(sndfile);
+	free(inbuf);
+	free(outbuf);
+	src_delete(src_state);
+	return NULL;
+    }
+    buflen = src_data.output_frames;
+
+    if (channels == 1){
+	//average across all channels
+	for (int i=0;i<src_data.output_frames*sf_info.channels;i+=sf_info.channels){
+	    buf[i/sf_info.channels] = 0;
+	    for (int j=0;j<sf_info.channels;j++){
+		buf[i/sf_info.channels] += outbuf[i+j];
 	    }
-            av_destruct_packet_nofree(packet);
+	    buf[i/sf_info.channels] /= sf_info.channels;
 	}
+    } else if (channels <= sf_info.channels){
+	//just grab first nb channels
+	for (int i=0;i<src_data.output_frames*sf_info.channels;i+=sf_info.channels){
+	    for (int j=0;j<channels;j++){
+		buf[i/sf_info.channels+j] = outbuf[i+j];
+	    }
+	}
+    } else {
+	free(buf);
+	buf=NULL;
+    }
 
- audio_cleanup:
-        free(packet);
-	av_free(in_buf);
-	av_free(out_buf);
-	audio_resample_close(rs_ctx);
-	avcodec_close(pCodecCtx);
-	av_close_input_file(pFormatCtx);
-        buflen = (int)index;
-	
-	return buf;
+    src_delete(src_state);
+    sf_close(sndfile);
+    free(inbuf);
+    free(outbuf);
+    return buf;
 } 
-
 
 uint32_t* ph_audiohash(float *buf, int N, int sr, int &nb_frames){
 
@@ -364,6 +274,7 @@ uint32_t* ph_audiohash(float *buf, int N, int sr, int &nb_frames){
    delete [] wts;
    return hash;
 }
+
 
 int ph_bitcount(uint32_t n){
     
