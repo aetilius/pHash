@@ -153,6 +153,27 @@ AC_CHECK_LIB([swscale], [sws_getContext], [], [AC_MSG_ERROR([
 You need FFmpeg. Get it at <http://ffmpeg.org/>])])
 found_ffmpeg="y"])
 
+
+AC_DEFUN([AC_CHECK_SNDFILE],
+[
+AC_MSG_CHECKING([whether sndfile lib is present])
+AC_CHECK_LIB([sndfile], [sf_readf_float], [], [AC_MSG_ERROR([
+
+*** libsndfile not found.
+You need sndfile.  Get it at <http://www.mega-nerd.com/libsndfile/>])])
+found_sndfile="y"])
+
+
+AC_DEFUN([AC_CHECK_SAMPLERATE],
+[
+AC_MSG_CHECKING([whether samplerate lib is present])
+AC_CHECK_LIB([samplerate],[src_process],[],[AC_MSG_ERROR([
+
+*** libsamplerate not found.
+You need samplerate. Get it at <http://www.mega-nerd.com/libsamplerate/>])])
+found_samplerate="y"])
+
+
 AC_ARG_ENABLE([image-hash], [AS_HELP_STRING([--enable-image-hash],[include support for perceptual image hashes @<:@default=yes@:>@])],
 [image_hash=$enableval], [image_hash=yes])
 AS_IF([test x"$image_hash" != x"no"],
@@ -191,13 +212,18 @@ AS_IF([test x"$audio_hash" != x"no"],
 	echo
 	echo "*** Configuring audio hash ***"
 	echo
-	if test "$found_ffmpeg" != "y"; then
-		AC_CHECK_FFMPEG() 
+	if test "$found_sndfile" != "y"; then
+		AC_CHECK_SNDFILE() 
 	fi
+<<<<<<< .mine
+	if test "$found_samplerate" != "y"; then
+		AC_CHECK_SAMPLERATE()
+	fi
+	CPPFLAGS="$CPPFLAGS -DHAVE_AUDIO_HASH=1"])
+=======
 	AC_DEFINE([HAVE_AUDIO_HASH],[1], [configure with audio hash])
 	])
-
-
+>>>>>>> .r359
 AM_CONDITIONAL(HAVE_AUDIO_HASH, test x$audio_hash != xno)
 
 if test "$audio_hash" = "yes" -o "$video_hash" = "yes"; then
@@ -217,6 +243,7 @@ AC_CHECK_LIB([jpeg], [jpeg_read_header], [use_jpeg="y"])
 AC_CHECK_LIB([m], [sqrt])
 AC_CHECK_LIB([png], [png_create_read_struct], [use_png="y"])
 
+
 AS_IF([test "$found_fftw" = "y"],
 [
 	CPPFLAGS="$CPPFLAGS -Dcimg_use_fftw3"])
@@ -233,7 +260,7 @@ AS_IF([test "$use_png" = "y"],
 
 CFLAGS="$CXXFLAGS"
 # Checks for header files.
-AC_CHECK_HEADERS([limits.h stdlib.h string.h sys/time.h unistd.h])
+AC_CHECK_HEADERS([limits.h stdlib.h string.h sys/time.h unistd.h sndfile.h samplerate.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
@@ -252,3 +279,4 @@ AC_FUNC_ERROR_AT_LINE
 AC_CHECK_FUNCS([mremap malloc realloc floor gettimeofday memmove memset pow sqrt strcasecmp strdup strncasecmp])
 AC_CONFIG_FILES([Makefile src/Makefile examples/Makefile pHash.pc bindings/Makefile bindings/java/Makefile])
 AC_OUTPUT
+
