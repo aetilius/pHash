@@ -219,7 +219,6 @@ AS_IF([test x"$audio_hash" != x"no"],
 	if test "$found_samplerate" != "y"; then
 		AC_CHECK_SAMPLERATE()
 	fi
-	CPPFLAGS="$CPPFLAGS -DHAVE_AUDIO_HASH=1"
 
 	AC_DEFINE([HAVE_AUDIO_HASH],[1], [configure with audio hash])
 	])
