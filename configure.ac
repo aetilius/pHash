@@ -215,15 +215,15 @@ AS_IF([test x"$audio_hash" != x"no"],
 	if test "$found_sndfile" != "y"; then
 		AC_CHECK_SNDFILE() 
 	fi
-<<<<<<< .mine
+
 	if test "$found_samplerate" != "y"; then
 		AC_CHECK_SAMPLERATE()
 	fi
 	CPPFLAGS="$CPPFLAGS -DHAVE_AUDIO_HASH=1"])
-=======
+
 	AC_DEFINE([HAVE_AUDIO_HASH],[1], [configure with audio hash])
 	])
->>>>>>> .r359
+
 AM_CONDITIONAL(HAVE_AUDIO_HASH, test x$audio_hash != xno)
 
 if test "$audio_hash" = "yes" -o "$video_hash" = "yes"; then
