@@ -102,8 +102,16 @@ float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, i
 	return NULL;
     }
 
+    float *buf = NULL;
+    if ((buflen > src_data.output_frames*channels) || (sigbuf == NULL)){
+	//alloc new buffer
+	buf = (float*)malloc(src_data.output_frames*channels*sizeof(float));
+    } else {
+	//use buffer from param
+	buf = sigbuf;
+    }
+    buflen = src_data.output_frames*channels;
 
-    float *buf = (float*)malloc(src_data.output_frames*channels*sizeof(float));
     if (!buf){
 	sf_close(sndfile);
 	free(inbuf);
