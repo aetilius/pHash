@@ -219,7 +219,7 @@ AS_IF([test x"$audio_hash" != x"no"],
 	if test "$found_samplerate" != "y"; then
 		AC_CHECK_SAMPLERATE()
 	fi
-	CPPFLAGS="$CPPFLAGS -DHAVE_AUDIO_HASH=1"])
+	CPPFLAGS="$CPPFLAGS -DHAVE_AUDIO_HASH=1"
 
 	AC_DEFINE([HAVE_AUDIO_HASH],[1], [configure with audio hash])
 	])
@@ -260,7 +260,7 @@ AS_IF([test "$use_png" = "y"],
 
 CFLAGS="$CXXFLAGS"
 # Checks for header files.
-AC_CHECK_HEADERS([limits.h stdlib.h string.h sys/time.h unistd.h sndfile.h samplerate.h])
+AC_CHECK_HEADERS([limits.h stdlib.h string.h sys/time.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL

@@ -18668,6 +18668,13 @@ CPPFLAGS="$CPPFLAGS -I/usr/local/include"
 
 
 
+
+
+
+
+
+
+
 # Check whether --enable-image-hash was given.
 if test "${enable_image_hash+set}" = set; then
   enableval=$enable_image_hash; image_hash=$enableval
@@ -19402,18 +19409,18 @@ if test x"$audio_hash" != x"no"; then
 	echo
 	echo "*** Configuring audio hash ***"
 	echo
-	if test "$found_ffmpeg" != "y"; then
+	if test "$found_sndfile" != "y"; then
 
-{ $as_echo "$as_me:$LINENO: checking whether FFmpeg is present" >&5
-$as_echo_n "checking whether FFmpeg is present... " >&6; }
+{ $as_echo "$as_me:$LINENO: checking whether sndfile lib is present" >&5
+$as_echo_n "checking whether sndfile lib is present... " >&6; }
 
-{ $as_echo "$as_me:$LINENO: checking for avcodec_alloc_frame in -lavcodec" >&5
-$as_echo_n "checking for avcodec_alloc_frame in -lavcodec... " >&6; }
-if test "${ac_cv_lib_avcodec_avcodec_alloc_frame+set}" = set; then
+{ $as_echo "$as_me:$LINENO: checking for sf_readf_float in -lsndfile" >&5
+$as_echo_n "checking for sf_readf_float in -lsndfile... " >&6; }
+if test "${ac_cv_lib_sndfile_sf_readf_float+set}" = set; then
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lavcodec  $LIBS"
+LIBS="-lsndfile  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -19427,11 +19434,11 @@ cat >>conftest.$ac_ext <<_ACEOF
 #ifdef __cplusplus
 extern "C"
 #endif
-char avcodec_alloc_frame ();
+char sf_readf_float ();
 int
 main ()
 {
-return avcodec_alloc_frame ();
+return sf_readf_float ();
   ;
   return 0;
 }
@@ -19457,12 +19464,12 @@ $as_echo "$ac_try_echo") >&5
 	 test "$cross_compiling" = yes ||
 	 $as_test_x conftest$ac_exeext
        }; then
-  ac_cv_lib_avcodec_avcodec_alloc_frame=yes
+  ac_cv_lib_sndfile_sf_readf_float=yes
 else
   $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_lib_avcodec_avcodec_alloc_frame=no
+	ac_cv_lib_sndfile_sf_readf_float=no
 fi
 
 rm -rf conftest.dSYM
@@ -19470,287 +19477,123 @@ rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_avcodec_avcodec_alloc_frame" >&5
-$as_echo "$ac_cv_lib_avcodec_avcodec_alloc_frame" >&6; }
-if test "x$ac_cv_lib_avcodec_avcodec_alloc_frame" = x""yes; then
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_sndfile_sf_readf_float" >&5
+$as_echo "$ac_cv_lib_sndfile_sf_readf_float" >&6; }
+if test "x$ac_cv_lib_sndfile_sf_readf_float" = x""yes; then
   cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBAVCODEC 1
+#define HAVE_LIBSNDFILE 1
 _ACEOF
 
-  LIBS="-lavcodec $LIBS"
+  LIBS="-lsndfile $LIBS"
 
 else
   { { $as_echo "$as_me:$LINENO: error:
 
-*** libavcodec not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>" >&5
+*** libsndfile not found.
+You need sndfile.  Get it at <http://www.mega-nerd.com/libsndfile/>" >&5
 $as_echo "$as_me: error:
 
-*** libavcodec not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>" >&2;}
+*** libsndfile not found.
+You need sndfile.  Get it at <http://www.mega-nerd.com/libsndfile/>" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
-
-
-{ $as_echo "$as_me:$LINENO: checking for av_log_set_level in -lavutil" >&5
-$as_echo_n "checking for av_log_set_level in -lavutil... " >&6; }
-if test "${ac_cv_lib_avutil_av_log_set_level+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lavutil  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char av_log_set_level ();
-int
-main ()
-{
-return av_log_set_level ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-$as_echo "$ac_try_echo") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_cxx_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext && {
-	 test "$cross_compiling" = yes ||
-	 $as_test_x conftest$ac_exeext
-       }; then
-  ac_cv_lib_avutil_av_log_set_level=yes
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_lib_avutil_av_log_set_level=no
-fi
-
-rm -rf conftest.dSYM
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_avutil_av_log_set_level" >&5
-$as_echo "$ac_cv_lib_avutil_av_log_set_level" >&6; }
-if test "x$ac_cv_lib_avutil_av_log_set_level" = x""yes; then
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBAVUTIL 1
-_ACEOF
-
-  LIBS="-lavutil $LIBS"
-
-else
-  { { $as_echo "$as_me:$LINENO: error:
-
-*** libavutil not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>" >&5
-$as_echo "$as_me: error:
-
-*** libavutil not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-
-
-{ $as_echo "$as_me:$LINENO: checking for av_read_frame in -lavformat" >&5
-$as_echo_n "checking for av_read_frame in -lavformat... " >&6; }
-if test "${ac_cv_lib_avformat_av_read_frame+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lavformat  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char av_read_frame ();
-int
-main ()
-{
-return av_read_frame ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-$as_echo "$ac_try_echo") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_cxx_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext && {
-	 test "$cross_compiling" = yes ||
-	 $as_test_x conftest$ac_exeext
-       }; then
-  ac_cv_lib_avformat_av_read_frame=yes
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_lib_avformat_av_read_frame=no
-fi
-
-rm -rf conftest.dSYM
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_avformat_av_read_frame" >&5
-$as_echo "$ac_cv_lib_avformat_av_read_frame" >&6; }
-if test "x$ac_cv_lib_avformat_av_read_frame" = x""yes; then
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBAVFORMAT 1
-_ACEOF
-
-  LIBS="-lavformat $LIBS"
-
-else
-  { { $as_echo "$as_me:$LINENO: error:
-
-*** libavformat not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>" >&5
-$as_echo "$as_me: error:
-
-*** libavformat not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-
-
-{ $as_echo "$as_me:$LINENO: checking for sws_getContext in -lswscale" >&5
-$as_echo_n "checking for sws_getContext in -lswscale... " >&6; }
-if test "${ac_cv_lib_swscale_sws_getContext+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lswscale  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char sws_getContext ();
-int
-main ()
-{
-return sws_getContext ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-$as_echo "$ac_try_echo") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_cxx_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext && {
-	 test "$cross_compiling" = yes ||
-	 $as_test_x conftest$ac_exeext
-       }; then
-  ac_cv_lib_swscale_sws_getContext=yes
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_lib_swscale_sws_getContext=no
-fi
-
-rm -rf conftest.dSYM
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_swscale_sws_getContext" >&5
-$as_echo "$ac_cv_lib_swscale_sws_getContext" >&6; }
-if test "x$ac_cv_lib_swscale_sws_getContext" = x""yes; then
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBSWSCALE 1
-_ACEOF
-
-  LIBS="-lswscale $LIBS"
-
-else
-  { { $as_echo "$as_me:$LINENO: error:
-
-*** libswscale not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>" >&5
-$as_echo "$as_me: error:
-
-*** libswscale not found.
-You need FFmpeg. Get it at <http://ffmpeg.org/>" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-found_ffmpeg="y"
+found_sndfile="y"
 	fi
+
+	if test "$found_samplerate" != "y"; then
+
+{ $as_echo "$as_me:$LINENO: checking whether samplerate lib is present" >&5
+$as_echo_n "checking whether samplerate lib is present... " >&6; }
+
+{ $as_echo "$as_me:$LINENO: checking for src_process in -lsamplerate" >&5
+$as_echo_n "checking for src_process in -lsamplerate... " >&6; }
+if test "${ac_cv_lib_samplerate_src_process+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsamplerate  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char src_process ();
+int
+main ()
+{
+return src_process ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_cxx_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext && {
+	 test "$cross_compiling" = yes ||
+	 $as_test_x conftest$ac_exeext
+       }; then
+  ac_cv_lib_samplerate_src_process=yes
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_samplerate_src_process=no
+fi
+
+rm -rf conftest.dSYM
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_samplerate_src_process" >&5
+$as_echo "$ac_cv_lib_samplerate_src_process" >&6; }
+if test "x$ac_cv_lib_samplerate_src_process" = x""yes; then
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBSAMPLERATE 1
+_ACEOF
+
+  LIBS="-lsamplerate $LIBS"
+
+else
+  { { $as_echo "$as_me:$LINENO: error:
+
+*** libsamplerate not found.
+You need samplerate. Get it at <http://www.mega-nerd.com/libsamplerate/>" >&5
+$as_echo "$as_me: error:
+
+*** libsamplerate not found.
+You need samplerate. Get it at <http://www.mega-nerd.com/libsamplerate/>" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+found_samplerate="y"
+	fi
+	CPPFLAGS="$CPPFLAGS -DHAVE_AUDIO_HASH=1"
+
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_AUDIO_HASH 1
@@ -19758,7 +19601,6 @@ _ACEOF
 
 
 fi
-
 
 
  if test x$audio_hash != xno; then
@@ -19995,6 +19837,7 @@ $as_echo "$ac_cv_lib_png_png_create_read_struct" >&6; }
 if test "x$ac_cv_lib_png_png_create_read_struct" = x""yes; then
   use_png="y"
 fi
+
 
 
 if test "$found_fftw" = "y"; then
@@ -24056,4 +23899,5 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
   { $as_echo "$as_me:$LINENO: WARNING: unrecognized options: $ac_unrecognized_opts" >&5
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
+
 
