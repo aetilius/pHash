@@ -19592,7 +19592,6 @@ fi
 
 found_samplerate="y"
 	fi
-	CPPFLAGS="$CPPFLAGS -DHAVE_AUDIO_HASH=1"
 
 
 cat >>confdefs.h <<\_ACEOF

@@ -34,7 +34,7 @@
 int ph_num_threads()
 {
 	int numCPU = 1;
-	#ifdef linux
+	#ifdef __GLIBC__
 		numCPU = sysconf( _SC_NPROCESSORS_ONLN );
 	#else
 		nt mib[4];
@@ -1098,7 +1098,7 @@ void ph_mvp_init(MVPFile *m)
 	m->branchfactor = 2;
     	m->pathlength = 5;
     	m->leafcapacity = 23;
-    	#ifdef linux
+    	#ifdef __GLIBC__
 		m->pgsize = sysconf(_SC_PAGE_SIZE);
 	#else
 		m->pgsize = getpagesize();
