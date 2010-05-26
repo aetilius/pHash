@@ -34,9 +34,9 @@
 int ph_num_threads()
 {
 	int numCPU = 1;
-	#ifdef __GLIBC__
+#ifdef __GLIBC__
 		numCPU = sysconf( _SC_NPROCESSORS_ONLN );
-	#else
+#else
 		nt mib[4];
 		size_t len; 
 
@@ -56,7 +56,7 @@ int ph_num_threads()
      			}
 		}
 
-	#endif
+#endif
 	return numCPU;
 }
 #endif
@@ -943,7 +943,7 @@ uint8_t* ph_mh_imagehash(const char *filename, int &N,float alpha, float lvl){
     CImg<uint8_t> src(filename);
     CImg<uint8_t> img;
 
-    if (img.spectrum() == 3){
+    if (src.spectrum() == 3){
 	img = src.get_RGBtoYCbCr().channel(0).blur(1.0).resize(512,512,1,1,5).get_equalize(256);
     } else{
 	img = src.channel(0).get_blur(1.0).resize(512,512,1,1,5).get_equalize(256);
