@@ -1,0 +1,11 @@
+/* configure with audio hash */
+#undef HAVE_AUDIO_HASH
+
+/* configure with video hash */
+#undef HAVE_VIDEO_HASH
+
+/* configure with image hash */
+#undef HAVE_IMAGE_HASH
+
+/* configure with pthread support */
+#undef HAVE_PTHREAD
