@@ -444,7 +444,7 @@ DP** ph_audio_hashes(char *files[], int count, int sr, int channels, int threads
                 s[n].hash_p = &hashes[start];
                 s[n].n = off;
 		s[n].hash_params = new pair<int,int>(sr,channels);
-                start = off;
+                start += off;
                 --rem;
                 pthread_create(&thds[n], NULL, ph_audio_thread, &s[n]);
         }
