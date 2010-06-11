@@ -15,18 +15,25 @@
 
  <release>
   <version>0.9.1</version>
-  <date>2010-03-31</date>
-<state>stable</state>
+  <date>2010-06-12</date>
+<state>beta</state>
  </release>
 
 <deps language="cpp" platform="all">
 <with defaults='/usr:/usr/local' testfile='include/pHash.h'>
 	<header name="pHash.h"/>
+	<header name="pHash-config.h"/>
 	<header name="audiophash.h"/>
 	<header name="CImg.h"/>
 
-</with>
+<lib name="avcodec" platform="all" function="avcodec_alloc_frame"/>
+<lib name="avutil" platform="all" function="av_log_set_level"/>
+<lib name="avformat" platform="all" function="av_read_frame"/>
+<lib name="swscale" platform="all" function="sws_getContext"/>
+<lib name="sndfile" platform="all" function="sf_readf_float"/>
+<lib name="samplerate" platform="all" function="src_process"/>
 
+</with>
  </deps>
 
 <code role="code" position="top">
@@ -94,7 +101,7 @@ struct ph_text_hash
  </destruct>
 </resource>
 
-<function name="ph_dct_videohash">
+<function name="ph_dct_videohash" if="HAVE_VIDEO_HASH">
    <proto>resource ph_video_hash ph_dct_videohash(string file)</proto>
    <summary>pHash DCT video hash</summary>
    <description>
@@ -119,7 +126,7 @@ struct ph_text_hash
   </function>
 
 
-<function name="ph_dct_imagehash">
+<function name="ph_dct_imagehash" if="HAVE_IMAGE_HASH">
    <proto>resource ph_image_hash ph_dct_imagehash(string file)</proto>
    <summary>pHash DCT image hash</summary>
    <description>
@@ -163,8 +170,8 @@ struct ph_text_hash
 </code>
   </function>
 
-<function name="ph_audiohash">
-   <proto>resource ph_audio_hash ph_audiohash(string file, int sample_rate=8000, int channels=1)</proto>
+<function name="ph_audiohash" if="HAVE_AUDIO_HASH">
+   <proto>resource ph_audio_hash ph_audiohash(string file, int sample_rate=5512, int channels=1)</proto>
    <summary>pHash audio hash</summary>
    <description>
 	Perceptual audio hash based on bark scale.
@@ -196,7 +203,7 @@ struct ph_text_hash
 </code>
 </function>
 
-<function name="ph_image_dist">
+<function name="ph_image_dist" if="HAVE_IMAGE_HASH">
    <proto>float ph_image_dist(resource ph_image_hash h1,resource ph_image_hash h2)</proto>
    <summary>pHash image distance.</summary>
    <description>
@@ -215,7 +222,7 @@ struct ph_text_hash
 </code>
   </function>
 
-<function name="ph_video_dist">
+<function name="ph_video_dist" if="HAVE_VIDEO_HASH">
    <proto>float ph_video_dist(resource ph_video_hash h1,resource ph_video_hash h2, int thresh=21)</proto>
    <summary>pHash video distance.</summary>
    <description>
@@ -234,7 +241,7 @@ struct ph_text_hash
 </code>
   </function>
 
-<function name="ph_audio_dist">
+<function name="ph_audio_dist" if="HAVE_AUDIO_HASH">
    <proto>float ph_audio_dist(resource ph_audio_hash h1,resource ph_audio_hash h2, 
 		int block_size=256, float thresh=0.30)</proto>
    <summary>pHash audio distance.</summary>
