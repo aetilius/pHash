@@ -37,7 +37,7 @@ int ph_num_threads()
 #ifdef __GLIBC__
 		numCPU = sysconf( _SC_NPROCESSORS_ONLN );
 #else
-		nt mib[4];
+		int mib[2];
 		size_t len; 
 
 		mib[0] = CTL_HW;
@@ -483,6 +483,7 @@ DP** ph_dct_image_hashes(char *files[], int count, int threads)
 CImgList<uint8_t>* ph_getKeyFramesFromVideo(const char *filename){
 
     long N =  GetNumberVideoFrames(filename);
+
     if (N < 0){
 	return NULL;
     }

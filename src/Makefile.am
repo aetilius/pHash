@@ -11,3 +11,4 @@ endif
 if HAVE_VIDEO_HASH
 libpHash_la_SOURCES += cimgffmpeg.cpp cimgffmpeg.h
 endif
+

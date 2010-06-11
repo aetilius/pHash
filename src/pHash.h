@@ -28,6 +28,7 @@
 #define cimg_debug 0
 #define cimg_display 0
 
+#include <pHash-config.h>
 #include <limits.h>
 #include <math.h>
 #include <dirent.h>
@@ -40,6 +41,11 @@
 #include <string.h>
 #include <stdint.h>
 #include "CImg.h"
+
+#ifndef __GLIBC__
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#endif
 
 #ifdef HAVE_PTHREAD
 #include <pthread.h>
