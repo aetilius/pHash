@@ -395,7 +395,7 @@ void *ph_audio_thread(void *p)
                 DP *dp = (DP *)s->hash_p[i];
                 int N, count;
 		pair<int,int> *p = (pair<int,int> *)s->hash_params;
-                float *buf = ph_readaudio(dp->id, p->first, p->second, N);
+                float *buf = ph_readaudio(dp->id, p->first, p->second, NULL, N);
                 uint32_t *hash = ph_audiohash(buf, N, p->first, count);
                 free(buf);
                 buf = NULL;

@@ -2,10 +2,10 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([pHash],[0.9.0],[support@phash.org])
+AC_INIT([pHash],[0.9.1],[support@phash.org])
 AM_INIT_AUTOMAKE($PACKAGE_NAME,$PACKAGE_VERSION)
 AC_CONFIG_SRCDIR([src/pHash.cpp])
-AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_HEADERS([config.h pHash-config.h])
 # Checks for programs.
 
 m4_include([m4/ax_pthread.m4])
@@ -31,7 +31,8 @@ AC_ARG_ENABLE(pthread, [AS_HELP_STRING([--disable-pthread],
 if test "$PTHREAD" = "yes"; then
 	AX_PTHREAD([
 	LIBS="$PTHREAD_LIBS $LIBS"
-	CPPFLAGS="$CLFAGS $PTHREAD_CFLAGS"
+	LDFLAGS="$PTHREAD_LIBS $LIBS"
+	CPPFLAGS="$CFLAGS $PTHREAD_CFLAGS"
 	CC="$PTHREAD_CC"
 	AC_DEFINE([HAVE_PTHREAD], [1], [configure with pthread support])
 	])
@@ -82,7 +83,8 @@ if test x"$found_jni" = x"n"; then
 		if test x"$jni_header" != "x"; then
 			AC_MSG_RESULT([yes])
 			jni_header=`dirname $jni_header`
-			CPPFLAGS="$CPPFLAGS -I $jni_header"
+			jni_md_header=$jni_header"/"`uname|tr '[A-Z]' '[a-z]'`
+			CPPFLAGS="$CPPFLAGS -I $jni_header -I $jni_md_header"
 		else
 			AC_MSG_RESULT([no])
 		fi

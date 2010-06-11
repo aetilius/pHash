@@ -1,3 +1,4 @@
+include_HEADERS = pHash-config.h
 SUBDIRS = src bindings examples
 
 EXTRA_DIST = $(subdirs) libpHash.spec
