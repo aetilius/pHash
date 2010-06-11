@@ -459,7 +459,7 @@ DP** ph_dct_image_hashes(char *files[], int count, int threads)
                 s[n].hash_p = &hashes[start];
                 s[n].n = off;
                 s[n].hash_params = NULL;
-                start = off;
+                start += off;
                 --rem;
                 pthread_create(&thds[n], NULL, ph_image_thread, &s[n]);
         }
@@ -757,7 +757,7 @@ DP** ph_dct_video_hashes(char *files[], int count, int threads)
                 s[n].hash_p = &hashes[start];
                 s[n].n = off;
                 s[n].hash_params = NULL;
-                start = off;
+                start += off;
                 --rem;
                 pthread_create(&thds[n], NULL, ph_video_thread, &s[n]);
         }
