@@ -9,3 +9,6 @@ pkgconfig_DATA = pHash.pc
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
 libtool: @LIBTOOL_DEPS@
 	$(SHELL) ./config.status --recheck
+
+dist-hook:
+	rm -rf `find $(distdir) -name \.svn`
