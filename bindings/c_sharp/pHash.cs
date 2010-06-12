@@ -156,8 +156,5 @@ public class pHash
 					float nbsecs);
 	[DllImport("libc")]
 	public static extern void free(IntPtr p);
-
-	
-
 	
 }
