@@ -1,5 +1,0 @@
-update design docs with new video algorithm and api
-add optimized dct
-create one pass hash
-pHash Pro (detailed comments, support, one-pass hash?, multi-threaded/process, tcp/ip service?)
-pHash Forensics (signature, iris, fingerprint) & gui app
