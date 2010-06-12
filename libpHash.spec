@@ -1,5 +1,5 @@
 Name:           pHash
-Version:        0.9.0
+Version:        0.9.1
 Release:        1%{?dist}
 Summary:        pHash, the open source perceptual hashing library
 
@@ -12,9 +12,13 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  ffmpeg-devel >= 0.5
 BuildRequires:  libjpeg-devel
 BuildRequires:  libpng-devel
+BuildRequires:  libsndfile-devel
+BuildRequires:  libsamplerate-devel
 Requires:	ffmpeg >= 0.5
 Requires:	libjpeg
 Requires:	libpng
+Requires:  	libsndfile
+Requires:  	libsamplerate
 
 %description
 pHash is a perceptual hashing library that allows you to find similar 
@@ -58,15 +62,6 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 %doc
 %{_libdir}/*.so.*
-/usr/bin/add_mvptree
-/usr/bin/add_mvptree_audio
-/usr/bin/build_mvptree
-/usr/bin/build_mvptree_audio
-/usr/bin/query_mvptree
-/usr/bin/query_mvptree_audio
-/usr/bin/test_audio
-/usr/bin/test_image
-/usr/bin/test_video
 /usr/lib/pkgconfig/pHash.pc
 
 %files devel
