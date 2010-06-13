@@ -32,9 +32,7 @@ if test "$PHP_PHASH" != "no"; then
   export OLD_CPPFLAGS="$CPPFLAGS"
   export CPPFLAGS="$CPPFLAGS $INCLUDES -DHAVE_PHASH"
   AC_CHECK_HEADER([pHash.h], [], AC_MSG_ERROR('pHash.h' header not found))
-  AC_CHECK_HEADER([pHash-config.h], [], AC_MSG_ERROR('pHash-config.h' header not found))
   AC_CHECK_HEADER([audiophash.h], [], AC_MSG_ERROR('audiophash.h' header not found))
-  AC_CHECK_HEADER([CImg.h], [], AC_MSG_ERROR('CImg.h' header not found))
   PHP_SUBST(PHASH_SHARED_LIBADD)
 
 
