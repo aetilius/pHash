@@ -38,56 +38,11 @@ if test "$PHP_PHASH" != "no"; then
   PHP_SUBST(PHASH_SHARED_LIBADD)
 
 
-  PHP_CHECK_LIBRARY(avcodec, avcodec_alloc_frame,
+  PHP_CHECK_LIBRARY(pHash, ph_texthash,
   [
-	PHP_ADD_LIBRARY_WITH_PATH(avcodec, $PHP_PHASH_DIR/lib, PHASH_SHARED_LIBADD)
+	PHP_ADD_LIBRARY_WITH_PATH(pHash, $PHP_PHASH_DIR/lib, PHASH_SHARED_LIBADD)
   ],[
-	AC_MSG_ERROR([wrong avcodec lib version or lib not found])
-  ],[
-	-L$PHP_PHASH_DIR/lib
-  ])
-
-  PHP_CHECK_LIBRARY(avutil, av_log_set_level,
-  [
-	PHP_ADD_LIBRARY_WITH_PATH(avutil, $PHP_PHASH_DIR/lib, PHASH_SHARED_LIBADD)
-  ],[
-	AC_MSG_ERROR([wrong avutil lib version or lib not found])
-  ],[
-	-L$PHP_PHASH_DIR/lib
-  ])
-
-  PHP_CHECK_LIBRARY(avformat, av_read_frame,
-  [
-	PHP_ADD_LIBRARY_WITH_PATH(avformat, $PHP_PHASH_DIR/lib, PHASH_SHARED_LIBADD)
-  ],[
-	AC_MSG_ERROR([wrong avformat lib version or lib not found])
-  ],[
-	-L$PHP_PHASH_DIR/lib
-  ])
-
-  PHP_CHECK_LIBRARY(swscale, sws_getContext,
-  [
-	PHP_ADD_LIBRARY_WITH_PATH(swscale, $PHP_PHASH_DIR/lib, PHASH_SHARED_LIBADD)
-  ],[
-	AC_MSG_ERROR([wrong swscale lib version or lib not found])
-  ],[
-	-L$PHP_PHASH_DIR/lib
-  ])
-
-  PHP_CHECK_LIBRARY(sndfile, sf_readf_float,
-  [
-	PHP_ADD_LIBRARY_WITH_PATH(sndfile, $PHP_PHASH_DIR/lib, PHASH_SHARED_LIBADD)
-  ],[
-	AC_MSG_ERROR([wrong sndfile lib version or lib not found])
-  ],[
-	-L$PHP_PHASH_DIR/lib
-  ])
-
-  PHP_CHECK_LIBRARY(samplerate, src_process,
-  [
-	PHP_ADD_LIBRARY_WITH_PATH(samplerate, $PHP_PHASH_DIR/lib, PHASH_SHARED_LIBADD)
-  ],[
-	AC_MSG_ERROR([wrong samplerate lib version or lib not found])
+	AC_MSG_ERROR([wrong pHash lib version or lib not found])
   ],[
 	-L$PHP_PHASH_DIR/lib
   ])
