@@ -47,9 +47,7 @@ extern "C" {
 } // extern "C" 
 #endif
 #include <pHash.h>
-#include <pHash-config.h>
 #include <audiophash.h>
-#include <CImg.h>
 #ifdef  __cplusplus
 extern "C" {
 #endif

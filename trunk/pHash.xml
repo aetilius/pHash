@@ -22,9 +22,7 @@
 <deps language="cpp" platform="all">
 <with defaults='/usr:/usr/local' testfile='include/pHash.h'>
 	<header name="pHash.h"/>
-	<header name="pHash-config.h"/>
 	<header name="audiophash.h"/>
-	<header name="CImg.h"/>
 
 <lib name="pHash" platform="all" function="ph_texthash"/>
 
