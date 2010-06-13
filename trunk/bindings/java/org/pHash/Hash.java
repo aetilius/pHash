@@ -1,4 +1,5 @@
 public abstract class Hash
 {
-	public String filename;
+	protected String filename;
+	public String getFilename() { return filename; }
 }
