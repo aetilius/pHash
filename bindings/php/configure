@@ -5001,13 +5001,13 @@ fi
     esac
   done
 
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for avcodec_alloc_frame in -lavcodec" >&5
-$as_echo_n "checking for avcodec_alloc_frame in -lavcodec... " >&6; }
-if test "${ac_cv_lib_avcodec_avcodec_alloc_frame+set}" = set; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ph_texthash in -lpHash" >&5
+$as_echo_n "checking for ph_texthash in -lpHash... " >&6; }
+if test "${ac_cv_lib_pHash_ph_texthash+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lavcodec  $LIBS"
+LIBS="-lpHash  $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -5017,27 +5017,27 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char avcodec_alloc_frame ();
+char ph_texthash ();
 int
 main ()
 {
-return avcodec_alloc_frame ();
+return ph_texthash ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_cxx_try_link "$LINENO"; then :
-  ac_cv_lib_avcodec_avcodec_alloc_frame=yes
+  ac_cv_lib_pHash_ph_texthash=yes
 else
-  ac_cv_lib_avcodec_avcodec_alloc_frame=no
+  ac_cv_lib_pHash_ph_texthash=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_avcodec_avcodec_alloc_frame" >&5
-$as_echo "$ac_cv_lib_avcodec_avcodec_alloc_frame" >&6; }
-if test "x$ac_cv_lib_avcodec_avcodec_alloc_frame" = x""yes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_pHash_ph_texthash" >&5
+$as_echo "$ac_cv_lib_pHash_ph_texthash" >&6; }
+if test "x$ac_cv_lib_pHash_ph_texthash" = x""yes; then :
 
     LDFLAGS=$save_old_LDFLAGS
     ext_shared=$save_ext_shared
@@ -5045,7 +5045,7 @@ if test "x$ac_cv_lib_avcodec_avcodec_alloc_frame" = x""yes; then :
 
 
   if test "$ext_shared" = "yes"; then
-    PHASH_SHARED_LIBADD="-lavcodec $PHASH_SHARED_LIBADD"
+    PHASH_SHARED_LIBADD="-lpHash $PHASH_SHARED_LIBADD"
     if test -n "$PHP_PHASH_DIR/lib"; then
 
   if test "$PHP_PHASH_DIR/lib" != "/usr/$PHP_LIBDIR" && test "$PHP_PHASH_DIR/lib" != "/usr/lib"; then
@@ -5129,10 +5129,10 @@ if test "x$ac_cv_lib_avcodec_avcodec_alloc_frame" = x""yes; then :
   fi
 
 
-  case avcodec in
+  case pHash in
   c|c_r|pthread*) ;;
   *)
-      LIBS="-lavcodec $LIBS"
+      LIBS="-lpHash $LIBS"
    ;;
   esac
 
@@ -5148,1279 +5148,9 @@ else
 
     LDFLAGS=$save_old_LDFLAGS
     ext_shared=$save_ext_shared
-    unset ac_cv_lib_avcodec_avcodec_alloc_frame
+    unset ac_cv_lib_pHash_ph_texthash
 
-	as_fn_error "wrong avcodec lib version or lib not found" "$LINENO" 5
-
-
-fi
-
-
-
-  save_old_LDFLAGS=$LDFLAGS
-  ac_stuff="
-	-L$PHP_PHASH_DIR/lib
-  "
-
-  save_ext_shared=$ext_shared
-  ext_shared=yes
-
-  for ac_i in $ac_stuff; do
-    case $ac_i in
-    -pthread)
-      if test "$ext_shared" = "yes"; then
-        LDFLAGS="$LDFLAGS -pthread"
-      else
-
-
-  unique=`echo $ac_i|$SED 's/[^a-zA-Z0-9]/_/g'`
-
-  cmd="echo $ac_n \"\$EXTRA_LDFLAGS$unique$ac_c\""
-  if test -n "$unique" && test "`eval $cmd`" = "" ; then
-    eval "EXTRA_LDFLAGS$unique=set"
-    EXTRA_LDFLAGS="$EXTRA_LDFLAGS $ac_i"
-  fi
-
-      fi
-    ;;
-    -l*)
-      ac_ii=`echo $ac_i|cut -c 3-`
-
-
-  case $ac_ii in
-  c|c_r|pthread*) ;;
-  *)
-    if test "$ext_shared" = "yes"; then
-        LDFLAGS="$LDFLAGS -l$ac_ii"
-    else
-
-
-  case $ac_ii in
-  c|c_r|pthread*) ;;
-  *)
-      LIBS="$LIBS -l$ac_ii"
-   ;;
-  esac
-
-
-    fi
-   ;;
-  esac
-
-
-    ;;
-    -L*)
-      ac_ii=`echo $ac_i|cut -c 3-`
-
-  if test "$ac_ii" != "/usr/$PHP_LIBDIR" && test "$ac_ii" != "/usr/lib"; then
-
-  if test -z "$ac_ii" || echo "$ac_ii" | grep '^/' >/dev/null ; then
-    ai_p=$ac_ii
-  else
-
-    ep_dir="`echo $ac_ii|$SED 's%/*[^/][^/]*/*$%%'`"
-
-    ep_realdir="`(cd \"$ep_dir\" && pwd)`"
-    ai_p="$ep_realdir/`basename \"$ac_ii\"`"
-  fi
-
-
-      if test "$ext_shared" = "yes"; then
-        LDFLAGS="-L$ai_p $LDFLAGS"
-        test "x$PHP_RPATH" != "xno" && \
-        test -n "$ld_runpath_switch" && LDFLAGS="$ld_runpath_switch$ai_p $LDFLAGS"
-      else
-
-
-
-  unique=`echo $ai_p|$SED 's/[^a-zA-Z0-9]/_/g'`
-
-  cmd="echo $ac_n \"\$LIBPATH$unique$ac_c\""
-  if test -n "$unique" && test "`eval $cmd`" = "" ; then
-    eval "LIBPATH$unique=set"
-
-    test "x$PHP_RPATH" != "xno" &&
-    test -n "$ld_runpath_switch" && LDFLAGS="$LDFLAGS $ld_runpath_switch$ai_p"
-    LDFLAGS="$LDFLAGS -L$ai_p"
-    PHP_RPATHS="$PHP_RPATHS $ai_p"
-
-  fi
-
-
-      fi
-
-  fi
-
-    ;;
-    esac
-  done
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for av_log_set_level in -lavutil" >&5
-$as_echo_n "checking for av_log_set_level in -lavutil... " >&6; }
-if test "${ac_cv_lib_avutil_av_log_set_level+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lavutil  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char av_log_set_level ();
-int
-main ()
-{
-return av_log_set_level ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_link "$LINENO"; then :
-  ac_cv_lib_avutil_av_log_set_level=yes
-else
-  ac_cv_lib_avutil_av_log_set_level=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_avutil_av_log_set_level" >&5
-$as_echo "$ac_cv_lib_avutil_av_log_set_level" >&6; }
-if test "x$ac_cv_lib_avutil_av_log_set_level" = x""yes; then :
-
-    LDFLAGS=$save_old_LDFLAGS
-    ext_shared=$save_ext_shared
-
-
-
-  if test "$ext_shared" = "yes"; then
-    PHASH_SHARED_LIBADD="-lavutil $PHASH_SHARED_LIBADD"
-    if test -n "$PHP_PHASH_DIR/lib"; then
-
-  if test "$PHP_PHASH_DIR/lib" != "/usr/$PHP_LIBDIR" && test "$PHP_PHASH_DIR/lib" != "/usr/lib"; then
-
-  if test -z "$PHP_PHASH_DIR/lib" || echo "$PHP_PHASH_DIR/lib" | grep '^/' >/dev/null ; then
-    ai_p=$PHP_PHASH_DIR/lib
-  else
-
-    ep_dir="`echo $PHP_PHASH_DIR/lib|$SED 's%/*[^/][^/]*/*$%%'`"
-
-    ep_realdir="`(cd \"$ep_dir\" && pwd)`"
-    ai_p="$ep_realdir/`basename \"$PHP_PHASH_DIR/lib\"`"
-  fi
-
-
-      if test "$ext_shared" = "yes"; then
-        PHASH_SHARED_LIBADD="-L$ai_p $PHASH_SHARED_LIBADD"
-        test "x$PHP_RPATH" != "xno" && \
-        test -n "$ld_runpath_switch" && PHASH_SHARED_LIBADD="$ld_runpath_switch$ai_p $PHASH_SHARED_LIBADD"
-      else
-
-
-
-  unique=`echo $ai_p|$SED 's/[^a-zA-Z0-9]/_/g'`
-
-  cmd="echo $ac_n \"\$LIBPATH$unique$ac_c\""
-  if test -n "$unique" && test "`eval $cmd`" = "" ; then
-    eval "LIBPATH$unique=set"
-
-    test "x$PHP_RPATH" != "xno" &&
-    test -n "$ld_runpath_switch" && LDFLAGS="$LDFLAGS $ld_runpath_switch$ai_p"
-    LDFLAGS="$LDFLAGS -L$ai_p"
-    PHP_RPATHS="$PHP_RPATHS $ai_p"
-
-  fi
-
-
-      fi
-
-  fi
-
-    fi
-  else
-
-
-  if test -n "$PHP_PHASH_DIR/lib"; then
-
-  if test "$PHP_PHASH_DIR/lib" != "/usr/$PHP_LIBDIR" && test "$PHP_PHASH_DIR/lib" != "/usr/lib"; then
-
-  if test -z "$PHP_PHASH_DIR/lib" || echo "$PHP_PHASH_DIR/lib" | grep '^/' >/dev/null ; then
-    ai_p=$PHP_PHASH_DIR/lib
-  else
-
-    ep_dir="`echo $PHP_PHASH_DIR/lib|$SED 's%/*[^/][^/]*/*$%%'`"
-
-    ep_realdir="`(cd \"$ep_dir\" && pwd)`"
-    ai_p="$ep_realdir/`basename \"$PHP_PHASH_DIR/lib\"`"
-  fi
-
-
-
-
-
-  unique=`echo $ai_p|$SED 's/[^a-zA-Z0-9]/_/g'`
-
-  cmd="echo $ac_n \"\$LIBPATH$unique$ac_c\""
-  if test -n "$unique" && test "`eval $cmd`" = "" ; then
-    eval "LIBPATH$unique=set"
-
-    test "x$PHP_RPATH" != "xno" &&
-    test -n "$ld_runpath_switch" && LDFLAGS="$LDFLAGS $ld_runpath_switch$ai_p"
-    LDFLAGS="$LDFLAGS -L$ai_p"
-    PHP_RPATHS="$PHP_RPATHS $ai_p"
-
-  fi
-
-
-
-  fi
-
-  fi
-
-
-  case avutil in
-  c|c_r|pthread*) ;;
-  *)
-      LIBS="-lavutil $LIBS"
-   ;;
-  esac
-
-
-
-
-  fi
-
-
-
-
-else
-
-    LDFLAGS=$save_old_LDFLAGS
-    ext_shared=$save_ext_shared
-    unset ac_cv_lib_avutil_av_log_set_level
-
-	as_fn_error "wrong avutil lib version or lib not found" "$LINENO" 5
-
-
-fi
-
-
-
-  save_old_LDFLAGS=$LDFLAGS
-  ac_stuff="
-	-L$PHP_PHASH_DIR/lib
-  "
-
-  save_ext_shared=$ext_shared
-  ext_shared=yes
-
-  for ac_i in $ac_stuff; do
-    case $ac_i in
-    -pthread)
-      if test "$ext_shared" = "yes"; then
-        LDFLAGS="$LDFLAGS -pthread"
-      else
-
-
-  unique=`echo $ac_i|$SED 's/[^a-zA-Z0-9]/_/g'`
-
-  cmd="echo $ac_n \"\$EXTRA_LDFLAGS$unique$ac_c\""
-  if test -n "$unique" && test "`eval $cmd`" = "" ; then
-    eval "EXTRA_LDFLAGS$unique=set"
-    EXTRA_LDFLAGS="$EXTRA_LDFLAGS $ac_i"
-  fi
-
-      fi
-    ;;
-    -l*)
-      ac_ii=`echo $ac_i|cut -c 3-`
-
-
-  case $ac_ii in
-  c|c_r|pthread*) ;;
-  *)
-    if test "$ext_shared" = "yes"; then
-        LDFLAGS="$LDFLAGS -l$ac_ii"
-    else
-
-
-  case $ac_ii in
-  c|c_r|pthread*) ;;
-  *)
-      LIBS="$LIBS -l$ac_ii"
-   ;;
-  esac
-
-
-    fi
-   ;;
-  esac
-
-
-    ;;
-    -L*)
-      ac_ii=`echo $ac_i|cut -c 3-`
-
-  if test "$ac_ii" != "/usr/$PHP_LIBDIR" && test "$ac_ii" != "/usr/lib"; then
-
-  if test -z "$ac_ii" || echo "$ac_ii" | grep '^/' >/dev/null ; then
-    ai_p=$ac_ii
-  else
-
-    ep_dir="`echo $ac_ii|$SED 's%/*[^/][^/]*/*$%%'`"
-
-    ep_realdir="`(cd \"$ep_dir\" && pwd)`"
-    ai_p="$ep_realdir/`basename \"$ac_ii\"`"
-  fi
-
-
-      if test "$ext_shared" = "yes"; then
-        LDFLAGS="-L$ai_p $LDFLAGS"
-        test "x$PHP_RPATH" != "xno" && \
-        test -n "$ld_runpath_switch" && LDFLAGS="$ld_runpath_switch$ai_p $LDFLAGS"
-      else
-
-
-
-  unique=`echo $ai_p|$SED 's/[^a-zA-Z0-9]/_/g'`
-
-  cmd="echo $ac_n \"\$LIBPATH$unique$ac_c\""
-  if test -n "$unique" && test "`eval $cmd`" = "" ; then
-    eval "LIBPATH$unique=set"
-
-    test "x$PHP_RPATH" != "xno" &&
-    test -n "$ld_runpath_switch" && LDFLAGS="$LDFLAGS $ld_runpath_switch$ai_p"
-    LDFLAGS="$LDFLAGS -L$ai_p"
-    PHP_RPATHS="$PHP_RPATHS $ai_p"
-
-  fi
-
-
-      fi
-
-  fi
-
-    ;;
-    esac
-  done
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for av_read_frame in -lavformat" >&5
-$as_echo_n "checking for av_read_frame in -lavformat... " >&6; }
-if test "${ac_cv_lib_avformat_av_read_frame+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lavformat  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char av_read_frame ();
-int
-main ()
-{
-return av_read_frame ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_link "$LINENO"; then :
-  ac_cv_lib_avformat_av_read_frame=yes
-else
-  ac_cv_lib_avformat_av_read_frame=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_avformat_av_read_frame" >&5
-$as_echo "$ac_cv_lib_avformat_av_read_frame" >&6; }
-if test "x$ac_cv_lib_avformat_av_read_frame" = x""yes; then :
-
-    LDFLAGS=$save_old_LDFLAGS
-    ext_shared=$save_ext_shared
-
-
-
-  if test "$ext_shared" = "yes"; then
-    PHASH_SHARED_LIBADD="-lavformat $PHASH_SHARED_LIBADD"
-    if test -n "$PHP_PHASH_DIR/lib"; then
-
-  if test "$PHP_PHASH_DIR/lib" != "/usr/$PHP_LIBDIR" && test "$PHP_PHASH_DIR/lib" != "/usr/lib"; then
-
-  if test -z "$PHP_PHASH_DIR/lib" || echo "$PHP_PHASH_DIR/lib" | grep '^/' >/dev/null ; then
-    ai_p=$PHP_PHASH_DIR/lib
-  else
-
-    ep_dir="`echo $PHP_PHASH_DIR/lib|$SED 's%/*[^/][^/]*/*$%%'`"
-
-    ep_realdir="`(cd \"$ep_dir\" && pwd)`"
-    ai_p="$ep_realdir/`basename \"$PHP_PHASH_DIR/lib\"`"
-  fi
-
-
-      if test "$ext_shared" = "yes"; then
-        PHASH_SHARED_LIBADD="-L$ai_p $PHASH_SHARED_LIBADD"
-        test "x$PHP_RPATH" != "xno" && \
-        test -n "$ld_runpath_switch" && PHASH_SHARED_LIBADD="$ld_runpath_switch$ai_p $PHASH_SHARED_LIBADD"
-      else
-
-
-
-  unique=`echo $ai_p|$SED 's/[^a-zA-Z0-9]/_/g'`
-
-  cmd="echo $ac_n \"\$LIBPATH$unique$ac_c\""
-  if test -n "$unique" && test "`eval $cmd`" = "" ; then
-    eval "LIBPATH$unique=set"
-
-    test "x$PHP_RPATH" != "xno" &&
-    test -n "$ld_runpath_switch" && LDFLAGS="$LDFLAGS $ld_runpath_switch$ai_p"
-    LDFLAGS="$LDFLAGS -L$ai_p"
-    PHP_RPATHS="$PHP_RPATHS $ai_p"
-
-  fi
-
-
-      fi
-
-  fi
-
-    fi
-  else
-
-
-  if test -n "$PHP_PHASH_DIR/lib"; then
-
-  if test "$PHP_PHASH_DIR/lib" != "/usr/$PHP_LIBDIR" && test "$PHP_PHASH_DIR/lib" != "/usr/lib"; then
-
-  if test -z "$PHP_PHASH_DIR/lib" || echo "$PHP_PHASH_DIR/lib" | grep '^/' >/dev/null ; then
-    ai_p=$PHP_PHASH_DIR/lib
-  else
-
-    ep_dir="`echo $PHP_PHASH_DIR/lib|$SED 's%/*[^/][^/]*/*$%%'`"
-
-    ep_realdir="`(cd \"$ep_dir\" && pwd)`"
-    ai_p="$ep_realdir/`basename \"$PHP_PHASH_DIR/lib\"`"
-  fi
-
-
-
-
-
-  unique=`echo $ai_p|$SED 's/[^a-zA-Z0-9]/_/g'`
-
-  cmd="echo $ac_n \"\$LIBPATH$unique$ac_c\""
-  if test -n "$unique" && test "`eval $cmd`" = "" ; then
-    eval "LIBPATH$unique=set"
-
-    test "x$PHP_RPATH" != "xno" &&
-    test -n "$ld_runpath_switch" && LDFLAGS="$LDFLAGS $ld_runpath_switch$ai_p"
-    LDFLAGS="$LDFLAGS -L$ai_p"
-    PHP_RPATHS="$PHP_RPATHS $ai_p"
-
-  fi
-
-
-
-  fi
-
-  fi
-
-
-  case avformat in
-  c|c_r|pthread*) ;;
-  *)
-      LIBS="-lavformat $LIBS"
-   ;;
-  esac
-
-
-
-
-  fi
-
-
-
-
-else
-
-    LDFLAGS=$save_old_LDFLAGS
-    ext_shared=$save_ext_shared
-    unset ac_cv_lib_avformat_av_read_frame
-
-	as_fn_error "wrong avformat lib version or lib not found" "$LINENO" 5
-
-
-fi
-
-
-
-  save_old_LDFLAGS=$LDFLAGS
-  ac_stuff="
-	-L$PHP_PHASH_DIR/lib
-  "
-
-  save_ext_shared=$ext_shared
-  ext_shared=yes
-
-  for ac_i in $ac_stuff; do
-    case $ac_i in
-    -pthread)
-      if test "$ext_shared" = "yes"; then
-        LDFLAGS="$LDFLAGS -pthread"
-      else
-
-
-  unique=`echo $ac_i|$SED 's/[^a-zA-Z0-9]/_/g'`
-
-  cmd="echo $ac_n \"\$EXTRA_LDFLAGS$unique$ac_c\""
-  if test -n "$unique" && test "`eval $cmd`" = "" ; then
-    eval "EXTRA_LDFLAGS$unique=set"
-    EXTRA_LDFLAGS="$EXTRA_LDFLAGS $ac_i"
-  fi
-
-      fi
-    ;;
-    -l*)
-      ac_ii=`echo $ac_i|cut -c 3-`
-
-
-  case $ac_ii in
-  c|c_r|pthread*) ;;
-  *)
-    if test "$ext_shared" = "yes"; then
-        LDFLAGS="$LDFLAGS -l$ac_ii"
-    else
-
-
-  case $ac_ii in
-  c|c_r|pthread*) ;;
-  *)
-      LIBS="$LIBS -l$ac_ii"
-   ;;
-  esac
-
-
-    fi
-   ;;
-  esac
-
-
-    ;;
-    -L*)
-      ac_ii=`echo $ac_i|cut -c 3-`
-
-  if test "$ac_ii" != "/usr/$PHP_LIBDIR" && test "$ac_ii" != "/usr/lib"; then
-
-  if test -z "$ac_ii" || echo "$ac_ii" | grep '^/' >/dev/null ; then
-    ai_p=$ac_ii
-  else
-
-    ep_dir="`echo $ac_ii|$SED 's%/*[^/][^/]*/*$%%'`"
-
-    ep_realdir="`(cd \"$ep_dir\" && pwd)`"
-    ai_p="$ep_realdir/`basename \"$ac_ii\"`"
-  fi
-
-
-      if test "$ext_shared" = "yes"; then
-        LDFLAGS="-L$ai_p $LDFLAGS"
-        test "x$PHP_RPATH" != "xno" && \
-        test -n "$ld_runpath_switch" && LDFLAGS="$ld_runpath_switch$ai_p $LDFLAGS"
-      else
-
-
-
-  unique=`echo $ai_p|$SED 's/[^a-zA-Z0-9]/_/g'`
-
-  cmd="echo $ac_n \"\$LIBPATH$unique$ac_c\""
-  if test -n "$unique" && test "`eval $cmd`" = "" ; then
-    eval "LIBPATH$unique=set"
-
-    test "x$PHP_RPATH" != "xno" &&
-    test -n "$ld_runpath_switch" && LDFLAGS="$LDFLAGS $ld_runpath_switch$ai_p"
-    LDFLAGS="$LDFLAGS -L$ai_p"
-    PHP_RPATHS="$PHP_RPATHS $ai_p"
-
-  fi
-
-
-      fi
-
-  fi
-
-    ;;
-    esac
-  done
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sws_getContext in -lswscale" >&5
-$as_echo_n "checking for sws_getContext in -lswscale... " >&6; }
-if test "${ac_cv_lib_swscale_sws_getContext+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lswscale  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char sws_getContext ();
-int
-main ()
-{
-return sws_getContext ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_link "$LINENO"; then :
-  ac_cv_lib_swscale_sws_getContext=yes
-else
-  ac_cv_lib_swscale_sws_getContext=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_swscale_sws_getContext" >&5
-$as_echo "$ac_cv_lib_swscale_sws_getContext" >&6; }
-if test "x$ac_cv_lib_swscale_sws_getContext" = x""yes; then :
-
-    LDFLAGS=$save_old_LDFLAGS
-    ext_shared=$save_ext_shared
-
-
-
-  if test "$ext_shared" = "yes"; then
-    PHASH_SHARED_LIBADD="-lswscale $PHASH_SHARED_LIBADD"
-    if test -n "$PHP_PHASH_DIR/lib"; then
-
-  if test "$PHP_PHASH_DIR/lib" != "/usr/$PHP_LIBDIR" && test "$PHP_PHASH_DIR/lib" != "/usr/lib"; then
-
-  if test -z "$PHP_PHASH_DIR/lib" || echo "$PHP_PHASH_DIR/lib" | grep '^/' >/dev/null ; then
-    ai_p=$PHP_PHASH_DIR/lib
-  else
-
-    ep_dir="`echo $PHP_PHASH_DIR/lib|$SED 's%/*[^/][^/]*/*$%%'`"
-
-    ep_realdir="`(cd \"$ep_dir\" && pwd)`"
-    ai_p="$ep_realdir/`basename \"$PHP_PHASH_DIR/lib\"`"
-  fi
-
-
-      if test "$ext_shared" = "yes"; then
-        PHASH_SHARED_LIBADD="-L$ai_p $PHASH_SHARED_LIBADD"
-        test "x$PHP_RPATH" != "xno" && \
-        test -n "$ld_runpath_switch" && PHASH_SHARED_LIBADD="$ld_runpath_switch$ai_p $PHASH_SHARED_LIBADD"
-      else
-
-
-
-  unique=`echo $ai_p|$SED 's/[^a-zA-Z0-9]/_/g'`
-
-  cmd="echo $ac_n \"\$LIBPATH$unique$ac_c\""
-  if test -n "$unique" && test "`eval $cmd`" = "" ; then
-    eval "LIBPATH$unique=set"
-
-    test "x$PHP_RPATH" != "xno" &&
-    test -n "$ld_runpath_switch" && LDFLAGS="$LDFLAGS $ld_runpath_switch$ai_p"
-    LDFLAGS="$LDFLAGS -L$ai_p"
-    PHP_RPATHS="$PHP_RPATHS $ai_p"
-
-  fi
-
-
-      fi
-
-  fi
-
-    fi
-  else
-
-
-  if test -n "$PHP_PHASH_DIR/lib"; then
-
-  if test "$PHP_PHASH_DIR/lib" != "/usr/$PHP_LIBDIR" && test "$PHP_PHASH_DIR/lib" != "/usr/lib"; then
-
-  if test -z "$PHP_PHASH_DIR/lib" || echo "$PHP_PHASH_DIR/lib" | grep '^/' >/dev/null ; then
-    ai_p=$PHP_PHASH_DIR/lib
-  else
-
-    ep_dir="`echo $PHP_PHASH_DIR/lib|$SED 's%/*[^/][^/]*/*$%%'`"
-
-    ep_realdir="`(cd \"$ep_dir\" && pwd)`"
-    ai_p="$ep_realdir/`basename \"$PHP_PHASH_DIR/lib\"`"
-  fi
-
-
-
-
-
-  unique=`echo $ai_p|$SED 's/[^a-zA-Z0-9]/_/g'`
-
-  cmd="echo $ac_n \"\$LIBPATH$unique$ac_c\""
-  if test -n "$unique" && test "`eval $cmd`" = "" ; then
-    eval "LIBPATH$unique=set"
-
-    test "x$PHP_RPATH" != "xno" &&
-    test -n "$ld_runpath_switch" && LDFLAGS="$LDFLAGS $ld_runpath_switch$ai_p"
-    LDFLAGS="$LDFLAGS -L$ai_p"
-    PHP_RPATHS="$PHP_RPATHS $ai_p"
-
-  fi
-
-
-
-  fi
-
-  fi
-
-
-  case swscale in
-  c|c_r|pthread*) ;;
-  *)
-      LIBS="-lswscale $LIBS"
-   ;;
-  esac
-
-
-
-
-  fi
-
-
-
-
-else
-
-    LDFLAGS=$save_old_LDFLAGS
-    ext_shared=$save_ext_shared
-    unset ac_cv_lib_swscale_sws_getContext
-
-	as_fn_error "wrong swscale lib version or lib not found" "$LINENO" 5
-
-
-fi
-
-
-
-  save_old_LDFLAGS=$LDFLAGS
-  ac_stuff="
-	-L$PHP_PHASH_DIR/lib
-  "
-
-  save_ext_shared=$ext_shared
-  ext_shared=yes
-
-  for ac_i in $ac_stuff; do
-    case $ac_i in
-    -pthread)
-      if test "$ext_shared" = "yes"; then
-        LDFLAGS="$LDFLAGS -pthread"
-      else
-
-
-  unique=`echo $ac_i|$SED 's/[^a-zA-Z0-9]/_/g'`
-
-  cmd="echo $ac_n \"\$EXTRA_LDFLAGS$unique$ac_c\""
-  if test -n "$unique" && test "`eval $cmd`" = "" ; then
-    eval "EXTRA_LDFLAGS$unique=set"
-    EXTRA_LDFLAGS="$EXTRA_LDFLAGS $ac_i"
-  fi
-
-      fi
-    ;;
-    -l*)
-      ac_ii=`echo $ac_i|cut -c 3-`
-
-
-  case $ac_ii in
-  c|c_r|pthread*) ;;
-  *)
-    if test "$ext_shared" = "yes"; then
-        LDFLAGS="$LDFLAGS -l$ac_ii"
-    else
-
-
-  case $ac_ii in
-  c|c_r|pthread*) ;;
-  *)
-      LIBS="$LIBS -l$ac_ii"
-   ;;
-  esac
-
-
-    fi
-   ;;
-  esac
-
-
-    ;;
-    -L*)
-      ac_ii=`echo $ac_i|cut -c 3-`
-
-  if test "$ac_ii" != "/usr/$PHP_LIBDIR" && test "$ac_ii" != "/usr/lib"; then
-
-  if test -z "$ac_ii" || echo "$ac_ii" | grep '^/' >/dev/null ; then
-    ai_p=$ac_ii
-  else
-
-    ep_dir="`echo $ac_ii|$SED 's%/*[^/][^/]*/*$%%'`"
-
-    ep_realdir="`(cd \"$ep_dir\" && pwd)`"
-    ai_p="$ep_realdir/`basename \"$ac_ii\"`"
-  fi
-
-
-      if test "$ext_shared" = "yes"; then
-        LDFLAGS="-L$ai_p $LDFLAGS"
-        test "x$PHP_RPATH" != "xno" && \
-        test -n "$ld_runpath_switch" && LDFLAGS="$ld_runpath_switch$ai_p $LDFLAGS"
-      else
-
-
-
-  unique=`echo $ai_p|$SED 's/[^a-zA-Z0-9]/_/g'`
-
-  cmd="echo $ac_n \"\$LIBPATH$unique$ac_c\""
-  if test -n "$unique" && test "`eval $cmd`" = "" ; then
-    eval "LIBPATH$unique=set"
-
-    test "x$PHP_RPATH" != "xno" &&
-    test -n "$ld_runpath_switch" && LDFLAGS="$LDFLAGS $ld_runpath_switch$ai_p"
-    LDFLAGS="$LDFLAGS -L$ai_p"
-    PHP_RPATHS="$PHP_RPATHS $ai_p"
-
-  fi
-
-
-      fi
-
-  fi
-
-    ;;
-    esac
-  done
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sf_readf_float in -lsndfile" >&5
-$as_echo_n "checking for sf_readf_float in -lsndfile... " >&6; }
-if test "${ac_cv_lib_sndfile_sf_readf_float+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lsndfile  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char sf_readf_float ();
-int
-main ()
-{
-return sf_readf_float ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_link "$LINENO"; then :
-  ac_cv_lib_sndfile_sf_readf_float=yes
-else
-  ac_cv_lib_sndfile_sf_readf_float=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_sndfile_sf_readf_float" >&5
-$as_echo "$ac_cv_lib_sndfile_sf_readf_float" >&6; }
-if test "x$ac_cv_lib_sndfile_sf_readf_float" = x""yes; then :
-
-    LDFLAGS=$save_old_LDFLAGS
-    ext_shared=$save_ext_shared
-
-
-
-  if test "$ext_shared" = "yes"; then
-    PHASH_SHARED_LIBADD="-lsndfile $PHASH_SHARED_LIBADD"
-    if test -n "$PHP_PHASH_DIR/lib"; then
-
-  if test "$PHP_PHASH_DIR/lib" != "/usr/$PHP_LIBDIR" && test "$PHP_PHASH_DIR/lib" != "/usr/lib"; then
-
-  if test -z "$PHP_PHASH_DIR/lib" || echo "$PHP_PHASH_DIR/lib" | grep '^/' >/dev/null ; then
-    ai_p=$PHP_PHASH_DIR/lib
-  else
-
-    ep_dir="`echo $PHP_PHASH_DIR/lib|$SED 's%/*[^/][^/]*/*$%%'`"
-
-    ep_realdir="`(cd \"$ep_dir\" && pwd)`"
-    ai_p="$ep_realdir/`basename \"$PHP_PHASH_DIR/lib\"`"
-  fi
-
-
-      if test "$ext_shared" = "yes"; then
-        PHASH_SHARED_LIBADD="-L$ai_p $PHASH_SHARED_LIBADD"
-        test "x$PHP_RPATH" != "xno" && \
-        test -n "$ld_runpath_switch" && PHASH_SHARED_LIBADD="$ld_runpath_switch$ai_p $PHASH_SHARED_LIBADD"
-      else
-
-
-
-  unique=`echo $ai_p|$SED 's/[^a-zA-Z0-9]/_/g'`
-
-  cmd="echo $ac_n \"\$LIBPATH$unique$ac_c\""
-  if test -n "$unique" && test "`eval $cmd`" = "" ; then
-    eval "LIBPATH$unique=set"
-
-    test "x$PHP_RPATH" != "xno" &&
-    test -n "$ld_runpath_switch" && LDFLAGS="$LDFLAGS $ld_runpath_switch$ai_p"
-    LDFLAGS="$LDFLAGS -L$ai_p"
-    PHP_RPATHS="$PHP_RPATHS $ai_p"
-
-  fi
-
-
-      fi
-
-  fi
-
-    fi
-  else
-
-
-  if test -n "$PHP_PHASH_DIR/lib"; then
-
-  if test "$PHP_PHASH_DIR/lib" != "/usr/$PHP_LIBDIR" && test "$PHP_PHASH_DIR/lib" != "/usr/lib"; then
-
-  if test -z "$PHP_PHASH_DIR/lib" || echo "$PHP_PHASH_DIR/lib" | grep '^/' >/dev/null ; then
-    ai_p=$PHP_PHASH_DIR/lib
-  else
-
-    ep_dir="`echo $PHP_PHASH_DIR/lib|$SED 's%/*[^/][^/]*/*$%%'`"
-
-    ep_realdir="`(cd \"$ep_dir\" && pwd)`"
-    ai_p="$ep_realdir/`basename \"$PHP_PHASH_DIR/lib\"`"
-  fi
-
-
-
-
-
-  unique=`echo $ai_p|$SED 's/[^a-zA-Z0-9]/_/g'`
-
-  cmd="echo $ac_n \"\$LIBPATH$unique$ac_c\""
-  if test -n "$unique" && test "`eval $cmd`" = "" ; then
-    eval "LIBPATH$unique=set"
-
-    test "x$PHP_RPATH" != "xno" &&
-    test -n "$ld_runpath_switch" && LDFLAGS="$LDFLAGS $ld_runpath_switch$ai_p"
-    LDFLAGS="$LDFLAGS -L$ai_p"
-    PHP_RPATHS="$PHP_RPATHS $ai_p"
-
-  fi
-
-
-
-  fi
-
-  fi
-
-
-  case sndfile in
-  c|c_r|pthread*) ;;
-  *)
-      LIBS="-lsndfile $LIBS"
-   ;;
-  esac
-
-
-
-
-  fi
-
-
-
-
-else
-
-    LDFLAGS=$save_old_LDFLAGS
-    ext_shared=$save_ext_shared
-    unset ac_cv_lib_sndfile_sf_readf_float
-
-	as_fn_error "wrong sndfile lib version or lib not found" "$LINENO" 5
-
-
-fi
-
-
-
-  save_old_LDFLAGS=$LDFLAGS
-  ac_stuff="
-	-L$PHP_PHASH_DIR/lib
-  "
-
-  save_ext_shared=$ext_shared
-  ext_shared=yes
-
-  for ac_i in $ac_stuff; do
-    case $ac_i in
-    -pthread)
-      if test "$ext_shared" = "yes"; then
-        LDFLAGS="$LDFLAGS -pthread"
-      else
-
-
-  unique=`echo $ac_i|$SED 's/[^a-zA-Z0-9]/_/g'`
-
-  cmd="echo $ac_n \"\$EXTRA_LDFLAGS$unique$ac_c\""
-  if test -n "$unique" && test "`eval $cmd`" = "" ; then
-    eval "EXTRA_LDFLAGS$unique=set"
-    EXTRA_LDFLAGS="$EXTRA_LDFLAGS $ac_i"
-  fi
-
-      fi
-    ;;
-    -l*)
-      ac_ii=`echo $ac_i|cut -c 3-`
-
-
-  case $ac_ii in
-  c|c_r|pthread*) ;;
-  *)
-    if test "$ext_shared" = "yes"; then
-        LDFLAGS="$LDFLAGS -l$ac_ii"
-    else
-
-
-  case $ac_ii in
-  c|c_r|pthread*) ;;
-  *)
-      LIBS="$LIBS -l$ac_ii"
-   ;;
-  esac
-
-
-    fi
-   ;;
-  esac
-
-
-    ;;
-    -L*)
-      ac_ii=`echo $ac_i|cut -c 3-`
-
-  if test "$ac_ii" != "/usr/$PHP_LIBDIR" && test "$ac_ii" != "/usr/lib"; then
-
-  if test -z "$ac_ii" || echo "$ac_ii" | grep '^/' >/dev/null ; then
-    ai_p=$ac_ii
-  else
-
-    ep_dir="`echo $ac_ii|$SED 's%/*[^/][^/]*/*$%%'`"
-
-    ep_realdir="`(cd \"$ep_dir\" && pwd)`"
-    ai_p="$ep_realdir/`basename \"$ac_ii\"`"
-  fi
-
-
-      if test "$ext_shared" = "yes"; then
-        LDFLAGS="-L$ai_p $LDFLAGS"
-        test "x$PHP_RPATH" != "xno" && \
-        test -n "$ld_runpath_switch" && LDFLAGS="$ld_runpath_switch$ai_p $LDFLAGS"
-      else
-
-
-
-  unique=`echo $ai_p|$SED 's/[^a-zA-Z0-9]/_/g'`
-
-  cmd="echo $ac_n \"\$LIBPATH$unique$ac_c\""
-  if test -n "$unique" && test "`eval $cmd`" = "" ; then
-    eval "LIBPATH$unique=set"
-
-    test "x$PHP_RPATH" != "xno" &&
-    test -n "$ld_runpath_switch" && LDFLAGS="$LDFLAGS $ld_runpath_switch$ai_p"
-    LDFLAGS="$LDFLAGS -L$ai_p"
-    PHP_RPATHS="$PHP_RPATHS $ai_p"
-
-  fi
-
-
-      fi
-
-  fi
-
-    ;;
-    esac
-  done
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for src_process in -lsamplerate" >&5
-$as_echo_n "checking for src_process in -lsamplerate... " >&6; }
-if test "${ac_cv_lib_samplerate_src_process+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lsamplerate  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char src_process ();
-int
-main ()
-{
-return src_process ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_link "$LINENO"; then :
-  ac_cv_lib_samplerate_src_process=yes
-else
-  ac_cv_lib_samplerate_src_process=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_samplerate_src_process" >&5
-$as_echo "$ac_cv_lib_samplerate_src_process" >&6; }
-if test "x$ac_cv_lib_samplerate_src_process" = x""yes; then :
-
-    LDFLAGS=$save_old_LDFLAGS
-    ext_shared=$save_ext_shared
-
-
-
-  if test "$ext_shared" = "yes"; then
-    PHASH_SHARED_LIBADD="-lsamplerate $PHASH_SHARED_LIBADD"
-    if test -n "$PHP_PHASH_DIR/lib"; then
-
-  if test "$PHP_PHASH_DIR/lib" != "/usr/$PHP_LIBDIR" && test "$PHP_PHASH_DIR/lib" != "/usr/lib"; then
-
-  if test -z "$PHP_PHASH_DIR/lib" || echo "$PHP_PHASH_DIR/lib" | grep '^/' >/dev/null ; then
-    ai_p=$PHP_PHASH_DIR/lib
-  else
-
-    ep_dir="`echo $PHP_PHASH_DIR/lib|$SED 's%/*[^/][^/]*/*$%%'`"
-
-    ep_realdir="`(cd \"$ep_dir\" && pwd)`"
-    ai_p="$ep_realdir/`basename \"$PHP_PHASH_DIR/lib\"`"
-  fi
-
-
-      if test "$ext_shared" = "yes"; then
-        PHASH_SHARED_LIBADD="-L$ai_p $PHASH_SHARED_LIBADD"
-        test "x$PHP_RPATH" != "xno" && \
-        test -n "$ld_runpath_switch" && PHASH_SHARED_LIBADD="$ld_runpath_switch$ai_p $PHASH_SHARED_LIBADD"
-      else
-
-
-
-  unique=`echo $ai_p|$SED 's/[^a-zA-Z0-9]/_/g'`
-
-  cmd="echo $ac_n \"\$LIBPATH$unique$ac_c\""
-  if test -n "$unique" && test "`eval $cmd`" = "" ; then
-    eval "LIBPATH$unique=set"
-
-    test "x$PHP_RPATH" != "xno" &&
-    test -n "$ld_runpath_switch" && LDFLAGS="$LDFLAGS $ld_runpath_switch$ai_p"
-    LDFLAGS="$LDFLAGS -L$ai_p"
-    PHP_RPATHS="$PHP_RPATHS $ai_p"
-
-  fi
-
-
-      fi
-
-  fi
-
-    fi
-  else
-
-
-  if test -n "$PHP_PHASH_DIR/lib"; then
-
-  if test "$PHP_PHASH_DIR/lib" != "/usr/$PHP_LIBDIR" && test "$PHP_PHASH_DIR/lib" != "/usr/lib"; then
-
-  if test -z "$PHP_PHASH_DIR/lib" || echo "$PHP_PHASH_DIR/lib" | grep '^/' >/dev/null ; then
-    ai_p=$PHP_PHASH_DIR/lib
-  else
-
-    ep_dir="`echo $PHP_PHASH_DIR/lib|$SED 's%/*[^/][^/]*/*$%%'`"
-
-    ep_realdir="`(cd \"$ep_dir\" && pwd)`"
-    ai_p="$ep_realdir/`basename \"$PHP_PHASH_DIR/lib\"`"
-  fi
-
-
-
-
-
-  unique=`echo $ai_p|$SED 's/[^a-zA-Z0-9]/_/g'`
-
-  cmd="echo $ac_n \"\$LIBPATH$unique$ac_c\""
-  if test -n "$unique" && test "`eval $cmd`" = "" ; then
-    eval "LIBPATH$unique=set"
-
-    test "x$PHP_RPATH" != "xno" &&
-    test -n "$ld_runpath_switch" && LDFLAGS="$LDFLAGS $ld_runpath_switch$ai_p"
-    LDFLAGS="$LDFLAGS -L$ai_p"
-    PHP_RPATHS="$PHP_RPATHS $ai_p"
-
-  fi
-
-
-
-  fi
-
-  fi
-
-
-  case samplerate in
-  c|c_r|pthread*) ;;
-  *)
-      LIBS="-lsamplerate $LIBS"
-   ;;
-  esac
-
-
-
-
-  fi
-
-
-
-
-else
-
-    LDFLAGS=$save_old_LDFLAGS
-    ext_shared=$save_ext_shared
-    unset ac_cv_lib_samplerate_src_process
-
-	as_fn_error "wrong samplerate lib version or lib not found" "$LINENO" 5
+	as_fn_error "wrong pHash lib version or lib not found" "$LINENO" 5
 
 
 fi
@@ -7246,13 +5976,13 @@ if test "${lt_cv_nm_interface+set}" = set; then :
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:7249: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:5979: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:7252: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:5982: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:7255: output\"" >&5)
+  (eval echo "\"\$as_me:5985: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -8457,7 +7187,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 8460 "configure"' > conftest.$ac_ext
+  echo '#line 7190 "configure"' > conftest.$ac_ext
   if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -10118,11 +8848,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10121: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8851: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:10125: \$? = $ac_status" >&5
+   echo "$as_me:8855: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -10457,11 +9187,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10460: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9190: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:10464: \$? = $ac_status" >&5
+   echo "$as_me:9194: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -10562,11 +9292,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10565: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9295: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:10569: \$? = $ac_status" >&5
+   echo "$as_me:9299: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -10617,11 +9347,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10620: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9350: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:10624: \$? = $ac_status" >&5
+   echo "$as_me:9354: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -12987,7 +11717,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 12990 "configure"
+#line 11720 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13083,7 +11813,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 13086 "configure"
+#line 11816 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -15039,11 +13769,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15042: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13772: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15046: \$? = $ac_status" >&5
+   echo "$as_me:13776: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -15138,11 +13868,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15141: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13871: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:15145: \$? = $ac_status" >&5
+   echo "$as_me:13875: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -15190,11 +13920,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15193: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13923: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:15197: \$? = $ac_status" >&5
+   echo "$as_me:13927: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized

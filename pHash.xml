@@ -26,12 +26,7 @@
 	<header name="audiophash.h"/>
 	<header name="CImg.h"/>
 
-<lib name="avcodec" platform="all" function="avcodec_alloc_frame"/>
-<lib name="avutil" platform="all" function="av_log_set_level"/>
-<lib name="avformat" platform="all" function="av_read_frame"/>
-<lib name="swscale" platform="all" function="sws_getContext"/>
-<lib name="sndfile" platform="all" function="sf_readf_float"/>
-<lib name="samplerate" platform="all" function="src_process"/>
+<lib name="pHash" platform="all" function="ph_texthash"/>
 
 </with>
  </deps>
