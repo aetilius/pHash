@@ -176,6 +176,17 @@ You need samplerate. Get it at <http://www.mega-nerd.com/libsamplerate/>])])
 found_samplerate="y"])
 
 
+AC_DEFUN([AC_CHECK_MPG123],
+[
+AC_MSG_CHECKING([whether mpg123 lib is present])
+AC_CHECK_LIB([mpg123],[mpg123_init],[],[AC_MSG_ERROR([
+
+***libmpg123 not found.
+You only need mpg123 if you are using the audio hash on mp3 files.
+Get it here: <http://www.mpg123.do/>])])
+found_mpg123="y"])
+
+
 AC_ARG_ENABLE([image-hash], [AS_HELP_STRING([--enable-image-hash],[include support for perceptual image hashes @<:@default=yes@:>@])],
 [image_hash=$enableval], [image_hash=yes])
 AS_IF([test x"$image_hash" != x"no"],
@@ -221,7 +232,9 @@ AS_IF([test x"$audio_hash" != x"no"],
 	if test "$found_samplerate" != "y"; then
 		AC_CHECK_SAMPLERATE()
 	fi
-
+	if test "$found_mpg123" != "y"; then
+		AC_CHECK_MPG123()
+	fi
 	AC_DEFINE([HAVE_AUDIO_HASH],[1], [configure with audio hash])
 	])
 
