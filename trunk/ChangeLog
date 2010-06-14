@@ -1,4 +1,5 @@
 0.9.1
+06.14.2010 added support for mp3 audio format in ph_readaudio (with libmpg123 library)
 06.11.2010 cleaned up java bindings, fixed bug in determining number of cpus on mac os x,
 	   fixed bug in multi-threaded image, audio and video functions, preliminary bindings
 	   for php and c#.
