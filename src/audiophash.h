@@ -55,15 +55,13 @@ int ph_count_samples(const char *filename, int sr,int channels);
  *
  * /param filename - path and name of audio file to read
  * /param sr - sample rate conversion
- * /param channels - number channel conversion
+ * /param channels - nb channels to convert to (always 1) unused
  * /param buf - preallocated buffer 
  * /param buflen - (in/out) param for buf length
  * /param nbsecs - float value for duration (in secs) to read from file
- * /return float* - float pointer to start of buffer, NULL if error
+ * /return float* - float pointer to start of buffer - one channel of audio, NULL if error
  */
 float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, int &buflen, const float nbsecs = 0);
-
-
 
 /* /brief audio hash calculation
  * purpose: hash calculation for each frame in the buffer.

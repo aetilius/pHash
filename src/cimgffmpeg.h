@@ -32,6 +32,8 @@
 
 #include "CImg.h"
 
+#define __STDC_CONSTANT_MACROS
+
 extern "C" {
 	#include "./libavformat/avformat.h"
 	#include "./libavcodec/avcodec.h"

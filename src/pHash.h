@@ -39,16 +39,19 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <string.h>
+
+#define __STDC_CONSTANT_MACROS
+
 #include <stdint.h>
 #include "CImg.h"
+
+#ifdef HAVE_PTHREAD
+#include <pthread.h>
+#endif
 
 #ifndef __GLIBC__
 #include <sys/param.h>
 #include <sys/sysctl.h>
-#endif
-
-#ifdef HAVE_PTHREAD
-#include <pthread.h>
 #endif
 
 using namespace cimg_library;
