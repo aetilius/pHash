@@ -26,6 +26,10 @@
 #include <sndfile.h>
 #include <samplerate.h>
 
+#ifdef HAVE_LIBMPG123
+#include <mpg123.h>
+#endif
+
 int ph_count_samples(const char *filename, int sr,int channels){
 
     SF_INFO sf_info;
@@ -39,115 +43,220 @@ int ph_count_samples(const char *filename, int sr,int channels){
     return count;
 }
 
-float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, int &buflen, const float nbsecs)
-{
+#ifdef HAVE_LIBMPG123
+
+static
+float* readaudio_mp3(const char *filename,long *sr, const float nbsecs, unsigned int *buflen){
+  mpg123_handle *m;
+  int ret;
+
+  if (mpg123_init() != MPG123_OK || ((m = mpg123_new(NULL,&ret)) == NULL)|| \
+                         mpg123_open(m, filename) != MPG123_OK){
+    fprintf(stderr,"unable to init mpg\n");
+    return NULL;
+  }
+
+  /*turn off logging */
+  mpg123_param(m, MPG123_ADD_FLAGS, MPG123_QUIET, 0);
+
+  off_t totalsamples;
+  
+  mpg123_scan(m);
+  totalsamples = mpg123_length(m);
+  
+  int meta = mpg123_meta_check(m);
+
+  int channels, encoding;
+    
+  if (mpg123_getformat(m, sr, &channels, &encoding) != MPG123_OK){
+    fprintf(stderr,"unable to get format\n");
+    return NULL;
+  }
+  
+  mpg123_format_none(m);
+  mpg123_format(m, *sr, channels, encoding);
+
+  size_t decbuflen = mpg123_outblock(m);
+  unsigned char *decbuf = (unsigned char*)malloc(decbuflen);  
+  if (decbuf == NULL){
+    printf("mem alloc error\n");
+    return NULL;
+  }
+
+  unsigned int nbsamples = (nbsecs <= 0) ? totalsamples : nbsecs*(*sr);
+  nbsamples = (nbsamples < totalsamples) ? nbsamples : totalsamples;
+
+  size_t i, j, index = 0, done;
+
+
+  float *buffer = (float*)malloc(nbsamples*sizeof(float));
+  *buflen = nbsamples;
+
+  do {
+    
+    ret = mpg123_read(m, decbuf, decbuflen, &done);
+    switch (encoding) {
+    case MPG123_ENC_SIGNED_16 :
+      for (i = 0; i < done/sizeof(short); i+=channels){
+	buffer[index] = 0.0f;
+	for (j = 0; j < channels ; j++){
+	  buffer[index] += (float)(((short*)decbuf)[i+j])/(float)SHRT_MAX;
+	}
+	buffer[index++] /= channels;
+	if (index >= nbsamples) break;
+      }
+      break;
+    case MPG123_ENC_SIGNED_8:
+      for (i = 0; i < done/sizeof(char); i+=channels){
+	buffer[index] = 0.0f;
+	for (j = 0; j < channels ; j++){
+	  buffer[index] += (float)(((char*)decbuf)[i+j])/(float)SCHAR_MAX;
+	}
+	buffer[index++] /= channels;
+	if (index >= nbsamples) break;
+      }
+      break;
+    case MPG123_ENC_FLOAT_32:
+      for (i = 0; i < done/sizeof(float); i+=channels){
+	buffer[index] = 0.0f;
+	for (j = 0; j < channels; j++){
+	  buffer[index] += ((float*)decbuf)[i+j];
+	}
+	buffer[index++] /= channels;
+	if (index >= nbsamples) break;
+      }
+      break;
+    default:
+	done = 0;
+    }
+
+  } while (ret == MPG123_OK && index < nbsamples);
+
+  free(decbuf);
+  mpg123_close(m);
+  mpg123_delete(m);
+  mpg123_exit();
+
+  return buffer;
+}
+
+#endif /*HAVE_LIBMPG123*/
+
+static
+float *readaudio_snd(const char *filename, long *sr, const float nbsecs, unsigned int *buflen){
+
     SF_INFO sf_info;
     sf_info.format=0;
     SNDFILE *sndfile = sf_open(filename, SFM_READ, &sf_info);
     if (sndfile == NULL){
-	return NULL;
-    }    
-
+      return NULL;
+    }
+    
+    /* normalize */ 
     sf_command(sndfile, SFC_SET_NORM_FLOAT, NULL, SF_TRUE);
 
+    *sr = (long)sf_info.samplerate;
+
     //allocate input buffer for signal
-    int src_frames = (nbsecs <= 0) ? sf_info.frames : (int)(nbsecs*sf_info.samplerate);
+    unsigned int src_frames = (nbsecs <= 0) ? sf_info.frames : (nbsecs*sf_info.samplerate);
     src_frames = (sf_info.frames < src_frames) ? sf_info.frames : src_frames;
     float *inbuf = (float*)malloc(src_frames*sf_info.channels*sizeof(float));
-    if (!inbuf){
-	sf_close(sndfile);
-	return NULL;
-    }
 
+    /*read frames */ 
     sf_count_t cnt_frames = sf_readf_float(sndfile, inbuf, src_frames);
+
+    float *buf = (float*)malloc(cnt_frames*sizeof(float));   
     
-    double sr_ratio = (double)sr/(double)sf_info.samplerate;
-    if (src_is_valid_ratio(sr_ratio) == 0){
-	sf_close(sndfile);
-	free(inbuf);
-	return NULL;
-    }
-
-    int inbuflen = cnt_frames*sf_info.channels;   
-    int outbuflen = (int)(sr_ratio*cnt_frames*sf_info.channels);
-    float *outbuf = (float*)malloc(outbuflen*sizeof(float));
-    if (!outbuf){
-	sf_close(sndfile);
-	free(inbuf);
-	return NULL;
-    }
-
-    int error;
-    SRC_STATE *src_state = src_new(SRC_LINEAR, sf_info.channels, &error);
-    if (!src_state){
-	sf_close(sndfile);
-	free(inbuf);
-	free(outbuf);
-        return NULL;
-    }
-
-    SRC_DATA src_data;
-    src_data.data_in = inbuf;
-    src_data.data_out = outbuf;
-    src_data.input_frames = cnt_frames;
-    src_data.output_frames = outbuflen/sf_info.channels;
-    src_data.end_of_input = SF_TRUE;
-    src_data.src_ratio = sr_ratio;
-
-    if (error = src_process(src_state, &src_data)){
-        sf_close(sndfile);
-	free(inbuf);
-	free(outbuf);
-	src_delete(src_state);
-	return NULL;
-    }
-
-    float *buf = NULL;
-    if ((buflen > src_data.output_frames*channels) || (sigbuf == NULL)){
-	//alloc new buffer
-	buf = (float*)malloc(src_data.output_frames*channels*sizeof(float));
-    } else {
-	//use buffer from param
-	buf = sigbuf;
-    }
-    buflen = src_data.output_frames*channels;
-
-    if (!buf){
-	sf_close(sndfile);
-	free(inbuf);
-	free(outbuf);
-	src_delete(src_state);
-	return NULL;
-    }
-    buflen = src_data.output_frames;
-
-    if (channels == 1){
-	//average across all channels
-	for (int i=0;i<src_data.output_frames*sf_info.channels;i+=sf_info.channels){
-	    buf[i/sf_info.channels] = 0;
-	    for (int j=0;j<sf_info.channels;j++){
-		buf[i/sf_info.channels] += outbuf[i+j];
-	    }
-	    buf[i/sf_info.channels] /= sf_info.channels;
+    //average across all channels
+    int  i,j,indx=0;
+    for (i=0;i<cnt_frames;i+=sf_info.channels){
+	buf[indx] = 0;
+	for (j=0;j<sf_info.channels;j++){
+	    buf[indx] += inbuf[i+j];
 	}
-    } else if (channels <= sf_info.channels){
-	//just grab first nb channels
-	for (int i=0;i<src_data.output_frames*sf_info.channels;i+=sf_info.channels){
-	    for (int j=0;j<channels;j++){
-		buf[i/sf_info.channels+j] = outbuf[i+j];
-	    }
-	}
-    } else {
-	free(buf);
-	buf=NULL;
+	buf[indx++] /= sf_info.channels;
     }
-
-    src_delete(src_state);
-    sf_close(sndfile);
     free(inbuf);
-    free(outbuf);
+
+    *buflen = indx;
     return buf;
+}
+
+float* ph_readaudio2(const char *filename, int sr, float *sigbuf, int &buflen, const float nbsecs){
+
+  long orig_sr;
+  float *inbuffer = NULL;
+  unsigned int inbufferlength;
+  buflen = 0;
+
+  char *suffix = strrchr(filename, '.');
+  if (*suffix == '\0') return NULL;
+  suffix++;
+  if (!strcmp(suffix, "mp3")) {
+#ifdef HAVE_LIBMPG123
+    inbuffer = readaudio_mp3(filename, &orig_sr, nbsecs, &inbufferlength);
+#endif /* HAVE_LIBMPG123 */
+  } else {
+    inbuffer = readaudio_snd(filename, &orig_sr, nbsecs, &inbufferlength);
+  }  
+
+  if (inbuffer == NULL){
+    return NULL;
+  }
+
+  /* resample float array */ 
+  /* set desired sr ratio */ 
+  double sr_ratio = (double)(sr)/(double)orig_sr;
+  if (src_is_valid_ratio(sr_ratio) == 0){
+    free(inbuffer);
+    return NULL;
+  }
+
+  /* allocate output buffer for conversion */ 
+  unsigned int outbufferlength = sr_ratio*inbufferlength;
+  float *outbuffer = (float*)malloc(outbufferlength*sizeof(float));
+  if (!outbuffer){
+    free(inbuffer);
+    return NULL;
+  }
+
+  int error;
+  SRC_STATE *src_state = src_new(SRC_LINEAR, 1, &error);
+  if (!src_state){
+    free(inbuffer);
+    free(outbuffer);
+    return NULL;
+  }
+
+  SRC_DATA src_data;
+  src_data.data_in = inbuffer;
+  src_data.data_out = outbuffer;
+  src_data.input_frames = inbufferlength;
+  src_data.output_frames = outbufferlength;
+  src_data.end_of_input = SF_TRUE;
+  src_data.src_ratio = sr_ratio;
+
+  /* sample rate conversion */ 
+  if (error = src_process(src_state, &src_data)){
+    free(inbuffer);
+    free(outbuffer);
+    src_delete(src_state);
+    return NULL;
+  }
+
+  buflen = src_data.output_frames;
+
+  src_delete(src_state);
+  free(inbuffer);
+
+  return outbuffer;
 } 
+
+
+float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, int &buflen,\
+		    const float nbsecs){
+    return ph_readaudio2(filename, sr, sigbuf, buflen, nbsecs);
+}
 
 uint32_t* ph_audiohash(float *buf, int N, int sr, int &nb_frames){
 

@@ -60,6 +60,7 @@ int fft(double *x, int N, complex double *X)
 
     complex double *twiddle_factors = (complex double*)malloc(sizeof(complex double)*(N/2));
     complex double *Xt = (complex double*)malloc(sizeof(complex double)*N);
+
     int k;
     for (k=0;k<N/2;k++){
 	twiddle_factors[k] = polar_to_complex(1.0, 2.0*PI*k/N);
