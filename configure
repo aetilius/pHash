@@ -17635,6 +17635,9 @@ CPPFLAGS="$CPPFLAGS -I/usr/local/include"
 
 
 
+
+
+
 # Check whether --enable-image-hash was given.
 if test "${enable_image_hash+set}" = set; then :
   enableval=$enable_image_hash; image_hash=$enableval
@@ -18074,7 +18077,63 @@ fi
 
 found_samplerate="y"
 	fi
+	if test "$found_mpg123" != "y"; then
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether libmpg123 is present" >&5
+$as_echo_n "checking whether libmpg123 is present... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for mpg123_init in -lmpg123" >&5
+$as_echo_n "checking for mpg123_init in -lmpg123... " >&6; }
+if test "${ac_cv_lib_mpg123_mpg123_init+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lmpg123  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char mpg123_init ();
+int
+main ()
+{
+return mpg123_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_lib_mpg123_mpg123_init=yes
+else
+  ac_cv_lib_mpg123_mpg123_init=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_mpg123_mpg123_init" >&5
+$as_echo "$ac_cv_lib_mpg123_mpg123_init" >&6; }
+if test "x$ac_cv_lib_mpg123_mpg123_init" = x""yes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBMPG123 1
+_ACEOF
+
+  LIBS="-lmpg123 $LIBS"
+
+else
+  as_fn_error "
+
+*** libmpg123 not found.
+You need libmpg123.
+Get it at <http://www.mpg123.do/>" "$LINENO" 5
+fi
+
+found_mpg123="y"
+	fi
 
 $as_echo "#define HAVE_AUDIO_HASH 1" >>confdefs.h
 
