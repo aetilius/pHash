@@ -178,12 +178,12 @@ found_samplerate="y"])
 
 AC_DEFUN([AC_CHECK_MPG123],
 [
-AC_MSG_CHECKING([whether mpg123 lib is present])
+AC_MSG_CHECKING([whether libmpg123 is present])
 AC_CHECK_LIB([mpg123],[mpg123_init],[],[AC_MSG_ERROR([
 
-***libmpg123 not found.
-You only need mpg123 if you are using the audio hash on mp3 files.
-Get it here: <http://www.mpg123.do/>])])
+*** libmpg123 not found.
+You need libmpg123.
+Get it at <http://www.mpg123.do/>])])
 found_mpg123="y"])
 
 
