@@ -183,7 +183,7 @@ AC_CHECK_LIB([mpg123],[mpg123_init],[],[AC_MSG_ERROR([
 
 *** libmpg123 not found.
 You need libmpg123.
-Get it at <http://www.mpg123.do/>])])
+Get it at <http://www.mpg123.de/>])])
 found_mpg123="y"])
 
 

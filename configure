@@ -18129,7 +18129,7 @@ else
 
 *** libmpg123 not found.
 You need libmpg123.
-Get it at <http://www.mpg123.do/>" "$LINENO" 5
+Get it at <http://www.mpg123.de/>" "$LINENO" 5
 fi
 
 found_mpg123="y"
