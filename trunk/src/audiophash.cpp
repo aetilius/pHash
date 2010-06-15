@@ -335,7 +335,7 @@ uint32_t* ph_audiohash(float *buf, int N, int sr, int &nb_frames){
 
    //p = fftw_plan_dft_r2c_1d(frame_length,frame,pF,FFTW_ESTIMATE);
 
-   while (end <= N){
+   while (end < N){
        maxF = 0.0;
        maxB = 0.0;
        for (int i = 0;i<frame_length;i++){
