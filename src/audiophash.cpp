@@ -190,7 +190,7 @@ float* ph_readaudio2(const char *filename, int sr, float *sigbuf, int &buflen, c
   buflen = 0;
 
   char *suffix = strrchr(filename, '.');
-  if (*suffix == '\0') return NULL;
+  if (suffix == NULL) return NULL;
   suffix++;
   if (!strcmp(suffix, "mp3")) {
 #ifdef HAVE_LIBMPG123
@@ -255,6 +255,8 @@ float* ph_readaudio2(const char *filename, int sr, float *sigbuf, int &buflen, c
 
 float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, int &buflen,\
 		    const float nbsecs){
+	if(!filename || sr <= 0)
+		return NULL;
     return ph_readaudio2(filename, sr, sigbuf, buflen, nbsecs);
 }
 
