@@ -189,10 +189,9 @@ float* ph_readaudio2(const char *filename, int sr, float *sigbuf, int &buflen, c
   unsigned int inbufferlength;
   buflen = 0;
 
-  char *suffix = strrchr(filename, '.');
+  const char *suffix = strrchr(filename, '.');
   if (suffix == NULL) return NULL;
-  suffix++;
-  if (!strcmp(suffix, "mp3")) {
+  if (!strcasecmp(suffix+1, "mp3")) {
 #ifdef HAVE_LIBMPG123
     inbuffer = readaudio_mp3(filename, &orig_sr, nbsecs, &inbufferlength);
 #endif /* HAVE_LIBMPG123 */
