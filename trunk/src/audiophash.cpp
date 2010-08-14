@@ -169,7 +169,7 @@ float *readaudio_snd(const char *filename, long *sr, const float nbsecs, unsigne
     
     //average across all channels
     int  i,j,indx=0;
-    for (i=0;i<cnt_frames;i+=sf_info.channels){
+    for (i=0;i<cnt_frames*sf_info.channels;i+=sf_info.channels){
 	buf[indx] = 0;
 	for (j=0;j<sf_info.channels;j++){
 	    buf[indx] += inbuf[i+j];
