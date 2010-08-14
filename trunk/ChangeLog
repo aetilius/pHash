@@ -1,4 +1,10 @@
+0.9.2
+---
+08.14.2010 fixed bug when converting wav/flac/ogg audio files from stereo to mono 
+	   (thanks to Roy Turner).
+
 0.9.1
+---
 06.14.2010 added support for mp3 audio format in ph_readaudio (with libmpg123 library)
 06.11.2010 cleaned up java bindings, fixed bug in determining number of cpus on mac os x,
 	   fixed bug in multi-threaded image, audio and video functions, preliminary bindings
