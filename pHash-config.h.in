@@ -7,5 +7,7 @@
 /* configure with image hash */
 #undef HAVE_IMAGE_HASH
 
+#undef HAVE_LIBMPG123
+
 /* configure with pthread support */
 #undef HAVE_PTHREAD
