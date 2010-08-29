@@ -25,6 +25,7 @@
 #include "audiophash.h"
 #include <sndfile.h>
 #include <samplerate.h>
+#include "config.h"
 
 #ifdef HAVE_LIBMPG123
 #include <mpg123.h>
