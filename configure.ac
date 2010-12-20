@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([pHash],[0.9.3],[support@phash.org])
+AC_INIT([pHash],[0.9.4],[support@phash.org])
 AM_INIT_AUTOMAKE($PACKAGE_NAME,$PACKAGE_VERSION)
 AC_CONFIG_SRCDIR([src/pHash.cpp])
 AC_CONFIG_HEADERS([config.h pHash-config.h])
@@ -31,7 +31,6 @@ AC_ARG_ENABLE(pthread, [AS_HELP_STRING([--disable-pthread],
 if test "$PTHREAD" = "yes"; then
 	AX_PTHREAD([
 	LIBS="$PTHREAD_LIBS $LIBS"
-	LDFLAGS="$PTHREAD_LIBS $LIBS"
 	CPPFLAGS="$CFLAGS $PTHREAD_CFLAGS"
 	CC="$PTHREAD_CC"
 	AC_DEFINE([HAVE_PTHREAD], [1], [configure with pthread support])
@@ -45,9 +44,14 @@ AC_ARG_ENABLE(debug, [AS_HELP_STRING([--enable-debug],
 debug=$enableval, debug=no)
 AS_IF([test x"$debug" != x"no"],
 	[CXXFLAGS="`echo $CXXFLAGS' ' | sed 's/-O[0-9]//g'`"
-	CXXFLAGS="$CXXFLAGS -O0 -g"],
+	CXXFLAGS="$CXXFLAGS -O0 -g"
+	LDFLAGS="$PTHREAD_LIBS $LIBS $CFLAGS $PTHREAD_CFLAGS"
+	LDFLAGS="`echo $LDFLAGS | sed 's/-g//g' | sed 's/-O[0-9]//g'`"],
 	[CXXFLAGS="`echo $CXXFLAGS' -ffast-math' | sed 's/-g//g' | sed 's/-O[0-9]//g'`"
-	CXXFLAGS="$CXXFLAGS -O3"])
+	CXXFLAGS="$CXXFLAGS -O3"
+	CPPFLAGS="`echo $CPPFLAGS | sed 's/-g//g' | sed 's/-O[0-9]//g'`"
+	LDFLAGS="$PTHREAD_LIBS $LIBS $CFLAGS $PTHREAD_CFLAGS"
+	LDFLAGS="`echo $LDFLAGS | sed 's/-g//g' | sed 's/-O[0-9]//g'`"])
 
 AC_ARG_ENABLE(openmp, [AS_HELP_STRING([--enable-openmp],
 [enable OpenMP support in pHash to use multiple cores/CPUs @<:@default=no@:>@])], 
@@ -240,7 +244,7 @@ AS_IF([test x"$audio_hash" != x"no"],
 
 AM_CONDITIONAL(HAVE_AUDIO_HASH, test x$audio_hash != xno)
 
-if test "$audio_hash" = "yes" -o "$video_hash" = "yes"; then
+if test "$video_hash" = "yes"; then
 case "$DISTRO" in
 	debian)
 		CPPFLAGS="$CPPFLAGS -I/usr/include/ffmpeg"
@@ -261,13 +265,12 @@ AC_CHECK_LIB([png], [png_create_read_struct], [use_png="y"])
 AS_IF([test "$found_fftw" = "y"],
 [
 	CPPFLAGS="$CPPFLAGS -Dcimg_use_fftw3"])
-
-AS_IF([test "$use_jpeg" = "y"],
+AS_IF([test "$use_jpeg" = "y" -a \( "$image_hash" = "yes" -o "$video_hash" = "yes" \)],
 [
 	CPPFLAGS="$CPPFLAGS -Dcimg_use_jpeg"
 	LDFLAGS="$LDFLAGS -ljpeg"])
 
-AS_IF([test "$use_png" = "y"],
+AS_IF([test "$use_png" = "y" -a \( "$image_hash" = "yes" -o "$video_hash" = "yes" \)],
 [
 	CPPFLAGS="$CPPFLAGS -Dcimg_use_png"
 	LDFLAGS="$LDFLAGS -lpng"])

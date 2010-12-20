@@ -33,10 +33,7 @@
 #include "pHash.h"
 
 extern "C" {
-	#include "./libavformat/avformat.h"
-	#include "./libavcodec/avcodec.h"
-	#include "./libswscale/swscale.h"
-        #include "ph_fft.h"
+#include "ph_fft.h"
 }
 
 /*  /brief count number of samples in file
