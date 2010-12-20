@@ -830,7 +830,7 @@ void ph_free_datapoint(DP *dp){
 }
 
 
-
+#ifdef HAVE_IMAGE_HASH
 DP** ph_read_imagehashes(const char *dirname,int pathlength, int &count){
 
     count = 0;
@@ -881,44 +881,6 @@ DP** ph_read_imagehashes(const char *dirname,int pathlength, int &count){
 
 }
 
-char** ph_readfilenames(const char *dirname,int &count){
-    count = 0;
-    struct dirent *dir_entry;
-    DIR *dir = opendir(dirname);
-    if (!dir)
-        return NULL;
-
-    /*count files */
-    while ((dir_entry = readdir(dir)) != NULL){
-	if (strcmp(dir_entry->d_name, ".") && strcmp(dir_entry->d_name,".."))
-	    count++;
-    }
-    
-    /* alloc list of files */
-    char **files = (char**)malloc(count*sizeof(*files));
-    if (!files)
-	return NULL;
-
-    errno = 0;
-    int index = 0;
-    char path[1024];
-    path[0] = '\0';
-    rewinddir(dir);
-    while ((dir_entry = readdir(dir)) != 0){
-	if (strcmp(dir_entry->d_name,".") && strcmp(dir_entry->d_name,"..")){
-	    strcat(path, dirname);
-	    strcat(path, "/");
-	    strcat(path, dir_entry->d_name);
-	    files[index++] = strdup(path);
-	}
-        path[0]='\0';
-    }
-    if (errno)
-	return NULL;
-    closedir(dir);
-    return files;
-}
-
 CImg<float>* GetMHKernel(float alpha, float level){
     int sigma = (int)4*pow((float)alpha,(float)level);
     static CImg<float> *pkernel = NULL;
@@ -934,6 +896,7 @@ CImg<float>* GetMHKernel(float alpha, float level){
     }
     return pkernel;
 }
+
 uint8_t* ph_mh_imagehash(const char *filename, int &N,float alpha, float lvl){
     if (filename == NULL){
 	return NULL;
@@ -989,6 +952,45 @@ uint8_t* ph_mh_imagehash(const char *filename, int &N,float alpha, float lvl){
 	}
 
     return hash;
+}
+#endif
+
+char** ph_readfilenames(const char *dirname,int &count){
+    count = 0;
+    struct dirent *dir_entry;
+    DIR *dir = opendir(dirname);
+    if (!dir)
+        return NULL;
+
+    /*count files */
+    while ((dir_entry = readdir(dir)) != NULL){
+	if (strcmp(dir_entry->d_name, ".") && strcmp(dir_entry->d_name,".."))
+	    count++;
+    }
+    
+    /* alloc list of files */
+    char **files = (char**)malloc(count*sizeof(*files));
+    if (!files)
+	return NULL;
+
+    errno = 0;
+    int index = 0;
+    char path[1024];
+    path[0] = '\0';
+    rewinddir(dir);
+    while ((dir_entry = readdir(dir)) != 0){
+	if (strcmp(dir_entry->d_name,".") && strcmp(dir_entry->d_name,"..")){
+	    strcat(path, dirname);
+	    strcat(path, "/");
+	    strcat(path, dir_entry->d_name);
+	    files[index++] = strdup(path);
+	}
+        path[0]='\0';
+    }
+    if (errno)
+	return NULL;
+    closedir(dir);
+    return files;
 }
 
 

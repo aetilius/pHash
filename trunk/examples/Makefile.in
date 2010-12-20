@@ -34,12 +34,10 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-noinst_PROGRAMS = buildmvptreedct$(EXEEXT) addmvptreedct$(EXEEXT) \
-	querymvptreedct$(EXEEXT) test_texthash$(EXEEXT) \
-	test_texthash2$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2) \
-	$(am__EXEEXT_3)
+noinst_PROGRAMS = test_texthash$(EXEEXT) test_texthash2$(EXEEXT) \
+	$(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3)
 @HAVE_AUDIO_HASH_TRUE@am__append_1 = test_audio build_mvptree_audio add_mvptree_audio query_mvptree_audio
-@HAVE_IMAGE_HASH_TRUE@am__append_2 = test_image test_mhimagehash
+@HAVE_IMAGE_HASH_TRUE@am__append_2 = test_image test_mhimagehash buildmvptreedct addmvptreedct querymvptreedct
 @HAVE_VIDEO_HASH_TRUE@am__append_3 = test_video
 subdir = examples
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
@@ -58,7 +56,10 @@ CONFIG_CLEAN_VPATH_FILES =
 @HAVE_AUDIO_HASH_TRUE@	add_mvptree_audio$(EXEEXT) \
 @HAVE_AUDIO_HASH_TRUE@	query_mvptree_audio$(EXEEXT)
 @HAVE_IMAGE_HASH_TRUE@am__EXEEXT_2 = test_image$(EXEEXT) \
-@HAVE_IMAGE_HASH_TRUE@	test_mhimagehash$(EXEEXT)
+@HAVE_IMAGE_HASH_TRUE@	test_mhimagehash$(EXEEXT) \
+@HAVE_IMAGE_HASH_TRUE@	buildmvptreedct$(EXEEXT) \
+@HAVE_IMAGE_HASH_TRUE@	addmvptreedct$(EXEEXT) \
+@HAVE_IMAGE_HASH_TRUE@	querymvptreedct$(EXEEXT)
 @HAVE_VIDEO_HASH_TRUE@am__EXEEXT_3 = test_video$(EXEEXT)
 PROGRAMS = $(noinst_PROGRAMS)
 am__add_mvptree_audio_SOURCES_DIST = add_mvptree_audio.cpp
@@ -67,27 +68,36 @@ am__add_mvptree_audio_SOURCES_DIST = add_mvptree_audio.cpp
 add_mvptree_audio_OBJECTS = $(am_add_mvptree_audio_OBJECTS)
 @HAVE_AUDIO_HASH_TRUE@add_mvptree_audio_DEPENDENCIES =  \
 @HAVE_AUDIO_HASH_TRUE@	$(top_srcdir)/src/libpHash.la
-am_addmvptreedct_OBJECTS = add_mvptree_dct.$(OBJEXT)
+am__addmvptreedct_SOURCES_DIST = add_mvptree_dct.cpp
+@HAVE_IMAGE_HASH_TRUE@am_addmvptreedct_OBJECTS =  \
+@HAVE_IMAGE_HASH_TRUE@	add_mvptree_dct.$(OBJEXT)
 addmvptreedct_OBJECTS = $(am_addmvptreedct_OBJECTS)
-addmvptreedct_DEPENDENCIES = $(top_srcdir)/src/libpHash.la
+@HAVE_IMAGE_HASH_TRUE@addmvptreedct_DEPENDENCIES =  \
+@HAVE_IMAGE_HASH_TRUE@	$(top_srcdir)/src/libpHash.la
 am__build_mvptree_audio_SOURCES_DIST = build_mvptree_audio.cpp
 @HAVE_AUDIO_HASH_TRUE@am_build_mvptree_audio_OBJECTS =  \
 @HAVE_AUDIO_HASH_TRUE@	build_mvptree_audio.$(OBJEXT)
 build_mvptree_audio_OBJECTS = $(am_build_mvptree_audio_OBJECTS)
 @HAVE_AUDIO_HASH_TRUE@build_mvptree_audio_DEPENDENCIES =  \
 @HAVE_AUDIO_HASH_TRUE@	$(top_srcdir)/src/libpHash.la
-am_buildmvptreedct_OBJECTS = buildmvptree_dctimage.$(OBJEXT)
+am__buildmvptreedct_SOURCES_DIST = buildmvptree_dctimage.cpp
+@HAVE_IMAGE_HASH_TRUE@am_buildmvptreedct_OBJECTS =  \
+@HAVE_IMAGE_HASH_TRUE@	buildmvptree_dctimage.$(OBJEXT)
 buildmvptreedct_OBJECTS = $(am_buildmvptreedct_OBJECTS)
-buildmvptreedct_DEPENDENCIES = $(top_srcdir)/src/libpHash.la
+@HAVE_IMAGE_HASH_TRUE@buildmvptreedct_DEPENDENCIES =  \
+@HAVE_IMAGE_HASH_TRUE@	$(top_srcdir)/src/libpHash.la
 am__query_mvptree_audio_SOURCES_DIST = query_mvptree_audio.cpp
 @HAVE_AUDIO_HASH_TRUE@am_query_mvptree_audio_OBJECTS =  \
 @HAVE_AUDIO_HASH_TRUE@	query_mvptree_audio.$(OBJEXT)
 query_mvptree_audio_OBJECTS = $(am_query_mvptree_audio_OBJECTS)
 @HAVE_AUDIO_HASH_TRUE@query_mvptree_audio_DEPENDENCIES =  \
 @HAVE_AUDIO_HASH_TRUE@	$(top_srcdir)/src/libpHash.la
-am_querymvptreedct_OBJECTS = query_mvptree_dct.$(OBJEXT)
+am__querymvptreedct_SOURCES_DIST = query_mvptree_dct.cpp
+@HAVE_IMAGE_HASH_TRUE@am_querymvptreedct_OBJECTS =  \
+@HAVE_IMAGE_HASH_TRUE@	query_mvptree_dct.$(OBJEXT)
 querymvptreedct_OBJECTS = $(am_querymvptreedct_OBJECTS)
-querymvptreedct_DEPENDENCIES = $(top_srcdir)/src/libpHash.la
+@HAVE_IMAGE_HASH_TRUE@querymvptreedct_DEPENDENCIES =  \
+@HAVE_IMAGE_HASH_TRUE@	$(top_srcdir)/src/libpHash.la
 am__test_audio_SOURCES_DIST = test_audiophash.cpp
 @HAVE_AUDIO_HASH_TRUE@am_test_audio_OBJECTS =  \
 @HAVE_AUDIO_HASH_TRUE@	test_audiophash.$(OBJEXT)
@@ -138,12 +148,12 @@ SOURCES = $(add_mvptree_audio_SOURCES) $(addmvptreedct_SOURCES) \
 	$(test_mhimagehash_SOURCES) $(test_texthash_SOURCES) \
 	$(test_texthash2_SOURCES) $(test_video_SOURCES)
 DIST_SOURCES = $(am__add_mvptree_audio_SOURCES_DIST) \
-	$(addmvptreedct_SOURCES) \
+	$(am__addmvptreedct_SOURCES_DIST) \
 	$(am__build_mvptree_audio_SOURCES_DIST) \
-	$(buildmvptreedct_SOURCES) \
+	$(am__buildmvptreedct_SOURCES_DIST) \
 	$(am__query_mvptree_audio_SOURCES_DIST) \
-	$(querymvptreedct_SOURCES) $(am__test_audio_SOURCES_DIST) \
-	$(am__test_image_SOURCES_DIST) \
+	$(am__querymvptreedct_SOURCES_DIST) \
+	$(am__test_audio_SOURCES_DIST) $(am__test_image_SOURCES_DIST) \
 	$(am__test_mhimagehash_SOURCES_DIST) $(test_texthash_SOURCES) \
 	$(test_texthash2_SOURCES) $(am__test_video_SOURCES_DIST)
 ETAGS = etags
@@ -258,7 +268,6 @@ libdir = @libdir@
 libexecdir = @libexecdir@
 localedir = @localedir@
 localstatedir = @localstatedir@
-lt_ECHO = @lt_ECHO@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
@@ -275,12 +284,6 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 INCLUDES = -I$(top_srcdir)/src
-buildmvptreedct_SOURCES = buildmvptree_dctimage.cpp
-buildmvptreedct_LDADD = $(top_srcdir)/src/libpHash.la
-addmvptreedct_SOURCES = add_mvptree_dct.cpp
-addmvptreedct_LDADD = $(top_srcdir)/src/libpHash.la
-querymvptreedct_SOURCES = query_mvptree_dct.cpp
-querymvptreedct_LDADD = $(top_srcdir)/src/libpHash.la
 test_texthash_SOURCES = test_texthash.cpp
 test_texthash_LDADD = $(top_srcdir)/src/libpHash.la
 test_texthash2_SOURCES = test_texthash2.cpp
@@ -293,6 +296,12 @@ test_texthash2_LDADD = $(top_srcdir)/src/libpHash.la
 @HAVE_AUDIO_HASH_TRUE@add_mvptree_audio_LDADD = $(top_srcdir)/src/libpHash.la
 @HAVE_AUDIO_HASH_TRUE@query_mvptree_audio_SOURCES = query_mvptree_audio.cpp
 @HAVE_AUDIO_HASH_TRUE@query_mvptree_audio_LDADD = $(top_srcdir)/src/libpHash.la
+@HAVE_IMAGE_HASH_TRUE@buildmvptreedct_SOURCES = buildmvptree_dctimage.cpp
+@HAVE_IMAGE_HASH_TRUE@buildmvptreedct_LDADD = $(top_srcdir)/src/libpHash.la
+@HAVE_IMAGE_HASH_TRUE@addmvptreedct_SOURCES = add_mvptree_dct.cpp
+@HAVE_IMAGE_HASH_TRUE@addmvptreedct_LDADD = $(top_srcdir)/src/libpHash.la
+@HAVE_IMAGE_HASH_TRUE@querymvptreedct_SOURCES = query_mvptree_dct.cpp
+@HAVE_IMAGE_HASH_TRUE@querymvptreedct_LDADD = $(top_srcdir)/src/libpHash.la
 @HAVE_IMAGE_HASH_TRUE@test_image_SOURCES = test_imagephash.cpp
 @HAVE_IMAGE_HASH_TRUE@test_image_LDADD = $(top_srcdir)/src/libpHash.la
 @HAVE_IMAGE_HASH_TRUE@test_mhimagehash_SOURCES = test_mhimagehash.cpp

@@ -25,8 +25,6 @@
 #ifndef _PHASH_H
 #define _PHASH_H
 
-#define cimg_debug 0
-#define cimg_display 0
 
 #include <pHash-config.h>
 #include <limits.h>
@@ -39,11 +37,19 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define __STDC_CONSTANT_MACROS
 
 #include <stdint.h>
+
+#if defined(HAVE_IMAGE_HASH) || defined(HAVE_VIDEO_HASH)
+#define cimg_debug 0
+#define cimg_display 0
 #include "CImg.h"
+using namespace cimg_library;
+#endif
 
 #ifdef HAVE_PTHREAD
 #include <pthread.h>
@@ -54,7 +60,6 @@
 #include <sys/sysctl.h>
 #endif
 
-using namespace cimg_library;
 using namespace std;
 
 #define SQRT_TWO 1.4142135623730950488016887242097
@@ -168,11 +173,13 @@ void ph_mvp_init(MVPFile *m);
 
 /*! /brief Radon Projection info
  */
+#ifdef HAVE_IMAGE_HASH
 typedef struct ph_projections {
     CImg<uint8_t> *R;           //contains projections of image of angled lines through center
     int *nb_pix_perline;        //the head of int array denoting the number of pixels of each line
     int size;                   //the size of nb_pix_perline
 }Projections;
+#endif
 
 /*! /brief feature vector info
  */
@@ -234,6 +241,7 @@ const char* ph_about();
  *  /param  projs - (out) Projections struct 
  *  /return int value - less than 0 for error
  */
+#ifdef HAVE_IMAGE_HASH
 int ph_radon_projections(const CImg<uint8_t> &img,int N,Projections &projs);
 
 /*! /brief feature vector
@@ -323,10 +331,13 @@ static CImg<float>* ph_dct_matrix(const int N);
  *  /return int value - -1 for failure, 1 for success
  */
 int ph_dct_imagehash(const char* file,ulong64 &hash);
+#endif
 
 #ifdef HAVE_PTHREAD
 DP** ph_dct_image_hashes(char *files[], int count, int threads = 0);
 #endif
+
+#ifdef HAVE_VIDEO_HASH
 static CImgList<uint8_t>* ph_getKeyFramesFromVideo(const char *filename);
 
 ulong64* ph_dct_videohash(const char *filename, int &Length);
@@ -334,6 +345,7 @@ ulong64* ph_dct_videohash(const char *filename, int &Length);
 DP** ph_dct_video_hashes(char *files[], int count, int threads = 0);
 
 double ph_dct_videohash_dist(ulong64 *hashA, int N1, ulong64 *hashB, int N2, int threshold=21);
+#endif
 
 /* ! /brief dct video robust hash
  *   Compute video hash based on the dct of normalized video 32x32x64 cube
@@ -341,6 +353,7 @@ double ph_dct_videohash_dist(ulong64 *hashA, int N1, ulong64 *hashB, int N2, int
  *   /param hash ulong64 value for hash value
  *   /return int value - less than 0 for error
  */
+#ifdef HAVE_IMAGE_HASH
 int ph_hamming_distance(const ulong64 hash1,const ulong64 hash2);
 
 /** /brief create a list of datapoint's directly from a directory of image files
@@ -360,7 +373,7 @@ DP** ph_read_imagehashes(const char *dirname,int capacity, int &count);
 *   /return uint8_t array
 **/
 uint8_t* ph_mh_imagehash(const char *filename, int &N, float alpha=2.0f, float lvl = 1.0f);
-
+#endif
 /** /brief count number bits set in given byte
 *   /param val - uint8_t byte value
 *   /return int value for number of bits set
