@@ -101,7 +101,7 @@ float radialImage_distance(DP *a, DP *b)
         uint8_t *hashB = (uint8_t*)b->hash;
 	double pcc = -1;
 	Digest x = {NULL,hashA, a->hash_length}, y = {NULL, hashB, b->hash_length};
-        ph_crosscorr(x,y,&pcc);
+        ph_crosscorr(x,y,pcc);
 	return (float)pcc;
 
 }
