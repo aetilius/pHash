@@ -1,3 +1,4 @@
+package org.phash;
 import java.io.*;
 
 public class pHash
@@ -7,6 +8,7 @@ public class pHash
 	public native static AudioHash audioHash(String file);
 	public native static DCTImageHash dctImageHash(String file);
 	public native static MHImageHash mhImageHash(String file);
+	public native static RadialImageHash radialImageHash(String file);
 	public native static TextHash textHash(String file);
 	public native static double imageDistance(ImageHash hash1, ImageHash hash2);
 	public native static double audioDistance(AudioHash hash1, AudioHash hash2);

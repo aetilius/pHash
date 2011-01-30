@@ -1,3 +1,4 @@
+package org.phash;
 public class MVPTree
 {
 	protected String mvpFile;
