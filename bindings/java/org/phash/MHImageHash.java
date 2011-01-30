@@ -1,4 +1,5 @@
+package org.phash;
 public class MHImageHash extends ImageHash
 {
-	byte[] hash;
+	public byte[] hash;
 }
