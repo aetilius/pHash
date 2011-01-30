@@ -1,3 +1,7 @@
+0.9.4
+---
+01.29.2011 move java bindings into phash package, add radial hash to jni, fix pthread 
+	   compilation of examples, fix for complex.h on Mac OS X.
 01.04.2011 remove old mvp functions (use libmvptree in separate download).
 
 0.9.2
