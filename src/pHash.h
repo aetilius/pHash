@@ -107,6 +107,42 @@ typedef struct ph_slice {
     void *hash_params;
 } slice;
 
+class BinHash {
+
+	public:
+
+	BinHash(uint32_t bytelength)
+	: bytelength(bytelength)
+	{
+		hash = (uint8_t*)calloc(sizeof(uint8_t), bytelength);
+		byteidx = 0;
+		bitmask = 128;
+	}
+
+	uint8_t *hash;
+	uint32_t bytelength;
+	uint32_t byteidx; // used by addbit()
+	uint8_t bitmask;  // used by addbit()
+
+	/*
+	 * add a single bit to hash. the bits are 
+	 * written from left to right.
+	 */
+	int addbit(uint8_t bit)
+	{
+		if (bitmask == 0) 
+		{
+			bitmask = 128; // reset bitmask to "10000000"
+			byteidx++;     // jump to next byte in array
+		}
+
+		if (byteidx >= bytelength) return -1;
+		
+		if (bit == 1) *(hash + byteidx) |= bitmask;
+		bitmask >>=1;
+		return 0;
+	}	
+};
 
 /*! /brief Radon Projection info
  */
@@ -268,6 +304,8 @@ static CImg<float>* ph_dct_matrix(const int N);
  *  /return int value - -1 for failure, 1 for success
  */
 int ph_dct_imagehash(const char* file,ulong64 &hash);
+
+int ph_bmb_imagehash(const char *file, uint8_t method, BinHash **ret_hash);
 #endif
 
 #ifdef HAVE_PTHREAD
