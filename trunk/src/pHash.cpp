@@ -357,6 +357,143 @@ CImg<float>* ph_dct_matrix(const int N){
     return ptr_matrix;
 }
 
+int ph_bmb_imagehash(const char *file, uint8_t method, BinHash **ret_hash)
+{
+    CImg<uint8_t> img;
+    const uint8_t *ptrsrc;  // source pointer (img)
+    uint8_t *block;
+    int pcol;  // "pointer" to pixel col (x)
+    int prow;  // "pointer" to pixel row (y)
+    int blockidx = 0;  //current idx of block begin processed.
+    double median;  // median value of mean_vals
+    const int preset_size_x=256;
+    const int preset_size_y=256;
+    const int blk_size_x=16;
+    const int blk_size_y=16;
+    int pixcolstep = blk_size_x;
+    int pixrowstep = blk_size_y;
+
+    int number_of_blocks;
+    uint32_t bitsize;
+    // number of bytes needed to store bitsize bits.
+    uint32_t bytesize;
+
+    if (!file || !ret_hash){
+        return -1;
+    }
+    try {
+        img.load(file);
+    } catch (CImgIOException ex){
+        return -1;
+    }
+
+    const int blk_size = blk_size_x * blk_size_y;
+    block = (uint8_t*)malloc(sizeof(uint8_t) * blk_size);
+
+    if(!block)
+        return -1;
+
+    switch (img.spectrum()) {
+    case 3 : // from RGB
+        img.RGBtoYCbCr().channel(0);
+        break;
+    default :
+        free(block);
+        return -1;
+    }
+
+    img.resize(preset_size_x, preset_size_y);
+
+    // ~step b
+    ptrsrc = img.data();  // set pointer to beginning of pixel buffer
+
+    if(method == 2) 
+    {
+        pixcolstep /= 2;
+        pixrowstep /= 2;
+
+        number_of_blocks = 
+            ((preset_size_x / blk_size_x) * 2 - 1) * 
+            ((preset_size_y / blk_size_y) * 2 - 1);
+    } else {
+        number_of_blocks = 
+            preset_size_x / blk_size_x * 
+            preset_size_y / blk_size_y;
+    }
+
+    bitsize= number_of_blocks;
+    bytesize = bitsize / 8;
+
+    double *mean_vals = new double[number_of_blocks];
+
+    /*
+    * pixel row < block < block row < image
+    * 
+    * The pixel rows of a block are copied consecutively
+    * into the block buffer (using memcpy). When a block is
+    * finished, the next block in the block row is processed.
+    * After finishing a block row, the processing of the next
+    * block row is started. An image consists of an arbitrary
+    * number of block rows.
+    */
+
+    /* image (multiple rows of blocks) */
+    for(prow = 0;prow<=preset_size_y-blk_size_y;prow += pixrowstep)
+    {
+
+        /* block row */
+        for(pcol = 0;pcol<=preset_size_x-blk_size_x;pcol += pixcolstep)
+        {
+
+            // idx for array holding one block.
+            int blockpos = 0;
+
+            /* block */
+
+            // i is used to address the different 
+            // pixel rows of a block
+            for(int i=0 ; i < blk_size_y; i++)
+            {
+                ptrsrc = img.data(pcol, prow + i);
+                memcpy(block + blockpos, ptrsrc, blk_size_x);
+                blockpos += blk_size_x;
+            }
+
+            mean_vals[blockidx] = CImg<uint8_t>(block,blk_size).mean();
+            blockidx++;
+
+        }
+        /* reset pixel pointer to first pixel col */
+        pcol = 0;
+    }
+
+    /* calculate the median */
+    median = CImg<double>(mean_vals, number_of_blocks).median();
+
+    /* step e */
+    BinHash *hash = new BinHash(bytesize);
+
+    if(!hash)
+    {
+        ret_hash = NULL;
+        return -1;
+    }
+
+    *ret_hash = hash;
+    for(int i = 0; i < bitsize; i++)
+    {
+        if(mean_vals[i] < median) 
+        {
+            hash->addbit(0);
+        } else {
+            hash->addbit(1);
+        }
+    }	
+    delete[] mean_vals;
+    free(block);
+    return 0;
+}
+
 int ph_dct_imagehash(const char* file,ulong64 &hash){
 
     if (!file){
