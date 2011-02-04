@@ -135,6 +135,7 @@ struct BinHash
 };
 
 BinHash* _ph_bmb_new(uint32_t bytelength);
+void ph_bmb_free(BinHash *binHash);
 
 /*! /brief Radon Projection info
  */

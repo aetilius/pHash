@@ -367,6 +367,15 @@ BinHash* _ph_bmb_new(uint32_t bytelength)
     return bh;
 }
 
+void ph_bmb_free(BinHash *bh)
+{
+	if(bh)
+	{
+		free(bh->hash);
+		free(bh);
+	}
+}
+
 int ph_bmb_imagehash(const char *file, uint8_t method, BinHash **ret_hash)
 {
     CImg<uint8_t> img;
