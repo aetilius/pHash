@@ -107,18 +107,8 @@ typedef struct ph_slice {
     void *hash_params;
 } slice;
 
-class BinHash {
-
-	public:
-
-	BinHash(uint32_t bytelength)
-	: bytelength(bytelength)
-	{
-		hash = (uint8_t*)calloc(sizeof(uint8_t), bytelength);
-		byteidx = 0;
-		bitmask = 128;
-	}
-
+struct BinHash 
+{
 	uint8_t *hash;
 	uint32_t bytelength;
 	uint32_t byteidx; // used by addbit()
@@ -143,6 +133,8 @@ class BinHash {
 		return 0;
 	}	
 };
+
+BinHash* _ph_bmb_new(uint32_t bytelength);
 
 /*! /brief Radon Projection info
  */

@@ -27,5 +27,8 @@ int main(int argc, char **argv)
 	double dist = ph_hammingdistance2(hash_a->hash, hash_a->bytelength, hash_b->hash, hash_b->bytelength);
 	printf("distance = %g\n", dist);
 
+    free(hash_a);
+    free(hash_b);
+
     return 0;
 }
