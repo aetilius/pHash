@@ -357,6 +357,16 @@ CImg<float>* ph_dct_matrix(const int N){
     return ptr_matrix;
 }
 
+BinHash* _ph_bmb_new(uint32_t bytelength)
+{
+    BinHash* bh = (BinHash*)malloc(sizeof(BinHash));
+    bh->bytelength = bytelength;
+	bh->hash = (uint8_t*)calloc(sizeof(uint8_t), bytelength);
+	bh->byteidx = 0;
+	bh->bitmask = 128;
+    return bh;
+}
+
 int ph_bmb_imagehash(const char *file, uint8_t method, BinHash **ret_hash)
 {
     CImg<uint8_t> img;
@@ -471,7 +481,7 @@ int ph_bmb_imagehash(const char *file, uint8_t method, BinHash **ret_hash)
     median = CImg<double>(mean_vals, number_of_blocks).median();
 
     /* step e */
-    BinHash *hash = new BinHash(bytesize);
+    BinHash *hash = _ph_bmb_new(bytesize);
 
     if(!hash)
     {
