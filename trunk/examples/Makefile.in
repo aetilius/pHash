@@ -37,7 +37,7 @@ host_triplet = @host@
 noinst_PROGRAMS = test_texthash$(EXEEXT) test_texthash2$(EXEEXT) \
 	$(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3)
 @HAVE_AUDIO_HASH_TRUE@am__append_1 = test_audio 
-@HAVE_IMAGE_HASH_TRUE@am__append_2 = test_image test_mhimagehash 
+@HAVE_IMAGE_HASH_TRUE@am__append_2 = test_image test_mhimagehash test_bmbimagehash
 @HAVE_VIDEO_HASH_TRUE@am__append_3 = test_video
 subdir = examples
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
@@ -53,7 +53,8 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 @HAVE_AUDIO_HASH_TRUE@am__EXEEXT_1 = test_audio$(EXEEXT)
 @HAVE_IMAGE_HASH_TRUE@am__EXEEXT_2 = test_image$(EXEEXT) \
-@HAVE_IMAGE_HASH_TRUE@	test_mhimagehash$(EXEEXT)
+@HAVE_IMAGE_HASH_TRUE@	test_mhimagehash$(EXEEXT) \
+@HAVE_IMAGE_HASH_TRUE@	test_bmbimagehash$(EXEEXT)
 @HAVE_VIDEO_HASH_TRUE@am__EXEEXT_3 = test_video$(EXEEXT)
 PROGRAMS = $(noinst_PROGRAMS)
 am__test_audio_SOURCES_DIST = test_audiophash.cpp
@@ -62,6 +63,12 @@ am__test_audio_SOURCES_DIST = test_audiophash.cpp
 test_audio_OBJECTS = $(am_test_audio_OBJECTS)
 @HAVE_AUDIO_HASH_TRUE@test_audio_DEPENDENCIES =  \
 @HAVE_AUDIO_HASH_TRUE@	$(top_srcdir)/src/libpHash.la
+am__test_bmbimagehash_SOURCES_DIST = test_bmbimagehash.cpp
+@HAVE_IMAGE_HASH_TRUE@am_test_bmbimagehash_OBJECTS =  \
+@HAVE_IMAGE_HASH_TRUE@	test_bmbimagehash.$(OBJEXT)
+test_bmbimagehash_OBJECTS = $(am_test_bmbimagehash_OBJECTS)
+@HAVE_IMAGE_HASH_TRUE@test_bmbimagehash_DEPENDENCIES =  \
+@HAVE_IMAGE_HASH_TRUE@	$(top_srcdir)/src/libpHash.la
 am__test_image_SOURCES_DIST = test_imagephash.cpp
 @HAVE_IMAGE_HASH_TRUE@am_test_image_OBJECTS =  \
 @HAVE_IMAGE_HASH_TRUE@	test_imagephash.$(OBJEXT)
@@ -99,10 +106,12 @@ CXXLD = $(CXX)
 CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(test_audio_SOURCES) $(test_image_SOURCES) \
-	$(test_mhimagehash_SOURCES) $(test_texthash_SOURCES) \
-	$(test_texthash2_SOURCES) $(test_video_SOURCES)
+SOURCES = $(test_audio_SOURCES) $(test_bmbimagehash_SOURCES) \
+	$(test_image_SOURCES) $(test_mhimagehash_SOURCES) \
+	$(test_texthash_SOURCES) $(test_texthash2_SOURCES) \
+	$(test_video_SOURCES)
 DIST_SOURCES = $(am__test_audio_SOURCES_DIST) \
+	$(am__test_bmbimagehash_SOURCES_DIST) \
 	$(am__test_image_SOURCES_DIST) \
 	$(am__test_mhimagehash_SOURCES_DIST) $(test_texthash_SOURCES) \
 	$(test_texthash2_SOURCES) $(am__test_video_SOURCES_DIST)
@@ -244,6 +253,8 @@ test_texthash2_LDADD = $(top_srcdir)/src/libpHash.la
 @HAVE_IMAGE_HASH_TRUE@test_image_LDADD = $(top_srcdir)/src/libpHash.la
 @HAVE_IMAGE_HASH_TRUE@test_mhimagehash_SOURCES = test_mhimagehash.cpp
 @HAVE_IMAGE_HASH_TRUE@test_mhimagehash_LDADD = $(top_srcdir)/src/libpHash.la
+@HAVE_IMAGE_HASH_TRUE@test_bmbimagehash_SOURCES = test_bmbimagehash.cpp
+@HAVE_IMAGE_HASH_TRUE@test_bmbimagehash_LDADD = $(top_srcdir)/src/libpHash.la
 @HAVE_VIDEO_HASH_TRUE@test_video_SOURCES = test_dctvideohash.cpp
 @HAVE_VIDEO_HASH_TRUE@test_video_LDADD = $(top_srcdir)/src/libpHash.la
 all: all-am
@@ -292,6 +303,9 @@ clean-noinstPROGRAMS:
 test_audio$(EXEEXT): $(test_audio_OBJECTS) $(test_audio_DEPENDENCIES) 
 	@rm -f test_audio$(EXEEXT)
 	$(CXXLINK) $(test_audio_OBJECTS) $(test_audio_LDADD) $(LIBS)
+test_bmbimagehash$(EXEEXT): $(test_bmbimagehash_OBJECTS) $(test_bmbimagehash_DEPENDENCIES) 
+	@rm -f test_bmbimagehash$(EXEEXT)
+	$(CXXLINK) $(test_bmbimagehash_OBJECTS) $(test_bmbimagehash_LDADD) $(LIBS)
 test_image$(EXEEXT): $(test_image_OBJECTS) $(test_image_DEPENDENCIES) 
 	@rm -f test_image$(EXEEXT)
 	$(CXXLINK) $(test_image_OBJECTS) $(test_image_LDADD) $(LIBS)
@@ -315,6 +329,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_audiophash.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_bmbimagehash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_dctvideohash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_imagephash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_mhimagehash.Po@am__quote@
