@@ -266,7 +266,10 @@ JNIEXPORT jboolean JNICALL Java_org_phash_MVPTree_create
 	for(int i = 0; i < hashLen; i++)
 	{
 		if(hashlist[i])
-			ph_free_datapoint(hashlist[i]);
+		{
+			free(hashlist[i]->hash);
+			free(hashlist[i]->id);
+		}
 	}
 
 	free(hashlist);
