@@ -67,7 +67,7 @@ int ReadFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList, unsigned int low_
 	    // Find the video stream
 	    for(i=0; i<st_info->pFormatCtx->nb_streams; i++)
 	    {
-		if(st_info->pFormatCtx->streams[i]->codec->codec_type==CODEC_TYPE_VIDEO) 
+		if(st_info->pFormatCtx->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO) 
 	        {
 		    st_info->videoStream=i;
 		    break;
@@ -131,7 +131,20 @@ int ReadFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList, unsigned int low_
           if (result < 0)
 	      break;
     	  if(packet.stream_index==st_info->videoStream) {
-	      avcodec_decode_video(st_info->pCodecCtx, pFrame, &frameFinished,packet.data, packet.size);
+
+		AVPacket avpkt; 
+		av_init_packet(&avpkt); 
+		avpkt.data = packet.data; 
+		avpkt.size = packet.size; 
+		// 
+		// HACK for CorePNG to decode as normal PNG by default 
+		// same method used by ffmpeg 
+		avpkt.flags = AV_PKT_FLAG_KEY; 
+	      
+	 	avcodec_decode_video2(st_info->pCodecCtx, pFrame, &frameFinished,&avpkt);
+
+	      // avcodec_decode_video(st_info->pCodecCtx, pFrame, &frameFinished,packet.data, packet.size);
+
 	      if(frameFinished) {
 		  if (st_info->current_index == st_info->next_index){
 		      st_info->next_index += st_info->step;
@@ -213,7 +226,7 @@ int NextFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList)
 		// Find the video stream
 		for(i=0; i< st_info->pFormatCtx->nb_streams; i++)
 		{
-			if(st_info->pFormatCtx->streams[i]->codec->codec_type==CODEC_TYPE_VIDEO) 
+			if(st_info->pFormatCtx->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO) 
 			{
 				st_info->videoStream=i;
 				break;
@@ -279,8 +292,19 @@ int NextFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList)
 			break;
 		if(packet.stream_index == st_info->videoStream) {
 			
-		    avcodec_decode_video(st_info->pCodecCtx, pFrame, &frameFinished,
-		                         packet.data,packet.size);
+ 		AVPacket avpkt;
+                av_init_packet(&avpkt);
+                avpkt.data = packet.data;
+                avpkt.size = packet.size;
+                //
+                // HACK for CorePNG to decode as normal PNG by default
+                // same method used by ffmpeg
+                avpkt.flags = AV_PKT_FLAG_KEY;
+
+                avcodec_decode_video2(st_info->pCodecCtx, pFrame, &frameFinished,&avpkt);
+
+		   // avcodec_decode_video(st_info->pCodecCtx, pFrame, &frameFinished,
+		   //                      packet.data,packet.size);
  
 		    if(frameFinished) {
 		    	if (st_info->current_index == st_info->next_index)
@@ -365,7 +389,7 @@ long GetNumberVideoFrames(const char *file)
 	int videoStream=-1;
 	for(unsigned int i=0; i<pFormatCtx->nb_streams; i++)
 	{
-	     if(pFormatCtx->streams[i]->codec->codec_type==CODEC_TYPE_VIDEO) 
+	     if(pFormatCtx->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO) 
 	     {
 		    videoStream=i;
 		    break;
@@ -407,7 +431,7 @@ float fps(const char *filename)
 	int videoStream=-1;
 	for(unsigned int i=0; i<pFormatCtx->nb_streams; i++)
 	{
-		     if(pFormatCtx->streams[i]->codec->codec_type==CODEC_TYPE_VIDEO) 
+		     if(pFormatCtx->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO) 
 		     {
 			    videoStream=i;
 			    break;
