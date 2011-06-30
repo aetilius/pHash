@@ -140,7 +140,7 @@ zend_module_entry pHash_module_entry = {
 	PHP_RINIT(pHash),     /* Replace with NULL if there is nothing to do at request start */
 	PHP_RSHUTDOWN(pHash), /* Replace with NULL if there is nothing to do at request end   */
 	PHP_MINFO(pHash),
-	"0.9.1", 
+	"0.9.4", 
 	STANDARD_MODULE_PROPERTIES
 };
 /* }}} */
@@ -217,7 +217,7 @@ PHP_MINFO_FUNCTION(pHash)
 	php_printf("' align='right' alt='image' border='0'>\n");
 
 	php_printf("<p>pHash</p>\n");
-	php_printf("<p>Version 0.9.1beta (2010-06-12)</p>\n");
+	php_printf("<p>Version 0.9.4beta (2011-06-04)</p>\n");
 	php_printf("<p><b>Authors:</b></p>\n");
 	php_printf("<p>Evan Klinger &lt;eklinger@phash.org&gt; (lead)</p>\n");
 	php_info_print_box_end();
