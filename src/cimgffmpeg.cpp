@@ -54,7 +54,7 @@ int ReadFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList, unsigned int low_
 	    av_register_all();
 	
 	    // Open video file
-	    if(av_open_input_file(&st_info->pFormatCtx, st_info->filename, NULL, 0, NULL)!=0)
+	    if(avformat_open_input(&st_info->pFormatCtx, st_info->filename, NULL, NULL)!=0)
 		return -1 ; // Couldn't open file
 	 
 	    // Retrieve stream information
