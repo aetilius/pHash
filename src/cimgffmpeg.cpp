@@ -29,7 +29,7 @@ void vfinfo_close(VFInfo  *vfinfo){
     if (vfinfo->pFormatCtx != NULL){
 	avcodec_close(vfinfo->pCodecCtx);
 	vfinfo->pCodecCtx = NULL;
-	av_close_input_file(vfinfo->pFormatCtx);
+	avformat_close_input(&vfinfo->pFormatCtx);
 	vfinfo->pFormatCtx = NULL;
 	vfinfo->width = -1;
 	vfinfo->height = -1;
@@ -58,7 +58,7 @@ int ReadFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList, unsigned int low_
 		return -1 ; // Couldn't open file
 	 
 	    // Retrieve stream information
-	    if(av_find_stream_info(st_info->pFormatCtx)<0)
+	    if(avformat_find_stream_info(st_info->pFormatCtx,NULL)<0)
 		return -1; // Couldn't find stream information
 	
 	    //dump_format(pFormatCtx,0,NULL,0);//debugging function to print infomation about format
@@ -90,7 +90,7 @@ int ReadFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList, unsigned int low_
 	  	return -1 ; // Codec not found
 	    }
 	    // Open codec
-	    if(avcodec_open(st_info->pCodecCtx, st_info->pCodec)<0)
+	    if(avcodec_open2(st_info->pCodecCtx, st_info->pCodec,NULL)<0)
 		return -1; // Could not open codec
 
 	    st_info->height = (st_info->height<=0) ? st_info->pCodecCtx->height : st_info->height;
@@ -122,6 +122,9 @@ int ReadFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList, unsigned int low_
 	int frameFinished;
 	int size = 0;
 	
+
+        int channels = ffmpeg_pixfmt == PIX_FMT_GRAY8 ? 1 : 3;
+
 	AVPacket packet;
 	int result = 1;
 	CImg<uint8_t> next_image;
@@ -150,18 +153,10 @@ int ReadFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList, unsigned int low_
 		      st_info->next_index += st_info->step;
 		      sws_scale(c, pFrame->data, pFrame->linesize, 0, st_info->pCodecCtx->height, pConvertedFrame->data, pConvertedFrame->linesize);
 			
-                      if (ffmpeg_pixfmt == PIX_FMT_GRAY8) {
-			  next_image.assign(pConvertedFrame->data[0],1,st_info->width,st_info->height,1,true);
-			  next_image.permute_axes("yzcx");
-			  pFrameList->push_back(next_image);
-			  size++;
-		      }
-		      else if (ffmpeg_pixfmt == PIX_FMT_RGB24){
-			  next_image.assign(*pConvertedFrame->data,3,st_info->width,st_info->height,1,true);
-			  next_image.permute_axes("yzcx");
-			  pFrameList->push_back(next_image);
-			  size++;
-		      }
+		  next_image.assign(*pConvertedFrame->data, channels,st_info->width,st_info->height,1,true);
+		  next_image.permute_axes("yzcx");
+		  pFrameList->push_back(next_image);
+		  size++;
 		  }    
 		  st_info->current_index++;
 	      }
@@ -172,7 +167,7 @@ int ReadFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList, unsigned int low_
 
 	if (result < 0){
 	    avcodec_close(st_info->pCodecCtx);
-	    av_close_input_file(st_info->pFormatCtx);
+	    avformat_close_input(&st_info->pFormatCtx);
 	    st_info->pFormatCtx = NULL;
 	    st_info->pCodecCtx = NULL;
 	    st_info->width = -1;
@@ -212,12 +207,12 @@ int NextFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList)
 
 		av_log_set_level(AV_LOG_QUIET);
 		// Open video file
- 		if(av_open_input_file(&(st_info->pFormatCtx),st_info->filename,NULL,0,NULL)!=0){
+ 		if(avformat_open_input(&st_info->pFormatCtx,st_info->filename,NULL,NULL)!=0){
 			return -1 ; // Couldn't open file
 		}
 	 
 		// Retrieve stream information
-		if(av_find_stream_info(st_info->pFormatCtx)<0){
+		if(avformat_find_stream_info(st_info->pFormatCtx,NULL)<0){
 			return -1; // Couldn't find stream information
 		}
 
@@ -247,7 +242,7 @@ int NextFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList)
 			return -1 ; // Codec not found
 		}
 		// Open codec
-		if(avcodec_open(st_info->pCodecCtx, st_info->pCodec)<0){
+		if(avcodec_open2(st_info->pCodecCtx, st_info->pCodec,NULL)<0){
 		    return -1; // Could not open codec
 		}
 		
@@ -292,6 +287,7 @@ int NextFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList)
 			break;
 		if(packet.stream_index == st_info->videoStream) {
 			
+		int channels = ffmpeg_pixfmt == PIX_FMT_GRAY8 ? 1 : 3;
  		AVPacket avpkt;
                 av_init_packet(&avpkt);
                 avpkt.data = packet.data;
@@ -313,18 +309,10 @@ int NextFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList)
 			   
 			    sws_scale(c, pFrame->data, pFrame->linesize, 0, st_info->pCodecCtx->height, pConvertedFrame->data, pConvertedFrame->linesize);
 				   	
-			    if (ffmpeg_pixfmt == PIX_FMT_RGB24){   
-				next_image.assign(*pConvertedFrame->data,3,st_info->width,st_info->height,1,true);
+				next_image.assign(*pConvertedFrame->data, channels, st_info->width,st_info->height,1,true);
 				next_image.permute_axes("yzcx");
 				pFrameList->push_back(next_image);
 				size++;
-			    }
-			    else if (ffmpeg_pixfmt == PIX_FMT_GRAY8){
-				next_image.assign(pConvertedFrame->data[0],1,st_info->width,st_info->height,1,true);
-				next_image.permute_axes("yzcx");
-				pFrameList->push_back(next_image);
-				size++;
-			    }
 				   	 
 		    	}    
 				st_info->current_index++;
@@ -344,7 +332,7 @@ int NextFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList)
 	if (result < 0)
 	{
 		avcodec_close(st_info->pCodecCtx);
-		av_close_input_file(st_info->pFormatCtx);
+		avformat_close_input(&st_info->pFormatCtx);
 		st_info->pCodecCtx = NULL;
 		st_info->pFormatCtx = NULL;
 		st_info->pCodec = NULL;
@@ -360,14 +348,14 @@ int GetNumberStreams(const char *file)
 	 av_log_set_level(AV_LOG_QUIET);
 	 av_register_all();
 	// Open video file
-	if (av_open_input_file(&pFormatCtx, file, NULL, 0, NULL))
+	if (avformat_open_input(&pFormatCtx, file, NULL, NULL))
 	  return -1 ; // Couldn't open file
 		 
 	// Retrieve stream information
-	if(av_find_stream_info(pFormatCtx)<0)
+	if(avformat_find_stream_info(pFormatCtx, NULL)<0)
 	  return -1; // Couldn't find stream information
 	int result = pFormatCtx->nb_streams;
-	av_close_input_file(pFormatCtx);
+	avformat_close_input(&pFormatCtx);
 	return result;
 }
 
@@ -378,11 +366,11 @@ long GetNumberVideoFrames(const char *file)
     av_log_set_level(AV_LOG_QUIET);
 	av_register_all();
 	// Open video file
-	if (av_open_input_file(&pFormatCtx, file, NULL, 0, NULL))
+	if (avformat_open_input(&pFormatCtx, file, NULL, NULL))
 	  return -1 ; // Couldn't open file
 			 
 	// Retrieve stream information
-	if(av_find_stream_info(pFormatCtx)<0)
+	if(avformat_find_stream_info(pFormatCtx, NULL)<0)
 	  return -1; // Couldn't find stream information
 		
 	// Find the first video stream
@@ -402,7 +390,7 @@ long GetNumberVideoFrames(const char *file)
         nb_frames = str->nb_frames;
 	if (nb_frames > 0)
 	{   //the easy way if value is already contained in struct 
-	    av_close_input_file(pFormatCtx);
+	    avformat_close_input(&pFormatCtx);
 	    return nb_frames;
 	}
 	else { // frames must be counted
@@ -412,7 +400,7 @@ long GetNumberVideoFrames(const char *file)
 		 int timebase = str->time_base.den / str->time_base.num;
                if (nb_frames <= 0)
                        nb_frames = str->duration/timebase;
-		av_close_input_file(pFormatCtx); 
+		avformat_close_input(&pFormatCtx); 
 		return nb_frames;
 	}
 }
@@ -423,11 +411,11 @@ float fps(const char *filename)
 	AVFormatContext *pFormatCtx;
 	
 	// Open video file
-	if (av_open_input_file(&pFormatCtx, filename, NULL, 0, NULL))
+	if (avformat_open_input(&pFormatCtx, filename, NULL, NULL))
 	  return -1 ; // Couldn't open file
 				 
 	// Retrieve stream information
-	if(av_find_stream_info(pFormatCtx)<0)
+	if(avformat_find_stream_info(pFormatCtx,NULL)<0)
 	  return -1; // Couldn't find stream information
 			
 	// Find the first video stream
@@ -447,7 +435,7 @@ float fps(const char *filename)
 	int den = (pFormatCtx->streams[videoStream]->r_frame_rate).den;
 	result = num/den;
 
-	av_close_input_file(pFormatCtx);
+	avformat_close_input(&pFormatCtx);
 	
 	return result;
 
