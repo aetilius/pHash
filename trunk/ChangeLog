@@ -1,3 +1,7 @@
+0.9.6
+---
+Code cleanup and fixes for autotools
+
 0.9.5
 ---
 Update to remove FFmpeg deprecated functions and use new API
