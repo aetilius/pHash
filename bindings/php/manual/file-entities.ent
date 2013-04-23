@@ -1,4 +1,6 @@
 <!ENTITY reference.pHash.reference SYSTEM './pHash/reference.xml'>
+<!ENTITY reference.pHash.constants SYSTEM './pHash/constants.xml'>
+<!ENTITY reference.pHash.ini SYSTEM './pHash/ini.xml'>
 <!ENTITY reference.pHash.configure SYSTEM './pHash/configure.xml'>
 <!ENTITY reference.pHash.functions.ph-dct-videohash SYSTEM './pHash/functions/ph-dct-videohash.xml'>
 <!ENTITY reference.pHash.functions.ph-dct-imagehash SYSTEM './pHash/functions/ph-dct-imagehash.xml'>

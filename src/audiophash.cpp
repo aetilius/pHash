@@ -37,7 +37,7 @@ int ph_count_samples(const char *filename, int sr,int channels){
     sf_info.format=0;
     SNDFILE *sndfile = sf_open(filename, SFM_READ, &sf_info);
     if (sndfile == NULL){
-	return NULL;
+	return -1;
     }
     int count = sf_info.frames;
     sf_close(sndfile);

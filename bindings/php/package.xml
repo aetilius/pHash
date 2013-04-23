@@ -8,7 +8,7 @@
 none
   </description>
 
-  <license>GPL3</license>
+  <license>PHP</license>
 
   <configureoptions>
    <configureoption name="with-pHash" default="autodetect" prompt="pHash installation directory?" />
@@ -24,10 +24,10 @@ none
   </maintainers>
 
   <release>
-    <version>0.9.4</version>
+    <version>0.9.2</version>
     <state>beta</state>
     <notes>unknown</notes>
-    <date>2011-06-04</date>
+    <date>2013-04-23</date>
   </release>
   <changelog>
 

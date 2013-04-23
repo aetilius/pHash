@@ -3,7 +3,7 @@
 <extension name="pHash" version="1.1.2">
 <summary>pHash</summary>
  <logo src='pHash.png' mimetype='image/png'/>
-  <license>GPL3</license>
+  <license>PHP</license>
 
  <maintainers>
   <maintainer>        
@@ -14,8 +14,8 @@
  </maintainers>
 
  <release>
-  <version>0.9.1</version>
-  <date>2010-06-12</date>
+  <version>0.9.2</version>
+  <date>2013-04-23</date>
 <state>beta</state>
  </release>
 

@@ -1,6 +1,10 @@
 <?xml version='1.0' encoding='iso-8859-1'?>
 <!-- $Revision: 1.1 $ -->
- <reference id='ref.pHash'>
+<!-- Purpose: utilspec -->
+<!-- Membership: pecl, external -->
+<!-- State: experimental -->
+
+ <reference xml:id='ref.pHash' xmlns='http://docbook.org/ns/docbook' xmlns:xlink='http://www.w3.org/1999/xlink'>
   <title>pHash</title>
   <titleabbrev>pHash</titleabbrev>
 
@@ -12,7 +16,15 @@ none
     </para>
    </section>
    
+   <section xml:id='pHash.requirements'>
+    &reftitle.required;
+    <para>
+     
+    </para>
+   </section>
+
    &reference.pHash.configure;
+   &reference.extname.ini;
 
    <section id='pHash.resources'>
     &reftitle.resources;
@@ -50,11 +62,7 @@ none
     </section>
    </section>
 
-   <section id='pHash.constants'>
-    &reftitle.constants;
-    &no.constants;
-   </section>
-   
+   &reference.extname.constants;
   </partintro>
 
 &reference.pHash.functions;
