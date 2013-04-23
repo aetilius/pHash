@@ -2,17 +2,16 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([pHash],[0.9.4],[support@phash.org])
+AC_INIT([pHash],[0.9.6],[support@phash.org])
 AM_INIT_AUTOMAKE($PACKAGE_NAME,$PACKAGE_VERSION)
 AC_CONFIG_SRCDIR([src/pHash.cpp])
 AC_CONFIG_HEADERS([config.h pHash-config.h])
-# Checks for programs.
 
 m4_include([m4/ax_pthread.m4])
 
+# Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC
-AM_PROG_GCJ
 
 if test -z $DISTRO; then
    AC_CHECK_FILE(/etc/gentoo-release, [DISTRO="gentoo"])
@@ -24,40 +23,36 @@ fi
 
 
 AC_ARG_ENABLE(pthread, [AS_HELP_STRING([--disable-pthread],
-[pthread support @<:@default=no@:>@])], 
-	[PTHREAD="$enableval"],
-	[PTHREAD="yes"])
+[pthread support @<:@default=no@:>@])])
 
-if test "$PTHREAD" = "yes"; then
+AS_IF([test "x$enable_pthread" != "xno"],
+[
 	AX_PTHREAD([
 	LIBS="$PTHREAD_LIBS $LIBS"
-	CPPFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+	CPPFLAGS="$CPPFLAGS $PTHREAD_CFLAGS"
 	CC="$PTHREAD_CC"
 	AC_DEFINE([HAVE_PTHREAD], [1], [configure with pthread support])
 	])
-fi
+])
 
-AM_CONDITIONAL([HAVE_PTHREAD], [test "$PTHREAD" = "yes"])
+AM_CONDITIONAL([HAVE_PTHREAD], [test "x$enable_pthread" != "xno"])
 
 AC_ARG_ENABLE(debug, [AS_HELP_STRING([--enable-debug],
-[compile with debugging support @<:@default=no@:>@])], 
-debug=$enableval, debug=no)
-AS_IF([test x"$debug" != x"no"],
+[compile with debugging support @<:@default=no@:>@])])
+
+AS_IF([test "x$enable_debug" = "xyes"],
 	[CXXFLAGS="`echo $CXXFLAGS' ' | sed 's/-O[0-9]//g'`"
 	CXXFLAGS="$CXXFLAGS -O0 -g"
-	LDFLAGS="$PTHREAD_LIBS $LIBS $CFLAGS $PTHREAD_CFLAGS"
 	LDFLAGS="`echo $LDFLAGS | sed 's/-g//g' | sed 's/-O[0-9]//g'`"],
 	[CXXFLAGS="`echo $CXXFLAGS' -ffast-math' | sed 's/-g//g' | sed 's/-O[0-9]//g'`"
 	CXXFLAGS="$CXXFLAGS -O3"
 	CPPFLAGS="`echo $CPPFLAGS | sed 's/-g//g' | sed 's/-O[0-9]//g'`"
-	LDFLAGS="$PTHREAD_LIBS $LIBS $CFLAGS $PTHREAD_CFLAGS"
 	LDFLAGS="`echo $LDFLAGS | sed 's/-g//g' | sed 's/-O[0-9]//g'`"])
 
 AC_ARG_ENABLE(openmp, [AS_HELP_STRING([--enable-openmp],
-[enable OpenMP support in pHash to use multiple cores/CPUs @<:@default=no@:>@])], 
-openmp=yes, openmp=no)
+[enable OpenMP support in pHash to use multiple cores/CPUs @<:@default=no@:>@])])
 
-AS_IF([test "$openmp" = "yes"],
+AS_IF([test "x$enable_openmp" = "xyes"],
 [
 	CPPFLAGS="$CPPFLAGS -Dcimg_use_openmp"
 	if test $GCC = "yes"; then
@@ -66,10 +61,9 @@ AS_IF([test "$openmp" = "yes"],
 ])
 
 AC_ARG_ENABLE(java, [AS_HELP_STRING([--enable-java],
-[compile java (JNI) binding for pHash @<:@default=no@:>@])], 
-java=yes, java=no)
+[compile java (JNI) binding for pHash @<:@default=no@:>@])])
 
-AS_IF([test "$java" = "yes"],
+AS_IF([test "x$enable_java" = "xyes"],
 [
 	AC_CHECK_HEADER([jni.h], [found_jni="y"], [found_jni="n"])
 
@@ -98,18 +92,18 @@ fi
 
 ])
 
-AM_CONDITIONAL([WITH_JAVA], test x$java != xno)
+AM_CONDITIONAL([WITH_JAVA], [test "x$enable_java" = "xyes"])
+
 AC_PROG_INSTALL
 AC_LANG([C++])
 AC_PROG_LN_S
-m4_defun([_LT_AC_LANG_F77_CONFIG], [:])
-
 AC_PROG_LIBTOOL
 
 AC_SUBST([LIBTOOLS_DEPS])
 
 LDFLAGS="$LDFLAGS -L/usr/local/lib"
 CPPFLAGS="$CPPFLAGS -I/usr/local/include"
+
 AC_DEFUN([AC_CHECK_CIMG], [
 AC_CHECK_HEADER([CImg.h], [found_cimg="y"], [found_cimg="n"])
 
@@ -124,17 +118,7 @@ if test x"$found_cimg" = x"n"; then
 	fi
 	
 fi])
-
-AC_DEFUN([AC_CHECK_FFTW3],
-[
-
-AC_MSG_CHECKING([whether FFTW3 is present])
-AC_CHECK_LIB([fftw3], [fftw_plan_dft_r2c_1d], [], [AC_MSG_ERROR([
-
-*** libfftw3 not found.
-You need FFTW3. Get it at <http://fftw.org/>])])
-found_fftw="y"])
-
+ 
 AC_DEFUN([AC_CHECK_FFMPEG],
 [
 AC_MSG_CHECKING([whether FFmpeg is present])
@@ -191,40 +175,48 @@ Get it at <http://www.mpg123.de/>])])
 found_mpg123="y"])
 
 
-AC_ARG_ENABLE([image-hash], [AS_HELP_STRING([--enable-image-hash],[include support for perceptual image hashes @<:@default=yes@:>@])],
-[image_hash=$enableval], [image_hash=yes])
-AS_IF([test x"$image_hash" != x"no"],
-	[
+AC_ARG_ENABLE([image-hash], [AS_HELP_STRING([--enable-image-hash],
+[include support for perceptual image hashes @<:@default=yes@:>@])])
+
+AS_IF([test x"$enable_image_hash" != "xno"],
+[
 	echo
 	echo "*** Configuring image hash ***"
 	echo
 	AC_CHECK_CIMG()
 	AC_DEFINE([HAVE_IMAGE_HASH], [1], [configure with image hash])
-	])
+])
 
-AM_CONDITIONAL(HAVE_IMAGE_HASH, test x$image_hash != xno)
+AM_CONDITIONAL(HAVE_IMAGE_HASH, [test "x$enable_image_hash" != "xno"])
 
-AC_ARG_ENABLE([video-hash], [AS_HELP_STRING([--enable-video-hash],[include support for perceptual video hashes @<:@default=yes@:>@])],
-[video_hash=$enableval], [video_hash=yes])
-AS_IF([test x"$video_hash" != x"no"],
-	[
+AC_ARG_ENABLE([video-hash], [AS_HELP_STRING([--enable-video-hash],
+[include support for perceptual video hashes @<:@default=yes@:>@])])
+
+AS_IF([test "x$enable_video_hash" != "xno"],
+[
 	echo
 	echo "*** Configuring video Hash ***"
 	echo
 	if test "$found_ffmpeg" != "y"; then
 		AC_CHECK_FFMPEG() 
+
+		case "$DISTRO" in
+			debian) CPPFLAGS="$CPPFLAGS -I/usr/include/ffmpeg" ;;
+			redhat) CPPFLAGS="$CPPFLAGS -I/usr/include/libavcodec -I/usr/include/libavformat -I/usr/include/libswscale" ;;
+		esac
 	fi
 	if test "$found_cimg" != "y"; then
 		AC_CHECK_CIMG()
 	fi
 	AC_DEFINE([HAVE_VIDEO_HASH],[1], [configure with video hash])
-	])
+])
 
-AM_CONDITIONAL(HAVE_VIDEO_HASH, test x$video_hash != xno)
+AM_CONDITIONAL(HAVE_VIDEO_HASH, [test "x$enable_video_hash" != "xno"])
 
-AC_ARG_ENABLE([audio-hash], [AS_HELP_STRING([--enable-audio-hash],[include support for perceptual audio hashes @<:@default=yes@:>@])],
-[audio_hash=$enableval], [audio_hash=yes])
-AS_IF([test x"$audio_hash" != x"no"],
+AC_ARG_ENABLE([audio-hash], [AS_HELP_STRING([--enable-audio-hash],
+[include support for perceptual audio hashes @<:@default=yes@:>@])])
+
+AS_IF([test "x$enable_audio_hash" != "xno"],
 	[
 	echo
 	echo "*** Configuring audio hash ***"
@@ -242,47 +234,39 @@ AS_IF([test x"$audio_hash" != x"no"],
 	AC_DEFINE([HAVE_AUDIO_HASH],[1], [configure with audio hash])
 	])
 
-AM_CONDITIONAL(HAVE_AUDIO_HASH, test x$audio_hash != xno)
+AM_CONDITIONAL(HAVE_AUDIO_HASH, [test "x$enable_audio_hash" != "xno"])
 
-if test "$video_hash" = "yes"; then
-case "$DISTRO" in
-	debian)
-		CPPFLAGS="$CPPFLAGS -I/usr/include/ffmpeg"
-		;;
-	redhat)
-		CPPFLAGS="$CPPFLAGS -I/usr/include/libavcodec -I/usr/include/libavformat -I/usr/include/libswscale"
-		;;
-esac
-fi
 # Checks for libraries.
+AC_ARG_WITH([libpng], AS_HELP_STRING([--without-libpng], [do not include libpng support]))
+AC_ARG_WITH([libjpeg], AS_HELP_STRING([--without-libjpeg], [do not include libjpeg support]))
+AC_ARG_WITH([fftw], AS_HELP_STRING([--without-fftw], [do not include FFTW support]))
 
+AS_IF([test "x$enable_image_hash" != "xno" -o "x$enable_video_hash" != "xno"],
+  AS_IF([test "x$with_libpng" != "xno"],
+    AC_CHECK_LIB([png], [png_create_read_struct],
+      [ CPPFLAGS="$CPPFLAGS -Dcimg_use_png" LIBS="$LIBS -lpng" ],
+      AS_IF([test "x$with_libpng" = "xyes"], AC_MSG_ERROR([libpng support requested but library not found]))
+    )
+  )
 
-AC_CHECK_LIB([jpeg], [jpeg_read_header], [use_jpeg="y"])
-AC_CHECK_LIB([m], [sqrt])
-AC_CHECK_LIB([png], [png_create_read_struct], [use_png="y"])
+  AS_IF([test "x$with_libjpeg" != "xno"],
+    AC_CHECK_LIB([jpeg], [jpeg_read_header],
+      [ CPPFLAGS="$CPPFLAGS -Dcimg_use_jpeg" LIBS="$LIBS -ljpeg" ],
+      AS_IF([test "x$with_libjpeg" = "xyes"], AC_MSG_ERROR([libjpeg support requested but library not found]))
+    )
+  )
+)
 
-
-AS_IF([test "$found_fftw" = "y"],
-[
-	CPPFLAGS="$CPPFLAGS -Dcimg_use_fftw3"])
-AS_IF([test "$use_jpeg" = "y" -a \( "$image_hash" = "yes" -o "$video_hash" = "yes" \)],
-[
-	CPPFLAGS="$CPPFLAGS -Dcimg_use_jpeg"
-	LDFLAGS="$LDFLAGS -ljpeg"])
-
-AS_IF([test "$use_png" = "y" -a \( "$image_hash" = "yes" -o "$video_hash" = "yes" \)],
-[
-	CPPFLAGS="$CPPFLAGS -Dcimg_use_png"
-	LDFLAGS="$LDFLAGS -lpng"])
+AS_IF([test "x$with_fftw" != "xno"],
+  AC_CHECK_LIB([fftw3], [fftw_plan_dft_r2c_1d],
+    [ CPPFLAGS="$CPPFLAGS -Dcimg_use_fftw3" LIBS="$LIBS -lfftw3" ],
+    AS_IF([test "x$with_fftw" = "xyes"], AC_MSG_ERROR([FFTW support requested but library not found]))
+  )
+)
 
 CFLAGS="$CXXFLAGS"
-# Checks for header files.
-AC_CHECK_HEADERS([limits.h stdlib.h string.h sys/time.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
-AC_HEADER_STDBOOL
-AC_C_INLINE
-AC_TYPE_INT16_T
 AC_TYPE_SIZE_T
 AC_TYPE_UINT32_T
 AC_TYPE_UINT8_T
@@ -291,9 +275,6 @@ AC_CHECK_TYPE([uint64_t],[],[AC_MSG_ERROR([
 *** Required type uint64_t not found. 
 pHash requires 64-bit integers for video and image hashes.])])
 
-# Checks for library functions.
-AC_FUNC_ERROR_AT_LINE
-AC_CHECK_FUNCS([mremap malloc realloc floor gettimeofday memmove memset pow sqrt strcasecmp strdup strncasecmp])
 AC_CONFIG_FILES([Makefile src/Makefile examples/Makefile pHash.pc bindings/Makefile bindings/java/Makefile])
 AC_OUTPUT
 

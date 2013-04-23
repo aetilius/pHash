@@ -65,7 +65,7 @@ int main(int argc, char **argv){
     printf(" %d matches\n", count);
     printf(" indxA  indxB  length\n");
     for (j=0;j<count;j++){
-	printf(" %d %d %d\n", matches[j].first_index, matches[j].second_index,matches[j].length); 
+	printf(" %jd %jd %d\n", matches[j].first_index, matches[j].second_index,matches[j].length); 
     }
 
     return 0;

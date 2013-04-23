@@ -1,22 +1,12 @@
 /*
    +----------------------------------------------------------------------+
-   | This program is free software; you can redistribute it and/or        |
-   | modify it under the terms of the GNU General Public License          |
-   | as published by the Free Software Foundation; either version 3       |                 
-   | of the License, or (at your option) any later version.               | 
-   |                                                                      |
-   | This program is distributed in the hope that it will be useful,      |
-   | but WITHOUT ANY WARRANTY; without even the implied warranty of       |
-   | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
-   | GNU General Public License for more details.                         | 
-   |                                                                      |
-   | You should have received a copy of the GNU General General Public    |
-   | License in the file LICENSE along with this library;                 |
-   | if not, write to the                                                 | 
-   |                                                                      |
-   |   Free Software Foundation, Inc.,                                    |
-   |   51 Franklin Street, Fifth Floor,                                   |
-   |   Boston, MA  02110-1301  USA                                        |
+   | This source file is subject to version 3.0 of the PHP license,       |
+   | that is bundled with this package in the file LICENSE, and is        |
+   | available through the world-wide-web at the following url:           |
+   | http://www.php.net/license/3_0.txt.                                  |
+   | If you did not receive a copy of the PHP license and are unable to   |
+   | obtain it through the world-wide-web, please send a note to          |
+   | license@php.net so we can mail you a copy immediately.               |
    +----------------------------------------------------------------------+
    | Authors: Evan Klinger <eklinger@phash.org>                           |
    +----------------------------------------------------------------------+
@@ -103,7 +93,7 @@ extern "C" void ph_txt_hash_dtor(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 /* }}} */
 
 /* {{{ pHash_functions[] */
-function_entry pHash_functions[] = {
+zend_function_entry pHash_functions[] = {
 #if HAVE_VIDEO_HASH
 	PHP_FE(ph_dct_videohash    , ph_dct_videohash_arg_info)
 #endif /* HAVE_VIDEO_HASH */
@@ -140,7 +130,7 @@ zend_module_entry pHash_module_entry = {
 	PHP_RINIT(pHash),     /* Replace with NULL if there is nothing to do at request start */
 	PHP_RSHUTDOWN(pHash), /* Replace with NULL if there is nothing to do at request end   */
 	PHP_MINFO(pHash),
-	"0.9.4", 
+	PHP_PHASH_VERSION, 
 	STANDARD_MODULE_PROPERTIES
 };
 /* }}} */
@@ -207,7 +197,7 @@ PHP_RSHUTDOWN_FUNCTION(pHash)
 /* {{{ PHP_MINFO_FUNCTION */
 PHP_MINFO_FUNCTION(pHash)
 {
-	php_info_print_box_start(0);
+	if (!sapi_module.phpinfo_as_text) {
 
 	php_printf("<img src='");
 	if (SG(request_info).request_uri) {
@@ -216,13 +206,15 @@ PHP_MINFO_FUNCTION(pHash)
 	php_printf("?=%s", "PHASH_LOGO_ID");
 	php_printf("' align='right' alt='image' border='0'>\n");
 
-	php_printf("<p>pHash</p>\n");
-	php_printf("<p>Version 0.9.4beta (2011-06-04)</p>\n");
-	php_printf("<p><b>Authors:</b></p>\n");
-	php_printf("<p>Evan Klinger &lt;eklinger@phash.org&gt; (lead)</p>\n");
-	php_info_print_box_end();
+	php_printf("pHash\n");
+	php_info_print_table_start();
+	php_info_print_table_row(2, "Version",PHP_PHASH_VERSION " (beta)");
+	php_info_print_table_row(2, "Released", "2013-04-23");
+	php_info_print_table_row(2, "CVS Revision", "$Id: $");
+	php_info_print_table_row(2, "Authors", "Evan Klinger 'eklinger@phash.org' (lead)\n");
+	php_info_print_table_end();
 	/* add your stuff here */
-
+}
 }
 /* }}} */
 

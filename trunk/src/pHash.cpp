@@ -299,14 +299,10 @@ cleanup:
 
 int ph_image_digest(const char *file, double sigma, double gamma, Digest &digest, int N){
     
-    CImg<uint8_t> *src = new CImg<uint8_t>(file);
+    CImg<uint8_t> src(file);
 	int res = -1;
-	if(src)
-	{
-    		int result = _ph_image_digest(*src,sigma,gamma,digest,N);
-		delete src;
+    		int result = _ph_image_digest(src,sigma,gamma,digest,N);
     		res = result;
-	}
 	return res;
 }
 
