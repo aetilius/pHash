@@ -23,42 +23,8 @@
 */
 
 #include "pHash.h"
-#include "config.h"
 #ifdef HAVE_VIDEO_HASH
 #include "cimgffmpeg.h"
-#endif
-
-#ifdef HAVE_PTHREAD
-#include <pthread.h>
-
-int ph_num_threads()
-{
-	int numCPU = 1;
-#ifdef __GLIBC__
-		numCPU = sysconf( _SC_NPROCESSORS_ONLN );
-#else
-		int mib[2];
-		size_t len; 
-
-		mib[0] = CTL_HW;
-		mib[1] = HW_AVAILCPU;
-
-		sysctl(mib, 2, &numCPU, &len, NULL, 0);
-
-		if( numCPU < 1 ) 
-		{
-     			mib[1] = HW_NCPU;
-     			sysctl( mib, 2, &numCPU, &len, NULL, 0 );
-
-		     	if( numCPU < 1 )
-     			{
-          			numCPU = 1;
-     			}
-		}
-
-#endif
-	return numCPU;
-}
 #endif
 
 const char phash_project[] = "%s. Copyright 2008-2010 Aetilius, Inc.";
@@ -369,10 +335,9 @@ int ph_dct_imagehash(const char* file,ulong64 &hash){
     if (src.spectrum() == 3){
         img = src.RGBtoYCbCr().channel(0).get_convolve(meanfilter);
     } else if (src.spectrum() == 4){
-	int width = img.width();
-        int height = img.height();
-        int depth = img.depth();
-	img = src.crop(0,0,0,0,width-1,height-1,depth-1,2).RGBtoYCbCr().channel(0).get_convolve(meanfilter);
+	int width = src.width();
+        int height = src.height();
+	img = src.crop(0,0,0,0,width-1,height-1,0,2).RGBtoYCbCr().channel(0).get_convolve(meanfilter);
     } else {
 	img = src.channel(0).get_convolve(meanfilter);
     }
@@ -399,76 +364,6 @@ int ph_dct_imagehash(const char* file,ulong64 &hash){
 
     return 0;
 }
-
-#ifdef HAVE_PTHREAD
-void *ph_image_thread(void *p)
-{
-        slice *s = (slice *)p;
-        for(int i = 0; i < s->n; ++i)
-        {
-                DP *dp = (DP *)s->hash_p[i];
-		ulong64 hash;
-		int ret = ph_dct_imagehash(dp->id, hash);
-                dp->hash = (ulong64*)malloc(sizeof(hash));
-		memcpy(dp->hash, &hash, sizeof(hash));
-                dp->hash_length = 1;
-        }
-}
-
-DP** ph_dct_image_hashes(char *files[], int count, int threads)
-{
-       	if(!files || count <= 0)
-                return NULL;
-
-        int num_threads;
-        if(threads > count)
-        {
-                num_threads = count;
-        }
-	else if(threads > 0)
-        {
-                num_threads = threads;
-        }
-	else
-	{
-                num_threads = ph_num_threads();
-        }
-
-	DP **hashes = (DP**)malloc(count*sizeof(DP*));
-
-        for(int i = 0; i < count; ++i)
-        {
-                hashes[i] = (DP *)malloc(sizeof(DP));
-                hashes[i]->id = strdup(files[i]);
-	}
-
-	pthread_t thds[num_threads];
-
-        int rem = count % num_threads;
-        int start = 0;
-        int off = 0;
-        slice *s = new slice[num_threads];
-        for(int n = 0; n < num_threads; ++n)
-        {
-                off = (int)floor((count/(float)num_threads) + (rem>0?num_threads-(count % num_threads):0));
-
-                s[n].hash_p = &hashes[start];
-                s[n].n = off;
-                s[n].hash_params = NULL;
-                start += off;
-                --rem;
-                pthread_create(&thds[n], NULL, ph_image_thread, &s[n]);
-        }
-	for(int i = 0; i < num_threads; ++i)
-        {
-                pthread_join(thds[i], NULL);
-        }
-	delete[] s;
-
-        return hashes;
-
-}
-#endif
 
 
 #endif
@@ -691,83 +586,6 @@ ulong64* ph_dct_videohash(const char *filename, int &Length){
     return hash;
 }
 
-#ifdef HAVE_PTHREAD
-void *ph_video_thread(void *p)
-{
-        slice *s = (slice *)p;
-        for(int i = 0; i < s->n; ++i)
-        {
-                DP *dp = (DP *)s->hash_p[i];
-		int N;
-		ulong64 *hash = ph_dct_videohash(dp->id, N);
-		if(hash)
-		{
-                	dp->hash = hash;
-	                dp->hash_length = N;
-		}
-		else
-		{
-			dp->hash = NULL;
-			dp->hash_length = 0;
-		}
-        }
-}
-
-DP** ph_dct_video_hashes(char *files[], int count, int threads)
-{
-       	if(!files || count <= 0)
-                return NULL;
-
-        int num_threads;
-        if(threads > count)
-        {
-                num_threads = count;
-        }
-	else if(threads > 0)
-        {
-                num_threads = threads;
-        }
-	else
-	{
-                num_threads = ph_num_threads();
-        }
-
-	DP **hashes = (DP**)malloc(count*sizeof(DP*));
-
-        for(int i = 0; i < count; ++i)
-        {
-                hashes[i] = (DP *)malloc(sizeof(DP));
-                hashes[i]->id = strdup(files[i]);
-	}
-
-	pthread_t thds[num_threads];
-
-        int rem = count % num_threads;
-        int start = 0;
-        int off = 0;
-        slice *s = new slice[num_threads];
-        for(int n = 0; n < num_threads; ++n)
-        {
-                off = (int)floor((count/(float)num_threads) + (rem>0?num_threads-(count % num_threads):0));
-
-                s[n].hash_p = &hashes[start];
-                s[n].n = off;
-                s[n].hash_params = NULL;
-                start += off;
-                --rem;
-                pthread_create(&thds[n], NULL, ph_video_thread, &s[n]);
-        }
-	for(int i = 0; i < num_threads; ++i)
-        {
-                pthread_join(thds[i], NULL);
-        }
-	delete[] s;
-
-        return hashes;
-
-}
-#endif
-
 double ph_dct_videohash_dist(ulong64 *hashA, int N1, ulong64 *hashB, int N2, int threshold){
 
     int den = (N1 <= N2) ? N1 : N2;
@@ -808,23 +626,6 @@ int ph_hamming_distance(const ulong64 hash1,const ulong64 hash2){
     x = (x + (x >> 4)) & m4;
     return (x * h01)>>56;
 }
-
-DP* ph_malloc_datapoint(int hashtype){
-    DP* dp = (DP*)malloc(sizeof(DP));
-    dp->hash = NULL;
-    dp->id = NULL;
-    dp->hash_type = hashtype;
-    return dp;
-}
-void ph_free_datapoint(DP *dp){
-    if (!dp){
-	return;
-    }
-    free(dp);
-    dp=NULL;
-    return;
-}
-
 
 #ifdef HAVE_IMAGE_HASH
 
@@ -901,45 +702,6 @@ uint8_t* ph_mh_imagehash(const char *filename, int &N,float alpha, float lvl){
     return hash;
 }
 #endif
-
-char** ph_readfilenames(const char *dirname,int &count){
-    count = 0;
-    struct dirent *dir_entry;
-    DIR *dir = opendir(dirname);
-    if (!dir)
-        return NULL;
-
-    /*count files */
-    while ((dir_entry = readdir(dir)) != NULL){
-	if (strcmp(dir_entry->d_name, ".") && strcmp(dir_entry->d_name,".."))
-	    count++;
-    }
-    
-    /* alloc list of files */
-    char **files = (char**)malloc(count*sizeof(*files));
-    if (!files)
-	return NULL;
-
-    errno = 0;
-    int index = 0;
-    char path[1024];
-    path[0] = '\0';
-    rewinddir(dir);
-    while ((dir_entry = readdir(dir)) != 0){
-	if (strcmp(dir_entry->d_name,".") && strcmp(dir_entry->d_name,"..")){
-	    strcat(path, dirname);
-	    strcat(path, "/");
-	    strcat(path, dir_entry->d_name);
-	    files[index++] = strdup(path);
-	}
-        path[0]='\0';
-    }
-    if (errno)
-	return NULL;
-    closedir(dir);
-    return files;
-}
-
 
 int ph_bitcount8(uint8_t val){
     int num = 0;
