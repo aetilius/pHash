@@ -1,3 +1,7 @@
+0.9.7
+---
+JNI code cleanup
+
 0.9.6
 ---
 Code cleanup and fixes for autotools
