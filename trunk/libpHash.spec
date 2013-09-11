@@ -1,5 +1,5 @@
 Name:           pHash
-Version:        0.9.1
+Version:        0.9.7
 Release:        1%{?dist}
 Summary:        pHash, the open source perceptual hashing library
 
