@@ -2,6 +2,8 @@ cmake_minimum_required (VERSION 2.8)
 
 include(ExternalProject)
 
+project(pHash)
+
 set(pHash_VERSION_MAJOR 0)
 set(pHash_VERSION_MINOR 9.7)
 
@@ -49,7 +51,7 @@ set(CMAKE_EXE_LINKER_FLAGS "-Wl,--no-undefined ${CMAKE_EXE_LINKER_FLAGS}")
 add_library(pHash SHARED ${MMAN_FILE} ${DIRENT_FILE} src/pHash.cpp )
 
 
-set(LIBS_DEPS 			png15 jpeg tiff pthread rt
+set(LIBS_DEPS 			png jpeg tiff pthread rt
 				)
 
 

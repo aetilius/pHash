@@ -351,13 +351,11 @@ int ph_dct_imagehash(const char* file,ulong64 &hash){
     CImg<float> subsec = dctImage.crop(1,1,8,8).unroll('x');;
    
     float median = subsec.median();
-    ulong64 one = 0x0000000000000001;
-    hash = 0x0000000000000000;
-    for (int i=0;i< 64;i++){
+    hash = 0;
+    for (int i=0;i < 64;i++, hash <<= 1){
 	float current = subsec(i);
         if (current > median)
-	    hash |= one;
-	one = one << 1;
+	    hash |= 0x01;
     }
   
     delete C;
@@ -617,14 +615,7 @@ double ph_dct_videohash_dist(ulong64 *hashA, int N1, ulong64 *hashB, int N2, int
 
 int ph_hamming_distance(const ulong64 hash1,const ulong64 hash2){
     ulong64 x = hash1^hash2;
-    const ulong64 m1  = 0x5555555555555555ULL;
-    const ulong64 m2  = 0x3333333333333333ULL;
-    const ulong64 h01 = 0x0101010101010101ULL;
-    const ulong64 m4  = 0x0f0f0f0f0f0f0f0fULL;
-    x -= (x >> 1) & m1;
-    x = (x & m2) + ((x >> 2) & m2);
-    x = (x + (x >> 4)) & m4;
-    return (x * h01)>>56;
+    return __builtin_popcountll(x);
 }
 
 #ifdef HAVE_IMAGE_HASH
