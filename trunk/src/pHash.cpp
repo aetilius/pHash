@@ -327,7 +327,7 @@ int ph_dct_imagehash(const char* file,ulong64 &hash){
     CImg<uint8_t> src;
     try {
 	src.load(file);
-    } catch (CImgIOException ex){
+    } catch (CImgIOException& ex){
 	return -1;
     }
     CImg<float> meanfilter(7,7,1,1,1);
