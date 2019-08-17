@@ -4,8 +4,8 @@ include(ExternalProject)
 
 project(pHash)
 
-set(pHash_VERSION_MAJOR 0)
-set(pHash_VERSION_MINOR 9.7)
+set(pHash_VERSION_MAJOR 1)
+set(pHash_VERSION_MINOR 0)
 
 OPTION(WITH_AUDIO_HASH "Audio hash support" 0)
 OPTION(WITH_VIDEO_HASH "Video hash support" 0)
@@ -45,13 +45,12 @@ add_subdirectory(bindings)
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BUILD_TYPE}")
 
-set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined ${CMAKE_SHARED_LINKER_FLAGS}")
-set(CMAKE_EXE_LINKER_FLAGS "-Wl,--no-undefined ${CMAKE_EXE_LINKER_FLAGS}")
+link_directories(/usr/local/lib)
 
 add_library(pHash SHARED ${MMAN_FILE} ${DIRENT_FILE} src/pHash.cpp )
 
 
-set(LIBS_DEPS 			png jpeg tiff pthread rt
+set(LIBS_DEPS 			png jpeg tiff pthread
 				)
 
 
@@ -59,13 +58,14 @@ if(HAVE_AUDIO_HASH)
 	add_library(pHash src/audiophash.cpp)
 	set(LIBS_DEPS "${LIBS_DEPS} sndfile samplerate vorbis vorbisenc ogg")
 endif()
-
 target_link_libraries(pHash	${LIBS_DEPS})
 
 install(TARGETS pHash DESTINATION lib)
+install(FILES pHash.h DESTINATION include)
 
 set(EXAMPLEDIR examples)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
 if(HAVE_IMAGE_HASH)
 add_executable(TestDCT "${EXAMPLEDIR}/test_imagephash.cpp")
 target_link_libraries (TestDCT pHash)
