@@ -1,0 +1,19 @@
+language: cpp
+sudo: required
+dist: bionic
+compiler:
+  - clang
+  - gcc
+os:
+  - linux
+  - osx
+before_install:
+  - if [ $TRAVIS_OS_NAME == "linux" ]; then sudo apt-get install -y libpng libjpeg libtiff ffmpeg; fi
+  - if [ $TRAVIS_OS_NAME == "osx" ]; then sudo brew install libpng libtiff libjpeg ffmpeg; fi
+before_script:
+  - mkdir -p build
+  - cd build
+  - cmake -DWITH_AUDIO_HASH=1 -DWITH_VIDEO_HASH=1 ..
+script: make
+notifications:
+  email: false

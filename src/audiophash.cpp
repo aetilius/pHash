@@ -25,8 +25,6 @@
 #include "audiophash.h"
 #include <sndfile.h>
 #include <samplerate.h>
-#include "config.h"
-
 #ifdef HAVE_LIBMPG123
 #include <mpg123.h>
 #endif
@@ -237,7 +235,7 @@ float* ph_readaudio2(const char *filename, int sr, float *sigbuf, int &buflen, c
   src_data.src_ratio = sr_ratio;
 
   /* sample rate conversion */ 
-  if (error = src_process(src_state, &src_data)){
+  if ((error = src_process(src_state, &src_data)) != 0){
     free(inbuffer);
     free(outbuffer);
     src_delete(src_state);
@@ -278,10 +276,7 @@ uint32_t* ph_audiohash(float *buf, int N, int sr, int &nb_frames){
    }
    
    double frame[frame_length];
-   //fftw_complex *pF;
-   //fftw_plan p;
-   //pF = (fftw_complex*)fftw_malloc(sizeof(fftw_complex)*nfft);
-   complex double *pF = (complex double*)malloc(sizeof(complex double)*nfft);
+   complex<double> *pF = new complex<double>[nfft];
 
    double magnF[nfft_half];
    double maxF = 0.0;
@@ -349,7 +344,7 @@ uint32_t* ph_audiohash(float *buf, int N, int sr, int &nb_frames){
        }
        for (int i=0; i < nfft_half;i++){
 	   //magnF[i] = sqrt(pF[i][0]*pF[i][0] +  pF[i][1]*pF[i][1] );
-           magnF[i] = cabs(pF[i]);
+           magnF[i] = abs(pF[i]);
 	   if (magnF[i] > maxF){
 	       maxF = magnF[i];
 	   }
@@ -386,7 +381,7 @@ uint32_t* ph_audiohash(float *buf, int N, int sr, int &nb_frames){
 
    //fftw_destroy_plan(p);
    //fftw_free(pF);
-   free(pF);
+   delete[] pF;
    for (int i=0;i<nfilts;i++){
        delete [] wts[i];
    }

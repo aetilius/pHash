@@ -18,11 +18,11 @@ int main(int argc, char **argv)
 	printf("--- file 1 --- \n");
 	
 	BinHash *hash_a;
-	bmb_imagehash(fileA,1,&hash_a);
+	ph_bmb_imagehash(fileA,1,&hash_a);
 
 	printf("--- file 2 --- \n");
 	BinHash *hash_b;
-	bmb_imagehash(fileB,1,&hash_b);
+	ph_bmb_imagehash(fileB,1,&hash_b);
 
 	double dist = ph_hammingdistance2(hash_a->hash, hash_a->bytelength, hash_b->hash, hash_b->bytelength);
 	printf("distance = %g\n", dist);

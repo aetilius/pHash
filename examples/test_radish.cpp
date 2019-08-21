@@ -18,18 +18,39 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     Evan Klinger - eklinger@phash.org
-    D Grant Starkweather - dstarkweather@phash.org
+    David Starkweather - dstarkweather@phash.org
 
 */
 
+#include <stdio.h>
+#include <dirent.h>
+#include <errno.h>
+#include <vector>
+#include <algorithm>
+#include "pHash.h"
 
-#ifndef _FFT_H
-#define _FFT_H
-
-#include <complex.h>
-#include <math.h>
-#include <stdlib.h>
 using namespace std;
-int fft(double *x, int N, complex<double> *X);
 
-#endif
+#define TRUE 1
+#define FALSE 0
+
+int main(int argc, char **argv){
+
+    const char *msg = ph_about();
+    printf(" %s\n", msg);
+
+    if (argc < 2){
+	printf("no input args\n");
+	printf("expected: \"test_radish [dir name] [dir_name]\"\n");
+	exit(1);
+    }
+    const char *img1 = argv[1];
+    const char *img2 = argv[2];
+	Digest digest;
+	int ret = ph_image_digest(img1, 1.5, 3.5, digest, 180);
+	printf("ret: %d\n", ret);
+
+	for(int i =0; i < digest.size; ++i)
+		printf("%d ", digest.coeffs[i]);
+    return 0;
+}
