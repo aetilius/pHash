@@ -8,7 +8,7 @@ os:
   - linux
   - osx
 before_install:
-  - if [ $TRAVIS_OS_NAME == "linux" ]; then sudo apt-get install -y libpng-dev libjpeg-dev libtiff-dev libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libmpg123-dev; fi
+  - if [ $TRAVIS_OS_NAME == "linux" ]; then sudo apt-get install -y libpng-dev libjpeg-dev libtiff-dev libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libsndfile1-dev libmpg123-dev; fi
   - if [ $TRAVIS_OS_NAME == "osx" ]; then sudo brew install libpng libtiff libjpeg ffmpeg mpg123; fi
 before_script:
   - mkdir -p build
