@@ -22,139 +22,105 @@
 
 */
 
-#include <stdio.h>
-#include <errno.h>
-#include "pHash.h"
+#include <cstdio>
+#include <getopt.h>
 #include "audiophash.h"
 
-#define TRUE 1
-#define FALSE 0
+int main(int argc, char** argv){
+
+   struct option long_option[] = 
+   {
+       {"help", 0, NULL, 'h'},
+       {"file1", 1, 0, 'f'},
+       {"file2", 1, 0, 'g'},
+       {"threshold", 1, 0, 't'},
+       {"block_size",1, NULL, 'b'},
+       {NULL, 0, NULL, 0},
+   };
+   char *file1, *file2;
+   float threshold = 0.30;
+   int block_size = 256;
+   int morehelp= 0;
+   while(1){
+       int c;
+       if ((c = getopt_long(argc, argv, "f:g:hb:t:",long_option,NULL)) < 0)
+	   break;
+       switch (c){
+       case 'h' :
+	   morehelp++;
+	   break;
+       case 'f':
+	   file1 = optarg;
+	   break;
+       case 'g':
+	   file2 = optarg;
+	   break;
+       case 't':
+	   threshold = atof(optarg);
+	   break;
+       case 'b':
+	   block_size = atoi(optarg);
+       }
+   }
+	   
+   printf("file1: %s\n",file1);
+   printf("file2: %s\n",file2);
+   printf("threshold: %f\n",threshold);
+   printf("blocksize: %d\n",block_size);
 
 
+    int sr = 8000;
+    int channels = 1;
+ 
+    int N = 0;
+    float *buf = ph_readaudio(file1,sr,channels, NULL, N); 
 
-int sort_names(char **names, int L1){
-
-    for (int i=0;i<L1;i++){
-	int min = i;
-	for (int j=i+1;j<L1;j++){
-	    if (strcmp(names[j], names[min]) <= 0)
-		min = j;
-	}
-	if (i != min){
-	    char *swap = names[i];
-	    names[i] = names[min];
-	    names[min] = swap;
-	}
-
+    if (!buf){
+	fprintf(stderr," cannot read file %s, no such file\n", file1);
+	return -1;
     }
-    return 0;
-}
+    int N2 = 0;
+    float *buf2 = ph_readaudio(file2,sr,channels, NULL, N2);
 
-int main(int argc, char **argv){
-
-    if (argc < 3){
-	printf("no args");
-	exit(1);
+    if (!buf2){
+	fprintf(stderr," cannot read file %s, no such file", file2);
+	return -1;
     }
-    const char *dir_name  = argv[1];     //first directory
-    const char *dir_name2 = argv[2];     //second directory
-    const float threshold = 0.30;        //ber threshold (0.25-0.35)
-    const int block_size = 256;          //number of frames to compare at a time
-    const int sr = 8000;                 //sample rate to convert the stream
-    const int channels = 1;              //number of channels to convert stream
+ 
+    int nb_frames = 0;
+    uint32_t *hash  = ph_audiohash(buf,N,sr,nb_frames);
 
-    int nbfiles1 = 0;
-    char **files1 = ph_readfilenames(dir_name, nbfiles1);
-    sort_names(files1, nbfiles1);
-    int nbfiles2 = 0;
-    char **files2 = ph_readfilenames(dir_name2, nbfiles2);
-    sort_names(files2, nbfiles2);
-
-    printf("dir: %s %d\n", dir_name, nbfiles1);
-    printf("dir: %s %d\n", dir_name2, nbfiles2);
-    if (nbfiles1 != nbfiles2){
-	printf("directories do not have same number of files\n");
-	exit(1);
-    }
-
-    uint32_t **hashes = (uint32_t**)malloc(nbfiles1*sizeof(uint32_t*));
-    int *lens = (int*)malloc(nbfiles1*sizeof(int));
-    float *buf;
-    int buflen;
-    uint32_t *hash1, *hash2;
-    int hashlen1, hashlen2;
-    double *cs;
-    int Nc;
-    int index, i, j;
-    
-    printf("intra distances\n");
-    printf("***************\n");
-    for (index=0;index<nbfiles1;index++){
-	printf("file1: %s\n", files1[index]);
-	buf = ph_readaudio(files1[index], sr, channels, NULL, buflen);
-	if (!buf){
-	    printf("unable to read audio\n");
-	    continue;
-	}
-	hash1 = ph_audiohash(buf, buflen, sr, hashlen1);
-	if (!hash1){
-	    printf("unable to get hash\n");
-	    continue;
-	}
-	hashes[index] = hash1;
-	lens[index] = hashlen1;
-	free(buf);
-
-	printf("file2: %s\n", files2[index]);
-	buf = ph_readaudio(files2[index], sr, channels, NULL, buflen);
-	if (!buf) {
-	    printf("unable to get audio\n");
-	    continue;
-	}
-        hash2 = ph_audiohash(buf, buflen, sr, hashlen2);
-	if (!hash2) {
-	    printf("unable to get hash\n");
-	    continue;
-	}
-
-	cs = ph_audio_distance_ber(hash1, hashlen1, hash2, hashlen2, threshold, block_size, Nc);
-	if (!cs){
-	    printf("unable to calc distance\n");
-	    continue;
-	}
-
-	double max_cs = 0.0;
-	for (i=0;i<Nc;i++){
-	    if (cs[i] > max_cs){
-		max_cs = cs[i];
-	    }
-	}
-	printf("max cs %f\n\n", max_cs);
-
-	free(hash2);
-	free(buf);
-	free(cs);
-    }
-    
-    printf("pause - hit any key\n\n");
-    getchar();
-    printf("inter dists\n");
-    printf("***********\n");
-    for (i=0;i<nbfiles1;i++){
-	printf("file1: %s\n", files1[i]);
-	for (j=i+1;j<nbfiles1;j++){
-	    printf("    file2: %s\n", files1[j]);
-	    cs=ph_audio_distance_ber(hashes[i],lens[i],hashes[j],lens[j],threshold,block_size,Nc);
-	    double max_f = 0.0;
-	    for (index=0;index<Nc;index++){
-		if (cs[index] > max_f)
-		    max_f = cs[index];
-	    }
-	    printf("    cs = %f\n", max_f);
-	}
+    if (!hash){
+	fprintf(stderr,"unable to calculate hash for %s\n",file1);
+	return -1;
     }
 
+    int nb_frames2 = 0;
+    uint32_t *hash2 = ph_audiohash(buf2,N2,sr,nb_frames2);
 
+    if (!hash2){
+	fprintf(stderr,"unable to calculate hash for %s\n",file2);
+	return -1;
+    }
+
+    int Nc = 0;
+    double maxC = 0;
+    double *C = ph_audio_distance_ber(hash, nb_frames, hash2, nb_frames2, threshold, block_size, Nc); 
+
+    printf("Nc = %d, ",Nc);
+
+    for (int i = 0;i < Nc; i++){
+        if (C[i] > maxC)
+	    maxC = C[i];
+    }
+    printf("cs = %f\n",maxC);
+
+  
+    free(buf);
+    free(buf2);
+    free(hash);
+    free(hash2);
+    free(C);
 
     return 0;
 }

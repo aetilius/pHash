@@ -32,9 +32,7 @@
 #include <algorithm>
 #include "pHash.h"
 
-extern "C" {
 #include "ph_fft.h"
-}
 
 /*  /brief count number of samples in file
  *  
@@ -73,8 +71,6 @@ float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, i
  * /return uint32 pointer to audio hash, NULL for error
 */
 uint32_t* ph_audiohash(float *buf, int nbbuf, const int sr, int &nbframes);
-
-DP **ph_audio_hashes(char *files[], int count, int sr = 8000, int channels = 1, int threads = 0);
 
 /* /brief bit count set bits in 32bit variable
  * /param n 

@@ -3,9 +3,9 @@ cmake_minimum_required (VERSION 2.8)
 include(ExternalProject)
 
 project(pHash)
-
-set(pHash_VERSION_MAJOR 0)
-set(pHash_VERSION_MINOR 9.7)
+set(CMAKE_MACOSX_RPATH 1)
+set(pHash_VERSION_MAJOR 1)
+set(pHash_VERSION_MINOR 0)
 
 OPTION(WITH_AUDIO_HASH "Audio hash support" 0)
 OPTION(WITH_VIDEO_HASH "Video hash support" 0)
@@ -45,27 +45,41 @@ add_subdirectory(bindings)
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BUILD_TYPE}")
 
-set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined ${CMAKE_SHARED_LINKER_FLAGS}")
-set(CMAKE_EXE_LINKER_FLAGS "-Wl,--no-undefined ${CMAKE_EXE_LINKER_FLAGS}")
-
-add_library(pHash SHARED ${MMAN_FILE} ${DIRENT_FILE} src/pHash.cpp )
+link_directories(/usr/local/lib)
+include_directories(/usr/local/include)
 
 
-set(LIBS_DEPS 			png jpeg tiff pthread rt
+set(LIBS_DEPS 			png jpeg tiff pthread
 				)
 
+find_library(LIBMPG123 mpg123)
+if(LIBMPG123)
+	message("libmpg123 found at ${LIBMPG123}")
+	set(HAVE_LIBMPG123 1)
+	list(APPEND LIBS_DEPS ${LIBMPG123})
+endif()
 
 if(HAVE_AUDIO_HASH)
-	add_library(pHash src/audiophash.cpp)
-	set(LIBS_DEPS "${LIBS_DEPS} sndfile samplerate vorbis vorbisenc ogg")
+	set(EXTRA_SRC src/audiophash.cpp src/ph_fft.cpp)
+	set(LIBS_DEPS ${LIBS_DEPS} sndfile samplerate vorbis vorbisenc ogg)
 endif()
+
+if(HAVE_VIDEO_HASH)
+	list(APPEND EXTRA_SRC src/cimgffmpeg.cpp)
+	set(LIBS_DEPS ${LIBS_DEPS} avcodec avformat swscale avutil)
+endif()
+
+add_library(pHash SHARED ${MMAN_FILE} ${DIRENT_FILE} src/pHash.cpp ${EXTRA_SRC})
 
 target_link_libraries(pHash	${LIBS_DEPS})
 
 install(TARGETS pHash DESTINATION lib)
+install(FILES pHash.h DESTINATION include)
 
 set(EXAMPLEDIR examples)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
+
 if(HAVE_IMAGE_HASH)
 add_executable(TestDCT "${EXAMPLEDIR}/test_imagephash.cpp")
 target_link_libraries (TestDCT pHash)
@@ -74,10 +88,6 @@ install(TARGETS TestDCT DESTINATION bin)
 add_executable(TestRadish "${EXAMPLEDIR}/test_radish.cpp")
 target_link_libraries (TestRadish pHash)
 install(TARGETS TestRadish DESTINATION bin)
-
-#add_executable(TestBMB "${EXAMPLEDIR}/test_bmbimagehash.cpp")
-#target_link_libraries (TestBMB pHash)
-#install(TARGETS TestBMB DESTINATION bin)
 
 add_executable(TestMH "${EXAMPLEDIR}/test_mhimagehash.cpp")
 target_link_libraries (TestMH pHash)
