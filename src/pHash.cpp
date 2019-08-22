@@ -298,27 +298,26 @@ cleanup:
 
 int ph_compare_images(const char *file1, const char *file2,double &pcc, double sigma, double gamma, int N,double threshold){
 
-    CImg<uint8_t> *imA = new CImg<uint8_t>(file1);
-    CImg<uint8_t> *imB = new CImg<uint8_t>(file2);
+    CImg<uint8_t> imA(file1);
+    CImg<uint8_t> imB(file2);
     
-    int res = _ph_compare_images(*imA,*imB,pcc,sigma,gamma,N,threshold);
+    int res = _ph_compare_images(imA,imB,pcc,sigma,gamma,N,threshold);
 
-    delete imA;
-    delete imB;
     return res;
 }
 
-CImg<float>* ph_dct_matrix(const int N){
-    CImg<float> *ptr_matrix = new CImg<float>(N,N,1,1,1/sqrt((float)N));
+static CImg<float> ph_dct_matrix(const int N){
+    CImg<float> matrix(N,N,1,1,1/sqrt((float)N));
     const float c1 = sqrt(2.0/N); 
     for (int x=0;x<N;x++){
 	for (int y=1;y<N;y++){
-	    *ptr_matrix->data(x,y) = c1*cos((cimg::PI/2/N)*y*(2*x+1));
+	    matrix(x,y) = c1*cos((cimg::PI/2/N)*y*(2*x+1));
 	}
     }
-    return ptr_matrix;
+    return matrix;
 }
 
+static const CImg<float> dct_matrix = ph_dct_matrix(32);
 int ph_dct_imagehash(const char* file,ulong64 &hash){
 
     if (!file){
@@ -343,10 +342,10 @@ int ph_dct_imagehash(const char* file,ulong64 &hash){
     }
 
     img.resize(32,32);
-    CImg<float> *C  = ph_dct_matrix(32);
-    CImg<float> Ctransp = C->get_transpose();
+    const CImg<float> &C  = dct_matrix;
+    CImg<float> Ctransp = C.get_transpose();
 
-    CImg<float> dctImage = (*C)*img*Ctransp;
+    CImg<float> dctImage = (C)*img*Ctransp;
 
     CImg<float> subsec = dctImage.crop(1,1,8,8).unroll('x');;
    
@@ -357,8 +356,6 @@ int ph_dct_imagehash(const char* file,ulong64 &hash){
         if (current > median)
 	    hash |= 0x01;
     }
-  
-    delete C;
 
     return 0;
 }
@@ -555,7 +552,7 @@ ulong64* ph_dct_videohash(const char *filename, int &Length){
     Length = keyframes->size();
 
     ulong64 *hash = (ulong64*)malloc(sizeof(ulong64)*Length);
-    CImg<float> *C = ph_dct_matrix(32);
+    const CImg<float> *C = &dct_matrix;
     CImg<float> Ctransp = C->get_transpose();
     CImg<float> dctImage;
     CImg<float> subsec;

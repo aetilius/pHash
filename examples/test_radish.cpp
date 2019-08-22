@@ -31,21 +31,17 @@
 
 using namespace std;
 
-#define TRUE 1
-#define FALSE 0
-
 int main(int argc, char **argv){
 
     const char *msg = ph_about();
     printf(" %s\n", msg);
 
-    if (argc < 2){
+    if (argc < 1){
 	printf("no input args\n");
-	printf("expected: \"test_radish [dir name] [dir_name]\"\n");
+	printf("expected: %s <image>\n", argv[0]);
 	exit(1);
     }
     const char *img1 = argv[1];
-    const char *img2 = argv[2];
 	Digest digest;
 	int ret = ph_image_digest(img1, 1.5, 3.5, digest, 180);
 	printf("ret: %d\n", ret);
