@@ -153,6 +153,7 @@ int ph_dct(const Features &fv,Digest &digest)
     double D_temp[nb_coeffs];
     double max = 0.0;
     double min = 0.0;
+    double sqrt_n = sqrt((double)N);
     for (int k = 0;k<nb_coeffs;k++){
 	double sum = 0.0;
         for (int n=0;n<N;n++){
@@ -160,9 +161,9 @@ int ph_dct(const Features &fv,Digest &digest)
             sum += temp;
 	}
         if (k == 0)
-	    D_temp[k] = sum/sqrt((double)N);
+	    D_temp[k] = sum/sqrt_n;
         else
-            D_temp[k] = sum*SQRT_TWO/sqrt((double)N);
+            D_temp[k] = sum*SQRT_TWO/sqrt_n;
         if (D_temp[k] > max)
             max = D_temp[k];
         if (D_temp[k] < min)
@@ -552,8 +553,8 @@ ulong64* ph_dct_videohash(const char *filename, int &Length){
     Length = keyframes->size();
 
     ulong64 *hash = (ulong64*)malloc(sizeof(ulong64)*Length);
-    const CImg<float> *C = &dct_matrix;
-    CImg<float> Ctransp = C->get_transpose();
+    const CImg<float> &C = dct_matrix;
+    CImg<float> Ctransp = C.get_transpose();
     CImg<float> dctImage;
     CImg<float> subsec;
     CImg<uint8_t> currentframe;
@@ -561,7 +562,7 @@ ulong64* ph_dct_videohash(const char *filename, int &Length){
     for (unsigned int i=0;i < keyframes->size(); i++){
 	currentframe = keyframes->at(i);
 	currentframe.blur(1.0);
-	dctImage = (*C)*(currentframe)*Ctransp;
+	dctImage = (C)*(currentframe)*Ctransp;
 	subsec = dctImage.crop(1,1,8,8).unroll('x');
 	float med = subsec.median();
 	hash[i] =     0x0000000000000000;
@@ -576,8 +577,7 @@ ulong64* ph_dct_videohash(const char *filename, int &Length){
     keyframes->clear();
     delete keyframes;
     keyframes = NULL;
-    delete C;
-    C = NULL;
+
     return hash;
 }
 
