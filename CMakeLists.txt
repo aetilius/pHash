@@ -6,6 +6,7 @@ project(pHash)
 set(CMAKE_MACOSX_RPATH 1)
 set(pHash_VERSION_MAJOR 1)
 set(pHash_VERSION_MINOR 0)
+set(pHash_VERSION_PATCH 0)
 
 OPTION(WITH_AUDIO_HASH "Audio hash support" 0)
 OPTION(WITH_VIDEO_HASH "Video hash support" 0)
@@ -69,8 +70,9 @@ if(HAVE_VIDEO_HASH)
 	set(LIBS_DEPS ${LIBS_DEPS} avcodec avformat swscale avutil)
 endif()
 
-add_library(pHash SHARED ${MMAN_FILE} ${DIRENT_FILE} src/pHash.cpp ${EXTRA_SRC})
 
+add_library(pHash SHARED ${MMAN_FILE} ${DIRENT_FILE} src/pHash.cpp ${EXTRA_SRC})
+set_property(TARGET pHash PROPERTY VERSION "${pHash_VERSION_MAJOR}.${pHash_VERSION_MINOR}.${pHash_VERSION_PATCH}")
 target_link_libraries(pHash	${LIBS_DEPS})
 
 install(TARGETS pHash DESTINATION lib)
