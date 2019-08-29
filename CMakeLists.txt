@@ -79,7 +79,7 @@ set_property(TARGET pHash PROPERTY VERSION "${pHash_VERSION_MAJOR}.${pHash_VERSI
 target_link_libraries(pHash	${LIBS_DEPS})
 
 install(TARGETS pHash DESTINATION lib)
-install(FILES pHash.h DESTINATION include)
+install(FILES src/pHash.h DESTINATION include)
 
 set(EXAMPLEDIR examples)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
