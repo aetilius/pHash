@@ -25,26 +25,26 @@
 #include <stdio.h>
 #include "pHash.h"
 
-
-float distancefunc(DP *pa, DP *pb){
-    uint8_t *hashA = (uint8_t*)pa->hash;
-    uint8_t *hashB = (uint8_t*)pb->hash;
-    float d = 10*ph_hammingdistance2(hashA, pa->hash_length,hashB,pb->hash_length);
-    float res = exp(d)-1;
-	return res;
+float distancefunc(DP *pa, DP *pb) {
+    uint8_t *hashA = (uint8_t *)pa->hash;
+    uint8_t *hashB = (uint8_t *)pb->hash;
+    float d = 10 * ph_hammingdistance2(hashA, pa->hash_length, hashB,
+                                       pb->hash_length);
+    float res = exp(d) - 1;
+    return res;
 }
 
-int main(int argc, char **argv){
-	if (argc < 3){
+int main(int argc, char **argv) {
+    if (argc < 3) {
         printf("not enough input args\n");
         exit(1);
-	}
+    }
 
-    const char *dir_name = argv[1];/* name of dir to retrieve image files */
-    const char *filename = argv[2];/* name of file to save db */
+    const char *dir_name = argv[1]; /* name of dir to retrieve image files */
+    const char *filename = argv[2]; /* name of file to save db */
 
     float alpha = 2.0f;
-    float lvl  = 1.0f;
+    float lvl = 1.0f;
 
     MVPFile mvpfile;
     ph_mvp_init(&mvpfile);
@@ -54,42 +54,43 @@ int main(int argc, char **argv){
 
     int nbfiles = 0;
     printf("dir name: %s\n", dir_name);
-    char **files = ph_readfilenames(dir_name,nbfiles);
-    if (!files){
-		printf("mem alloc error\n");
-		exit(1);
+    char **files = ph_readfilenames(dir_name, nbfiles);
+    if (!files) {
+        printf("mem alloc error\n");
+        exit(1);
     }
     printf("nbfiles = %d\n", nbfiles);
-    DP **hashlist = (DP**)malloc(nbfiles*sizeof(DP*));
-    if (!hashlist){
-		printf("mem alloc error\n");
-		exit(1);
+    DP **hashlist = (DP **)malloc(nbfiles * sizeof(DP *));
+    if (!hashlist) {
+        printf("mem alloc error\n");
+        exit(1);
     }
     int hashlength;
     int count = 0;
-    for (int i=0;i<nbfiles;i++){
-		printf("file[%d]: %s\n", i, files[i]);
+    for (int i = 0; i < nbfiles; i++) {
+        printf("file[%d]: %s\n", i, files[i]);
         hashlist[count] = ph_malloc_datapoint(mvpfile.hash_type);
-		if (hashlist[count] == NULL){
-			printf("mem alloc error\n");
-		    continue;
-		}
-		hashlist[count]->id = files[i];
-		hashlist[count]->hash = ph_mh_imagehash(files[i],hashlength,alpha,lvl);
-		if (hashlist[count]->hash == NULL){
-			printf("unable to get hash\n");
-			continue;
-		}
-		hashlist[count]->hash_length = hashlength;
-		printf("len: %d\n", hashlength);
+        if (hashlist[count] == NULL) {
+            printf("mem alloc error\n");
+            continue;
+        }
+        hashlist[count]->id = files[i];
+        hashlist[count]->hash =
+            ph_mh_imagehash(files[i], hashlength, alpha, lvl);
+        if (hashlist[count]->hash == NULL) {
+            printf("unable to get hash\n");
+            continue;
+        }
+        hashlist[count]->hash_length = hashlength;
+        printf("len: %d\n", hashlength);
         count++;
     }
 
     printf("add files to file %s\n", filename);
     int nbsaved;
-    MVPRetCode ret = ph_add_mvptree(&mvpfile, hashlist, count,nbsaved);
-    if (ret != PH_SUCCESS){
-		printf("unable to add points to %s db, %d\n", filename,ret);
+    MVPRetCode ret = ph_add_mvptree(&mvpfile, hashlist, count, nbsaved);
+    if (ret != PH_SUCCESS) {
+        printf("unable to add points to %s db, %d\n", filename, ret);
     }
     printf(" %d out of %d saved\n", nbsaved, count);
     return 0;

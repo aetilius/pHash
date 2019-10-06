@@ -22,47 +22,40 @@
 
 */
 
-
-
 #include "ph_fft.h"
 
-
-void fft_calc(const int N,const double *x,complex<double> *X,complex<double> *P,const int step,const complex<double> *twids)
-{
-    complex<double> *S = P + N/2;
-    if (N == 1){
-	X[0] = x[0];
-	return;
+void fft_calc(const int N, const double *x, complex<double> *X,
+              complex<double> *P, const int step,
+              const complex<double> *twids) {
+    complex<double> *S = P + N / 2;
+    if (N == 1) {
+        X[0] = x[0];
+        return;
     }
-    
-    fft_calc(N/2, x,      S,   X,2*step, twids);
-    fft_calc(N/2, x+step, P,   X,2*step, twids);	    
+
+    fft_calc(N / 2, x, S, X, 2 * step, twids);
+    fft_calc(N / 2, x + step, P, X, 2 * step, twids);
 
     int k;
-    for (k=0;k<N/2;k++){
-	P[k] = P[k]*twids[k*step];
-	X[k]     = S[k] + P[k];
-	X[k+N/2] = S[k] - P[k];
+    for (k = 0; k < N / 2; k++) {
+        P[k] = P[k] * twids[k * step];
+        X[k] = S[k] + P[k];
+        X[k + N / 2] = S[k] - P[k];
     }
-
 }
 
-
-int fft(double *x, int N, complex<double> *X)
-{
-
-    complex<double> *twiddle_factors = new complex<double>[N/2];
+int fft(double *x, int N, complex<double> *X) {
+    complex<double> *twiddle_factors = new complex<double>[N / 2];
     complex<double> *Xt = new complex<double>[N];
 
     int k;
-    for (k=0;k<N/2;k++){
-	twiddle_factors[k] = polar(1.0, 2.0*M_PI*k/N);
+    for (k = 0; k < N / 2; k++) {
+        twiddle_factors[k] = polar(1.0, 2.0 * M_PI * k / N);
     }
     fft_calc(N, x, X, Xt, 1, twiddle_factors);
 
-    delete [] (twiddle_factors);
-    delete [] (Xt);
+    delete[](twiddle_factors);
+    delete[](Xt);
 
     return 0;
-
 }

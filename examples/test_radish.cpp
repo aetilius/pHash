@@ -22,31 +22,29 @@
 
 */
 
-#include <stdio.h>
 #include <dirent.h>
 #include <errno.h>
-#include <vector>
+#include <stdio.h>
 #include <algorithm>
+#include <vector>
 #include "pHash.h"
 
 using namespace std;
 
-int main(int argc, char **argv){
-
+int main(int argc, char **argv) {
     const char *msg = ph_about();
     printf(" %s\n", msg);
 
-    if (argc < 1){
-	printf("no input args\n");
-	printf("expected: %s <image>\n", argv[0]);
-	exit(1);
+    if (argc < 1) {
+        printf("no input args\n");
+        printf("expected: %s <image>\n", argv[0]);
+        exit(1);
     }
     const char *img1 = argv[1];
-	Digest digest;
-	int ret = ph_image_digest(img1, 1.5, 3.5, digest, 180);
-	printf("ret: %d\n", ret);
+    Digest digest;
+    int ret = ph_image_digest(img1, 1.5, 3.5, digest, 180);
+    printf("ret: %d\n", ret);
 
-	for(int i =0; i < digest.size; ++i)
-		printf("%d ", digest.coeffs[i]);
+    for (int i = 0; i < digest.size; ++i) printf("%d ", digest.coeffs[i]);
     return 0;
 }

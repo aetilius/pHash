@@ -1,12 +1,12 @@
-#include <stdlib.h>
 #include <math.h>
+#include <stdlib.h>
 
 #ifndef _PH_COMPLEX_H
 #define _PH_COMPLEX_H
 
 typedef struct phcomplex {
-     double re;
-     double im;
+    double re;
+    double im;
 } Complexd;
 
 Complexd polar_to_complex(const double r, const double theta);

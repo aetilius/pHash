@@ -27,66 +27,66 @@
 
 #include <limits.h>
 #include <math.h>
-#include <unistd.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <algorithm>
 #include "pHash.h"
 
 #include "ph_fft.h"
 
 /*  /brief count number of samples in file
- *  
+ *
  *  /param filename - path and file name of audio file
  *  /param sr - sample rate conversion
  *  /param channels - channels number conversion
  *  /return int count of number of sampels, negative for error
-*/
-int ph_count_samples(const char *filename, int sr,int channels);
+ */
+int ph_count_samples(const char *filename, int sr, int channels);
 
-
-
-
-/* /brief read audio 
+/* /brief read audio
  *
  * /param filename - path and name of audio file to read
  * /param sr - sample rate conversion
  * /param channels - nb channels to convert to (always 1) unused
- * /param buf - preallocated buffer 
+ * /param buf - preallocated buffer
  * /param buflen - (in/out) param for buf length
  * /param nbsecs - float value for duration (in secs) to read from file
- * /return float* - float pointer to start of buffer - one channel of audio, NULL if error
+ * /return float* - float pointer to start of buffer - one channel of audio,
+ * NULL if error
  */
-float* ph_readaudio(const char *filename, int sr, int channels, float *sigbuf, int &buflen, const float nbsecs = 0);
+float *ph_readaudio(const char *filename, int sr, int channels, float *sigbuf,
+                    int &buflen, const float nbsecs = 0);
 
 /* /brief audio hash calculation
  * purpose: hash calculation for each frame in the buffer.
- *          Each value is computed from successive overlapping frames of the input buffer. 
- *          The value is based on the bark scale values of the frame fft spectrum. The value
- *          computed from temporal and spectral differences on the bark scale.
- * 
+ *          Each value is computed from successive overlapping frames of the
+ * input buffer. The value is based on the bark scale values of the frame fft
+ * spectrum. The value computed from temporal and spectral differences on the
+ * bark scale.
+ *
  * /param buf - pointer to start of buffer
  * /param N   - length of buffer
  * /param sr  - sample rate on which to base the audiohash
- * /param nb_frames - (out) number of frames in audio buf and length of audiohash buffer returned
- * /return uint32 pointer to audio hash, NULL for error
-*/
-uint32_t* ph_audiohash(float *buf, int nbbuf, const int sr, int &nbframes);
+ * /param nb_frames - (out) number of frames in audio buf and length of
+ * audiohash buffer returned /return uint32 pointer to audio hash, NULL for
+ * error
+ */
+uint32_t *ph_audiohash(float *buf, int nbbuf, const int sr, int &nbframes);
 
 /* /brief bit count set bits in 32bit variable
- * /param n 
+ * /param n
  * /return int number of bits set to 1, negative if error
  */
 int ph_bitcount(uint32_t n);
 
-
-/* /brief compare 2 hash blocks 
+/* /brief compare 2 hash blocks
  * /param ptr_blockA - pointer to the first block
  * /param ptr_blockB - pointer to the second block
  * /param block_size - length of both blocks to compare
  * /return double bit error rate (ber) from comparing two blocks, neg for error
  */
-double ph_compare_blocks(const uint32_t *ptr_blockA,const uint32_t *ptr_blockB, const int block_size);
-
+double ph_compare_blocks(const uint32_t *ptr_blockA, const uint32_t *ptr_blockB,
+                         const int block_size);
 
 /* /brief distance function between two hashes
  *
@@ -94,11 +94,13 @@ double ph_compare_blocks(const uint32_t *ptr_blockA,const uint32_t *ptr_blockB, 
  * /param Na     - length of first hash
  * /param hash_b - second hash
  * /param Nb     - length of second hash
- * /param threshold - threshold value to compare successive blocks, 0.25, 0.30, 0.35
- * /param block_size - length of block_size, 256
- * /param Nc     - (out) length of confidence score vector
- * /return double - ptr to confidence score vector
+ * /param threshold - threshold value to compare successive blocks, 0.25, 0.30,
+ * 0.35 /param block_size - length of block_size, 256 /param Nc     - (out)
+ * length of confidence score vector /return double - ptr to confidence score
+ * vector
  */
-double* ph_audio_distance_ber(uint32_t *hash_a , const int Na, uint32_t *hash_b, const int Nb, const float threshold, const int block_size, int &Nc);
+double *ph_audio_distance_ber(uint32_t *hash_a, const int Na, uint32_t *hash_b,
+                              const int Nb, const float threshold,
+                              const int block_size, int &Nc);
 
 #endif

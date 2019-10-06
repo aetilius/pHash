@@ -22,8 +22,6 @@
 
 */
 
-
-
 #ifndef CIMGFFMPEG_H_
 #define CIMGFFMPEG_H_
 
@@ -35,9 +33,9 @@
 #define __STDC_CONSTANT_MACROS
 
 extern "C" {
-	#include <libavformat/avformat.h>
-	#include <libavcodec/avcodec.h>
-	#include <libswscale/swscale.h>
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libswscale/swscale.h>
 }
 
 using namespace cimg_library;
@@ -56,16 +54,14 @@ typedef struct vf_info {
     const char *filename;
 } VFInfo;
 
-void vfinfo_close(VFInfo  *vfinfo);
+void vfinfo_close(VFInfo *vfinfo);
 
-int ReadFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList, unsigned int low_index, unsigned int hi_index);
-
+int ReadFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList,
+               unsigned int low_index, unsigned int hi_index);
 
 int NextFrames(VFInfo *st_info, CImgList<uint8_t> *pFrameList);
 
-
 int GetNumberStreams(const char *file);
-
 
 long GetNumberVideoFrames(const char *file);
 

@@ -1,0 +1,3 @@
+bindings/java/dummy.cpp
+build/*
+src/pHash.h
