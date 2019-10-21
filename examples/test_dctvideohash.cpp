@@ -44,6 +44,10 @@ int main(int argc, char **argv) {
     for (int i = 1; i < argc; i++) {
         printf("Hashing %s...\n", argv[i]);
         hashes[i - 1] = ph_dct_videohash(argv[i], lengths[i - 1]);
+        if (hashes[i - 1] == NULL) {
+            printf("Failed to hash video: %s\n", argv[i]);
+            break;
+        }
         printf("%s: %lx (length %d)\n", argv[i], hashes[i - 1][0],
                lengths[i - 1]);
         // If this isn't the first hash, then compare to the first.
@@ -55,11 +59,16 @@ int main(int argc, char **argv) {
         printf("\n");
     }
 
+    int result = 0;
     for (int i = 0; i < argc - 1; i++) {
-        free(hashes[i]);
+        if (hashes[i] == NULL) {
+            result = -1;
+        } else {
+            free(hashes[i]);
+        }
     }
     free(hashes);
     free(lengths);
 
-    return 0;
+    return result;
 }

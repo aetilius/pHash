@@ -360,6 +360,10 @@ CImgList<uint8_t> *ph_getKeyFramesFromVideo(const char *filename) {
 
     int step = (int)(frames_per_sec + ROUNDING_FACTOR(frames_per_sec));
     long nbframes = (long)(N / step);
+    // If the video length is less than 1 the video is probably corrupted.
+    if (nbframes <= 0) {
+        return NULL;
+    }
 
     float *dist = (float *)malloc((nbframes) * sizeof(float));
     if (!dist) {
