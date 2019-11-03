@@ -22,8 +22,6 @@
 
 */
 
-#include "CImg.h"
-#include "cimgffmpeg.h"
 #include "pHash.h"
 #include "stdio.h"
 
