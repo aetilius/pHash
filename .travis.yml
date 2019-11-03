@@ -1,13 +1,13 @@
 language: cpp
-sudo: required
-dist: bionic
-compiler:
-  - clang
-  - gcc
-os:
-  - linux
-  - osx
-osx_image: xcode11.2
+
+matrix:
+    include:
+      - os: linux
+        dist: bionic
+        compiler: gcc
+      - os: osx
+        osx_image: xcode11.2
+        
 before_install:
   - if [ $TRAVIS_OS_NAME == "linux" ]; then sudo apt-get install -y libpng-dev libjpeg-dev libtiff-dev libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libsndfile1-dev libsamplerate0-dev libmpg123-dev; fi
   - if [ $TRAVIS_OS_NAME == "osx" ]; then travis_retry brew upgrade && travis_retry brew install libpng libtiff libjpeg ffmpeg mpg123; fi
