@@ -22,21 +22,19 @@
 
 */
 
-#include <stdio.h>
 #include <math.h>
+#include <stdio.h>
 #include "pHash.h"
 
-
-float distancefunc(DP *pa, DP *pb){
-	float d = 10*hammingdistance(pa,pb)/64;
-    float res = exp(d)-1;
+float distancefunc(DP *pa, DP *pb) {
+    float d = 10 * hammingdistance(pa, pb) / 64;
+    float res = exp(d) - 1;
     return res;
 }
 
-int main(int argc, char **argv){
- 
-    const char *dir_name = argv[1];/* name of dir to retrieve image files */
-    const char *filename = argv[2];/* name of file to save db */
+int main(int argc, char **argv) {
+    const char *dir_name = argv[1]; /* name of dir to retrieve image files */
+    const char *filename = argv[2]; /* name of file to save db */
 
     MVPFile mvpfile;
     ph_mvp_init(&mvpfile);
@@ -48,42 +46,41 @@ int main(int argc, char **argv){
 
     int nbfiles = 0;
     printf("dir name: %s\n", dir_name);
-    char **files = ph_readfilenames(dir_name,nbfiles);
-    if (!files){
-		printf("mem alloc error\n");
-		exit(1);
+    char **files = ph_readfilenames(dir_name, nbfiles);
+    if (!files) {
+        printf("mem alloc error\n");
+        exit(1);
     }
     printf("nbfiles = %d\n", nbfiles);
-    DP **hashlist = (DP**)malloc(nbfiles*sizeof(DP*));
-    if (!hashlist){
-		printf("mem alloc error\n");
-		exit(1);
+    DP **hashlist = (DP **)malloc(nbfiles * sizeof(DP *));
+    if (!hashlist) {
+        printf("mem alloc error\n");
+        exit(1);
     }
     ulong64 tmphash = 0;
     int count = 0;
-    for (int i=0;i<nbfiles;i++){
-		printf("file[%d]: %s\n", i, files[i]);
+    for (int i = 0; i < nbfiles; i++) {
+        printf("file[%d]: %s\n", i, files[i]);
         hashlist[count] = ph_malloc_datapoint(mvpfile.hash_type);
-		if (hashlist[count] == NULL){
-			printf("mem alloc error\n");
-			exit(1);
-		}
+        if (hashlist[count] == NULL) {
+            printf("mem alloc error\n");
+            exit(1);
+        }
         hashlist[count]->hash = malloc(sizeof(ulong64));
-		hashlist[count]->id = files[i];
-		if (ph_dct_imagehash(files[i],tmphash)<0){
-			printf("unable to get hash\n");
-			continue;
-		}
-        *((ulong64*)hashlist[count]->hash) = tmphash;
-		hashlist[count]->hash_length = 1;
+        hashlist[count]->id = files[i];
+        if (ph_dct_imagehash(files[i], tmphash) < 0) {
+            printf("unable to get hash\n");
+            continue;
+        }
+        *((ulong64 *)hashlist[count]->hash) = tmphash;
+        hashlist[count]->hash_length = 1;
         count++;
     }
- 
 
     MVPRetCode ret = ph_save_mvptree(&mvpfile, hashlist, count);
-	if (ret != PH_SUCCESS){
-		printf("unable to save %s, error: %d\n", filename,ret);
-		exit(1);
+    if (ret != PH_SUCCESS) {
+        printf("unable to save %s, error: %d\n", filename, ret);
+        exit(1);
     }
 
     return 0;

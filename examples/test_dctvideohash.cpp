@@ -22,68 +22,51 @@
 
 */
 
-
-#include "stdio.h"
 #include "pHash.h"
-#include "CImg.h"
-#include "cimgffmpeg.h"
+#include "stdio.h"
 
-int main(int argc, char **argv){
-    if (argc < 2){
-	printf("not enough input arguments\n");
-	return -1;
-    }
-    const char *file1 = argv[1];
-    const char *file2t = argv[2];
-
-    char *file2 = strdup(file2t);
-
-    if (!file1 || !file2){
-	printf("not enough arguments\n");
-	exit(1);
+int main(int argc, char **argv) {
+    if (argc < 2) {
+        printf("Not enough arguments\n");
+        printf(
+            "Please specify a list of video paths. Paths after the first will "
+            "be compared to the first.\n");
+        return 1;
     }
 
-    ulong64 *hash1, *hash2;
-    int L1, L2;
-    double sim;
+    ulong64 **hashes = (ulong64 **)malloc(sizeof(ulong64 *) * (argc - 1));
+    int *lengths = (int *)malloc(sizeof(int) * (argc - 1));
 
-    printf("file1=%s\n", file1);
-    hash1 = ph_dct_videohash(file1, L1);
-    if (!hash1){
-	exit(2);
+    printf("Comparing additional paths to: %s\n\n", argv[1]);
+
+    for (int i = 1; i < argc; i++) {
+        printf("Hashing %s...\n", argv[i]);
+        hashes[i - 1] = ph_dct_videohash(argv[i], lengths[i - 1]);
+        if (hashes[i - 1] == NULL) {
+            printf("Failed to hash video: %s\n", argv[i]);
+            break;
+        }
+        printf("%s: %lx (length %d)\n", argv[i], hashes[i - 1][0],
+               lengths[i - 1]);
+        // If this isn't the first hash, then compare to the first.
+        if (i > 1) {
+            float similarity = ph_dct_videohash_dist(
+                hashes[0], lengths[0], hashes[i - 1], lengths[i - 1]);
+            printf("%s similarity: %f\n", argv[i], similarity);
+        }
+        printf("\n");
     }
-    printf("length %d\n", L1);
-   for (int i=0;i<L1;i++)
-       printf("hash1[%d]=%llx\n", i, hash1[i]);
 
-    do {
+    int result = 0;
+    for (int i = 0; i < argc - 1; i++) {
+        if (hashes[i] == NULL) {
+            result = -1;
+        } else {
+            free(hashes[i]);
+        }
+    }
+    free(hashes);
+    free(lengths);
 
-	printf("file=%s\n", file2);
-	hash2 = ph_dct_videohash(file2, L2);
-	if (!hash2){
-	    printf("hash 2 is null\n");
-	    free(hash1);
-	    exit(3);
-	}
-
-	printf("length %d\n", L2);
-
-	sim = ph_dct_videohash_dist(hash1, L1, hash2, L2, 21);
-	printf("similarity %f\n", sim);
-
-	free(hash2);
-	hash2 = NULL;
-
-	file2 = fgets(file2, 80, stdin);
-	file2[strlen(file2)-1] = '\0';
-    } while (strcmp(file2,"exit"));
-
-    free(hash1);
-    free(hash2);
-    hash1 = NULL;
-    hash2 = NULL;
-	free(file2);       
-    printf("done\n");
-    return 0;
+    return result;
 }
- 

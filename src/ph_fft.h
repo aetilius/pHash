@@ -22,7 +22,6 @@
 
 */
 
-
 #ifndef _FFT_H
 #define _FFT_H
 

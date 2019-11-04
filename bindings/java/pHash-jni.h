@@ -6,22 +6,34 @@
 #define __org_phash_pHash__
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
-JNIEXPORT jobject JNICALL Java_org_phash_pHash_videoHash (JNIEnv *env, jclass, jstring);
-JNIEXPORT jobject JNICALL Java_org_phash_pHash_audioHash (JNIEnv *env, jclass, jstring);
-JNIEXPORT jobject JNICALL Java_org_phash_pHash_dctImageHash (JNIEnv *env, jclass, jstring);
-JNIEXPORT jobject JNICALL Java_org_phash_pHash_mhImageHash (JNIEnv *env, jclass, jstring);
-JNIEXPORT jobject JNICALL Java_org_phash_pHash_radialImageHash (JNIEnv *env, jclass, jstring);
-JNIEXPORT jobject JNICALL Java_org_phash_pHash_textHash (JNIEnv *env, jclass, jstring);
-JNIEXPORT jdouble JNICALL Java_org_phash_pHash_imageDistance (JNIEnv *env, jclass, jobject, jobject);
-JNIEXPORT jdouble JNICALL Java_org_phash_pHash_audioDistance (JNIEnv *env, jclass, jobject, jobject);
-JNIEXPORT jdouble JNICALL Java_org_phash_pHash_videoDistance (JNIEnv *env, jclass, jobject, jobject, jint);
-JNIEXPORT jint JNICALL Java_org_phash_pHash_textDistance (JNIEnv *env, jclass, jobject, jobject);
-JNIEXPORT void JNICALL Java_org_phash_pHash_pHashInit (JNIEnv *env, jclass);
-JNIEXPORT void JNICALL Java_org_phash_pHash_cleanup (JNIEnv *env, jclass);
+JNIEXPORT jobject JNICALL Java_org_phash_pHash_videoHash(JNIEnv *env, jclass,
+                                                         jstring);
+JNIEXPORT jobject JNICALL Java_org_phash_pHash_audioHash(JNIEnv *env, jclass,
+                                                         jstring);
+JNIEXPORT jobject JNICALL Java_org_phash_pHash_dctImageHash(JNIEnv *env, jclass,
+                                                            jstring);
+JNIEXPORT jobject JNICALL Java_org_phash_pHash_mhImageHash(JNIEnv *env, jclass,
+                                                           jstring);
+JNIEXPORT jobject JNICALL Java_org_phash_pHash_radialImageHash(JNIEnv *env,
+                                                               jclass, jstring);
+JNIEXPORT jobject JNICALL Java_org_phash_pHash_textHash(JNIEnv *env, jclass,
+                                                        jstring);
+JNIEXPORT jdouble JNICALL Java_org_phash_pHash_imageDistance(JNIEnv *env,
+                                                             jclass, jobject,
+                                                             jobject);
+JNIEXPORT jdouble JNICALL Java_org_phash_pHash_audioDistance(JNIEnv *env,
+                                                             jclass, jobject,
+                                                             jobject);
+JNIEXPORT jdouble JNICALL Java_org_phash_pHash_videoDistance(JNIEnv *env,
+                                                             jclass, jobject,
+                                                             jobject, jint);
+JNIEXPORT jint JNICALL Java_org_phash_pHash_textDistance(JNIEnv *env, jclass,
+                                                         jobject, jobject);
+JNIEXPORT void JNICALL Java_org_phash_pHash_pHashInit(JNIEnv *env, jclass);
+JNIEXPORT void JNICALL Java_org_phash_pHash_cleanup(JNIEnv *env, jclass);
 
 #ifdef __cplusplus
 }
