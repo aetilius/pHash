@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    ulong64 **hashes = (ulong **)malloc(sizeof(ulong64 *) * (argc - 1));
+    ulong64 **hashes = (ulong64 **)malloc(sizeof(ulong64 *) * (argc - 1));
     int *lengths = (int *)malloc(sizeof(int) * (argc - 1));
 
     printf("Comparing additional paths to: %s\n\n", argv[1]);
