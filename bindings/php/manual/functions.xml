@@ -1,8 +1,0 @@
- &reference.pHash.functions.ph-audio-dist;
- &reference.pHash.functions.ph-audiohash;
- &reference.pHash.functions.ph-compare-text-hashes;
- &reference.pHash.functions.ph-dct-imagehash;
- &reference.pHash.functions.ph-dct-videohash;
- &reference.pHash.functions.ph-image-dist;
- &reference.pHash.functions.ph-texthash;
- &reference.pHash.functions.ph-video-dist;
