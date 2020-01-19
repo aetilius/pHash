@@ -1,8 +1,0 @@
-﻿---
-BasedOnStyle: Google
-ConstructorInitializerIndentWidth: '2'
-ContinuationIndentWidth: '4'
-IndentWidth: '4'
-NamespaceIndentation: None
-
-...
