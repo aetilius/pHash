@@ -254,6 +254,15 @@ int ph_hamming_distance(const ulong64 hash1,const ulong64 hash2);
 **/
 uint8_t* ph_mh_imagehash(const char *filename, int &N, float alpha=2.0f, float lvl = 1.0f);
 
+/** /brief create MH image hash from image buffer
+*   /param img - image buffer
+*   /param N - (out) int value for length of image hash returned
+*   /param alpha - int scale factor for marr wavelet (default=2)
+*   /param lvl   - int level of scale factor (default = 1)
+*   /return uint8_t array
+**/
+uint8_t* ph_mh_imagehash_from_buffer(CImg<uint8_t> &img, int &N, float alpha=2.0f, float lvl = 1.0f);
+
 /** /brief count number bits set in given byte
 *   /param val - uint8_t byte value
 *   /return int value for number of bits set
