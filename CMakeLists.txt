@@ -53,7 +53,11 @@ link_directories(/usr/local/lib)
 include_directories(/usr/local/include)
 
 
-set(LIBS_DEPS png jpeg tiff pthread)
+set(LIBS_DEPS png z jpeg tiff)
+
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+set(LIBS_DEPS ${LIBS_DEPS} Threads::Threads)
 
 find_library(LIBMPG123 mpg123)
 if(LIBMPG123)
