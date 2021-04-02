@@ -10,6 +10,8 @@ set(pHash_VERSION_PATCH 0)
 
 OPTION(WITH_AUDIO_HASH "Audio hash support" 0)
 OPTION(WITH_VIDEO_HASH "Video hash support" 0)
+OPTION(WITH_BINDINGS   "Compile foreign programming languages bindings" OFF)
+OPTION(WITH_EXAMPLES   "Compile examples"   OFF)
 
 set(HAVE_IMAGE_HASH 1)
 
@@ -45,7 +47,9 @@ if(NOT CMAKE_BUILD_TYPE)
       FORCE)
 endif()
 
-add_subdirectory(bindings)
+if(WITH_BINDINGS)
+  add_subdirectory(bindings)
+endif()
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BUILD_TYPE}")
 
@@ -84,6 +88,7 @@ target_link_libraries(pHash ${LIBS_DEPS})
 install(TARGETS pHash DESTINATION lib)
 install(FILES src/pHash.h DESTINATION include)
 
+if(WITH_EXAMPLES)
 set(EXAMPLEDIR examples)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -113,6 +118,7 @@ add_executable(TestVideoHash "${EXAMPLEDIR}/test_dctvideohash.cpp")
 target_link_libraries (TestVideoHash pHash)
 install(TARGETS TestVideoHash DESTINATION bin)
 endif()
+endif() # WITH_EXAMPLES
 
 include (InstallRequiredSystemLibraries)
 
