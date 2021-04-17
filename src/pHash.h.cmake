@@ -47,6 +47,7 @@
 #cmakedefine HAVE_AUDIO_HASH
 #cmakedefine HAVE_VIDEO_HASH
 #cmakedefine HAVE_LIBMPG123
+#cmakedefine HAVE_SYS_SYSCTL_H
 
 #define PACKAGE_STRING "${CMAKE_PROJECT_NAME}"
 
@@ -66,7 +67,11 @@ using namespace cimg_library;
 
 #ifndef __GLIBC__
 #include <sys/param.h>
+
+#ifdef HAVE_SYS_SYSCTL_H
 #include <sys/sysctl.h>
+#endif
+
 #endif
 
 using namespace std;

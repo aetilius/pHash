@@ -8,8 +8,12 @@ set(pHash_VERSION_MAJOR 1)
 set(pHash_VERSION_MINOR 0)
 set(pHash_VERSION_PATCH 0)
 
-OPTION(WITH_AUDIO_HASH "Audio hash support" 0)
-OPTION(WITH_VIDEO_HASH "Video hash support" 0)
+OPTION(PHASH_DYNAMIC   "Build pHash dynamic library"                     ON)
+OPTION(PHASH_STATIC    "Build pHash static library"                     OFF)
+OPTION(WITH_AUDIO_HASH "Audio hash support"                             OFF)
+OPTION(WITH_VIDEO_HASH "Video hash support"                             OFF)
+OPTION(PHASH_BINDINGS  "Compile foreign programming languages bindings" OFF)
+OPTION(PHASH_EXAMPLES  "Compile examples"                               OFF)
 
 set(HAVE_IMAGE_HASH 1)
 
@@ -45,7 +49,9 @@ if(NOT CMAKE_BUILD_TYPE)
       FORCE)
 endif()
 
-add_subdirectory(bindings)
+if(PHASH_BINDINGS)
+  add_subdirectory(bindings)
+endif()
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BUILD_TYPE}")
 
@@ -53,7 +59,11 @@ link_directories(/usr/local/lib)
 include_directories(/usr/local/include)
 
 
-set(LIBS_DEPS png jpeg tiff pthread)
+set(LIBS_DEPS png z jpeg tiff)
+
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+set(LIBS_DEPS ${LIBS_DEPS} Threads::Threads)
 
 find_library(LIBMPG123 mpg123)
 if(LIBMPG123)
@@ -73,13 +83,21 @@ if(HAVE_VIDEO_HASH)
 endif()
 
 
-add_library(pHash SHARED ${MMAN_FILE} ${DIRENT_FILE} src/pHash.cpp ${EXTRA_SRC})
+if(PHASH_DYNAMIC)
+	add_library(pHash SHARED ${MMAN_FILE} ${DIRENT_FILE} src/pHash.cpp ${EXTRA_SRC})
+endif()
+
+if(PHASH_STATIC)
+	add_library(pHash STATIC ${MMAN_FILE} ${DIRENT_FILE} src/pHash.cpp ${EXTRA_SRC})
+endif()
+
 set_property(TARGET pHash PROPERTY VERSION "${pHash_VERSION_MAJOR}.${pHash_VERSION_MINOR}.${pHash_VERSION_PATCH}")
 target_link_libraries(pHash ${LIBS_DEPS})
 
 install(TARGETS pHash DESTINATION lib)
 install(FILES src/pHash.h DESTINATION include)
 
+if(PHASH_EXAMPLES)
 set(EXAMPLEDIR examples)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -109,6 +127,7 @@ add_executable(TestVideoHash "${EXAMPLEDIR}/test_dctvideohash.cpp")
 target_link_libraries (TestVideoHash pHash)
 install(TARGETS TestVideoHash DESTINATION bin)
 endif()
+endif() # PHASH_EXAMPLES
 
 include (InstallRequiredSystemLibraries)
 
