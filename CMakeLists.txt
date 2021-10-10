@@ -1,6 +1,7 @@
 cmake_minimum_required (VERSION 2.8)
 
 include(ExternalProject)
+include(GNUInstallDirs)
 
 project(pHash)
 set(CMAKE_MACOSX_RPATH 1)
@@ -94,7 +95,7 @@ endif()
 set_property(TARGET pHash PROPERTY VERSION "${pHash_VERSION_MAJOR}.${pHash_VERSION_MINOR}.${pHash_VERSION_PATCH}")
 target_link_libraries(pHash ${LIBS_DEPS})
 
-install(TARGETS pHash DESTINATION lib)
+install(TARGETS pHash DESTINATION ${LIBDIR})
 install(FILES src/pHash.h DESTINATION include)
 
 if(PHASH_EXAMPLES)
