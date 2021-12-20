@@ -82,8 +82,6 @@ using namespace std;
 #define ULLONG_MAX 18446744073709551615ULL
 #endif
 
-#define ROUNDING_FACTOR(x) (((x) >= 0) ? 0.5 : -0.5) 
-
 #if defined( _MSC_VER) || defined(_BORLANDC_)
 typedef unsigned _uint64 ulong64;
 typedef signed _int64 long64;

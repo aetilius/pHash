@@ -27,6 +27,8 @@
 #include "cimgffmpeg.h"
 #endif
 
+#include <cmath>
+
 const char phash_project[] = "%s. Copyright 2008-2010 Aetilius, Inc.";
 char phash_version[255] = {0};
 const char *ph_about() {
@@ -43,8 +45,8 @@ int ph_radon_projections(const CImg<uint8_t> &img, int N, Projections &projs) {
     int D = (width > height) ? width : height;
     float x_center = (float)width / 2;
     float y_center = (float)height / 2;
-    int x_off = (int)std::floor(x_center + ROUNDING_FACTOR(x_center));
-    int y_off = (int)std::floor(y_center + ROUNDING_FACTOR(y_center));
+    int x_off = std::round(x_center);
+    int y_off = std::round(y_center);
 
     projs.R = new CImg<uint8_t>(N, D, 1, 1, 0);
     projs.nb_pix_perline = (int *)calloc(N, sizeof(int));
@@ -61,7 +63,7 @@ int ph_radon_projections(const CImg<uint8_t> &img, int N, Projections &projs) {
         double alpha = std::tan(theta);
         for (int x = 0; x < D; x++) {
             double y = alpha * (x - x_off);
-            int yd = (int)std::floor(y + ROUNDING_FACTOR(y));
+            int yd = std::round(y);
             if ((yd + y_off >= 0) && (yd + y_off < height) && (x < width)) {
                 *ptr_radon_map->data(k, x) = img(x, yd + y_off);
                 nb_per_line[k] += 1;
@@ -79,7 +81,7 @@ int ph_radon_projections(const CImg<uint8_t> &img, int N, Projections &projs) {
         double alpha = std::tan(theta);
         for (int x = 0; x < D; x++) {
             double y = alpha * (x - x_off);
-            int yd = (int)std::floor(y + ROUNDING_FACTOR(y));
+            int yd = std::round(y);
             if ((yd + y_off >= 0) && (yd + y_off < height) && (x < width)) {
                 *ptr_radon_map->data(k, x) = img(x, yd + y_off);
                 nb_per_line[k] += 1;
@@ -358,7 +360,7 @@ CImgList<uint8_t> *ph_getKeyFramesFromVideo(const char *filename) {
         return NULL;
     }
 
-    int step = (int)(frames_per_sec + ROUNDING_FACTOR(frames_per_sec));
+    int step = std::round(frames_per_sec);
     long nbframes = (long)(N / step);
     // If the video length is less than 1 the video is probably corrupted.
     if (nbframes <= 0) {
