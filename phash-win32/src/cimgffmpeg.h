@@ -2,7 +2,6 @@
 #define CIMGFFMPEG_H_
 
 #define cimg_display 0
-#define ROUNDING_FACTOR(x) (((x) >= 0) ? 0.5 : -0.5)
 
 #include "CImg.h"
 #include "string.h"

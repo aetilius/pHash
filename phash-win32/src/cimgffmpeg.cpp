@@ -1,5 +1,7 @@
 #include "cimgffmpeg.h"
 
+#include <cmath>
+
 __declspec(dllexport) void vfinfo_close(VFInfo *vfinfo) {
     if (vfinfo->pFormatCtx != NULL) {
         avcodec_close(vfinfo->pCodecCtx);
@@ -411,7 +413,7 @@ __declspec(dllexport) CImgList<uint8_t> *ph_getKeyFramesFromVideo(
         return NULL;
     }
 
-    int step = (int)(frames_per_sec + ROUNDING_FACTOR(frames_per_sec));
+    int step = std::round(frames_per_sec);
     long nbframes = (long)(N / step);
 
     float *dist = (float *)av_malloc((nbframes) * sizeof(float));
