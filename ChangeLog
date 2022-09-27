@@ -6,6 +6,10 @@ Clean up rounding logic
 ---
 GitHub release
 
+0.9.8
+---
+Extend pHash interface with ph_mh_imagehash_from_buffer
+
 0.9.7
 ---
 JNI code cleanup
