@@ -7,6 +7,30 @@ Copyright (C) 1994, 1995, 1996, 1999, 2000, 2001, 2002, 2004, 2005,
 This file is free documentation; the Free Software Foundation gives
 unlimited permission to copy, distribute and modify it.
 
+Basic Configuration
+==================
+
+This project uses CMake to manage project configuration. By default
+it builds pHash as a dynamic library with just image hashing
+capability.
+
+To create the default project for your system run `cmake .` in the
+root folder of the project. By default it creates unix makefiles.
+
+Optional Configuration
+=====================
+
+To build pHash as a static library run
+`cmake -DPHASH_DYNAMIC=OFF -DPHASH_STATIC=ON .`.
+
+To include audio hash add `-DWITH_AUDIO_HASH=ON`.
+
+To include video hash add `-DWITH_VIDEO_HASH=ON`.
+
+To include foreign programming language bindings add `-DPHASH_BINDINGS=ON`.
+
+To include examples add `-DPHASH_EXAMPLES=ON`.
+
 Basic Installation
 ==================
 

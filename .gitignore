@@ -1,3 +1,7 @@
 bindings/java/dummy.cpp
 build/*
 src/pHash.h
+*.cmake
+CMakeFiles/*
+CMakeCache.txt
+Makefile
