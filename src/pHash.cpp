@@ -218,7 +218,13 @@ int _ph_image_digest(const CImg<uint8_t> &img, double sigma, double gamma,
                      Digest &digest, int N) {
     int result = EXIT_FAILURE;
     CImg<uint8_t> graysc;
-    if (img.spectrum() >= 3) {
+
+    if(img.spectrum() >3)
+    {
+        CImg<> rgb = img.get_shared_channels(0,2);
+        graysc = rgb.RGBtoYCbCr().channel(0);
+    }
+    else if (img.spectrum() == 3) {
         graysc = img.get_RGBtoYCbCr().channel(0);
     } else if (img.spectrum() == 1) {
         graysc = img;
