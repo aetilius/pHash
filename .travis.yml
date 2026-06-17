@@ -19,7 +19,7 @@ before_install:
 before_script:
   - mkdir -p build
   - cd build
-  - cmake -DWITH_AUDIO_HASH=1 -DWITH_VIDEO_HASH=1 ..
+  - cmake -DWITH_AUDIO_HASH=1 -DWITH_VIDEO_HASH=1 -DLIBDIR=lib ..
 script: make
 notifications:
   email: false
